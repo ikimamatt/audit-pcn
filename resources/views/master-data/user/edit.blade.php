@@ -1,0 +1,162 @@
+@extends('layouts.vertical', ['title' => 'Edit User'])
+
+@section('content')
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('master.user.index') }}">Master Data</a></li>
+                    <li class="breadcrumb-item active">Edit User</li>
+                </ol>
+            </div>
+            <h4 class="page-title">Edit User</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form action="{{ route('master.user.update', $masterUser->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nama" class="form-label">Nama <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control @error('nama') is-invalid @enderror" 
+                                       id="nama" 
+                                       name="nama" 
+                                       value="{{ old('nama', $masterUser->nama) }}" 
+                                       placeholder="Masukkan nama lengkap"
+                                       required>
+                                @error('nama')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control @error('username') is-invalid @enderror" 
+                                       id="username" 
+                                       name="username" 
+                                       value="{{ old('username', $masterUser->username) }}" 
+                                       placeholder="Masukkan username"
+                                       required>
+                                @error('username')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nip" class="form-label">NIP <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control @error('nip') is-invalid @enderror" 
+                                       id="nip" 
+                                       name="nip" 
+                                       value="{{ old('nip', $masterUser->nip) }}" 
+                                       placeholder="Masukkan NIP"
+                                       required>
+                                @error('nip')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password <small class="text-muted">(Kosongkan jika tidak ingin mengubah)</small></label>
+                                <input type="password" 
+                                       class="form-control @error('password') is-invalid @enderror" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Masukkan password baru">
+                                @error('password')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="master_auditee_id" class="form-label">Divisi <span class="text-danger">*</span></label>
+                                <select class="form-select @error('master_auditee_id') is-invalid @enderror" 
+                                        id="master_auditee_id" 
+                                        name="master_auditee_id" 
+                                        required>
+                                    <option value="">Pilih Divisi</option>
+                                    @foreach($auditees as $auditee)
+                                        <option value="{{ $auditee->id }}" 
+                                                {{ old('master_auditee_id', $masterUser->master_auditee_id) == $auditee->id ? 'selected' : '' }}>
+                                            {{ $auditee->divisi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('master_auditee_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="master_akses_user_id" class="form-label">Akses <span class="text-danger">*</span></label>
+                                <select class="form-select @error('master_akses_user_id') is-invalid @enderror" 
+                                        id="master_akses_user_id" 
+                                        name="master_akses_user_id" 
+                                        required>
+                                    <option value="">Pilih Akses</option>
+                                    @foreach($aksesUsers as $akses)
+                                        <option value="{{ $akses->id }}" 
+                                                {{ old('master_akses_user_id', $masterUser->master_akses_user_id) == $akses->id ? 'selected' : '' }}>
+                                            {{ $akses->nama_akses }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('master_akses_user_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('master.user.index') }}" class="btn btn-secondary">
+                            <i class="mdi mdi-arrow-left"></i> Kembali
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-content-save"></i> Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection 

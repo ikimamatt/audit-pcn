@@ -1,0 +1,393 @@
+@extends('layouts.vertical', ['title' => 'Penutup LHA/LHK'])
+
+@section('css')
+    @vite([
+        'node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css',
+        'node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css',
+     ])
+    <style>
+        .btn-custom {
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #0056b3, #004085);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .btn-outline-primary:hover {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border-color: #007bff;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-success:hover {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+            border-color: #28a745;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-warning:hover {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            border-color: #ffc107;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-danger:hover {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            border-color: #dc3545;
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline-info:hover {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            border-color: #17a2b8;
+            transform: translateY(-1px);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+    </style>
+@endsection
+
+@section('content')
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{{ url('/') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="#">Audit</a></li>
+                    <li class="breadcrumb-item active">Penutup LHA/LHK</li>
+                </ol>
+            </div>
+            <h4 class="page-title">
+                <i class="mdi mdi-file-document-outline me-2"></i>
+                Penutup LHA/LHK
+            </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-0">
+                            <i class="mdi mdi-table me-2"></i>
+                            Data Rekomendasi Penutup LHA/LHK
+                        </h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{{ route('audit.penutup-lha-rekomendasi.create', ['pelaporan_isi_lha_id' => $isiLhaId]) }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="mdi mdi-plus-circle me-2"></i>
+                            Tambah Rekomendasi
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                @if(session('success'))
+                    @include('components.alert')
+                @endif
+
+                <!-- Filter Section -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <form method="GET" action="{{ route('audit.penutup-lha-rekomendasi.index') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="status_approval" class="form-label">Status Approval</label>
+                                <select name="status_approval" id="status_approval" class="form-select">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending" {{ request('status_approval') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="approved" {{ request('status_approval') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                    <option value="rejected" {{ request('status_approval') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="search" class="form-label">Cari</label>
+                                <input type="text" name="search" id="search" class="form-control" placeholder="Cari rekomendasi..." value="{{ request('search') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="pic" class="form-label">PIC</label>
+                                <input type="text" name="pic" id="pic" class="form-control" placeholder="Cari PIC..." value="{{ request('pic') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary" style="border-radius: 25px; font-weight: 500;">
+                                        <i class="mdi mdi-magnify me-2"></i>
+                                        Filter Data
+                                    </button>
+                                    <a href="{{ route('audit.penutup-lha-rekomendasi.index') }}" class="btn btn-outline-secondary" style="border-radius: 25px; font-weight: 500;">
+                                        <i class="mdi mdi-refresh me-2"></i>
+                                        Reset
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nomor ISS</th>
+                                <th>Rekomendasi</th>
+                                <th>PIC</th>
+                                <th>Target Waktu</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data as $index => $item)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 150px;" title="{{ $item->temuan->nomor_iss ?? '-' }}">
+                                        {{ $item->temuan->nomor_iss ?? '-' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="{{ $item->rekomendasi }}">
+                                        {{ Str::limit($item->rekomendasi, 50) }}
+                                    </div>
+                                </td>
+                                <td>{{ $item->pic_rekomendasi }}</td>
+                                <td>{{ $item->target_waktu }}</td>
+                                <td>
+                                    @if($item->status_approval == 'approved')
+                                        <span class="badge bg-success">Approved</span>
+                                    @elseif($item->status_approval == 'rejected')
+                                        <span class="badge bg-danger">Rejected</span>
+                                    @else
+                                        <span class="badge bg-warning">Pending</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="btn-group-vertical btn-group-sm" role="group">
+                                        <button type="button" 
+                                                class="btn btn-outline-info btn-sm mb-1 btn-custom" 
+                                                title="View Detail"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalView{{ $item->id }}">
+                                            <i class="mdi mdi-eye me-1"></i>View
+                                        </button>
+                                        
+                                        <a href="{{ route('audit.penutup-lha-rekomendasi.edit', $item->id) }}" 
+                                           class="btn btn-outline-primary btn-sm mb-1 btn-custom" 
+                                           title="Edit">
+                                            <i class="mdi mdi-pencil me-1"></i>Edit
+                                        </a>
+                                        
+                                        @if($item->status_approval == 'pending')
+                                            <button type="button" 
+                                                    class="btn btn-outline-success btn-sm mb-1 btn-custom" 
+                                                    title="Approve"
+                                                    onclick="approveData({{ $item->id }})">
+                                                <i class="mdi mdi-check me-1"></i>Approve
+                                            </button>
+                                            
+                                            <button type="button" 
+                                                    class="btn btn-outline-warning btn-sm mb-1 btn-custom" 
+                                                    title="Reject"
+                                                    onclick="rejectData({{ $item->id }})">
+                                                <i class="mdi mdi-close me-1"></i>Reject
+                                            </button>
+                                        @endif
+                                        
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm btn-custom" 
+                                                title="Hapus"
+                                                onclick="deleteData({{ $item->id }})">
+                                            <i class="mdi mdi-delete me-1"></i>Hapus
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center">Belum ada data rekomendasi.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Data -->
+@foreach($data as $item)
+<div class="modal fade" id="modalView{{ $item->id }}" tabindex="-1" aria-labelledby="modalViewLabel{{ $item->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalViewLabel{{ $item->id }}">Detail Rekomendasi Penutup LHA/LHK</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Nomor ISS</dt>
+                    <dd class="col-sm-8">{{ $item->temuan->nomor_iss ?? '-' }}</dd>
+                    <dt class="col-sm-4">Nomor LHA/LHK</dt>
+                    <dd class="col-sm-8">{{ $item->temuan->pelaporanHasilAudit->nomor_lha_lhk ?? '-' }}</dd>
+                    <dt class="col-sm-4">Rekomendasi</dt>
+                    <dd class="col-sm-8">{{ $item->rekomendasi }}</dd>
+                    <dt class="col-sm-4">Rencana Aksi</dt>
+                    <dd class="col-sm-8">{{ $item->rencana_aksi }}</dd>
+                    <dt class="col-sm-4">Eviden Rekomendasi</dt>
+                    <dd class="col-sm-8">{{ $item->eviden_rekomendasi }}</dd>
+                    <dt class="col-sm-4">PIC Rekomendasi</dt>
+                    <dd class="col-sm-8">{{ $item->pic_rekomendasi }}</dd>
+                    <dt class="col-sm-4">Target Waktu</dt>
+                    <dd class="col-sm-8">{{ $item->target_waktu }}</dd>
+                    <dt class="col-sm-4">Status Approval</dt>
+                    <dd class="col-sm-8">
+                        @if($item->status_approval == 'approved')
+                            <span class="badge bg-success">Approved</span>
+                        @elseif($item->status_approval == 'rejected')
+                            <span class="badge bg-danger">Rejected</span>
+                        @else
+                            <span class="badge bg-warning">Pending</span>
+                        @endif
+                    </dd>
+                    @if($item->status_approval == 'rejected' && $item->alasan_reject)
+                        <dt class="col-sm-4">Alasan Reject</dt>
+                        <dd class="col-sm-8 text-danger">{{ $item->alasan_reject }}</dd>
+                    @endif
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endforeach
+@endsection
+
+@section('script')
+    @vite([ 'resources/js/pages/datatable.init.js'])
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+});
+
+function deleteData(id) {
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data rekomendasi yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('delete-form-' + id).submit();
+        }
+    });
+}
+
+function approveData(id) {
+    Swal.fire({
+        title: 'Approve Rekomendasi',
+        text: 'Anda yakin ingin approve rekomendasi ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Approve!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('approve-form-' + id).submit();
+        }
+    });
+}
+
+function rejectData(id) {
+    Swal.fire({
+        title: 'Reject Rekomendasi',
+        text: 'Masukkan alasan reject:',
+        icon: 'warning',
+        input: 'textarea',
+        inputPlaceholder: 'Ketik alasan reject di sini...',
+        inputAttributes: {
+            'aria-label': 'Alasan reject'
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Reject!',
+        cancelButtonText: 'Batal',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Alasan reject harus diisi!'
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create form with alasan_reject
+            const form = document.getElementById('reject-form-' + id);
+            const alasanInput = document.createElement('input');
+            alasanInput.type = 'hidden';
+            alasanInput.name = 'alasan_reject';
+            alasanInput.value = result.value;
+            form.appendChild(alasanInput);
+            form.submit();
+        }
+    });
+}
+</script>
+
+<!-- Hidden Forms -->
+@foreach($data as $item)
+    <form id="delete-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.destroy', $item->id) }}" method="POST" class="d-none">
+        @csrf
+        @method('DELETE')
+    </form>
+    @if($item->status_approval == 'pending')
+        <form id="approve-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" class="d-none">
+            @csrf
+            <input type="hidden" name="action" value="approve">
+        </form>
+        <form id="reject-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" class="d-none">
+            @csrf
+            <input type="hidden" name="action" value="reject">
+        </form>
+    @endif
+@endforeach
+@endsection 
