@@ -12,7 +12,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('audit.toe.store') }}" method="POST">
+                <form action="{{ route('audit.toe.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
                         <label for="perencanaan_audit_id" class="form-label">Surat Tugas Audit</label>
@@ -35,6 +35,23 @@
                     <div class="mb-3">
                         <label for="pengendalian_eksisting" class="form-label">Pengendalian Eksisting</label>
                         <textarea name="pengendalian_eksisting" id="pengendalian_eksisting" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pemilihan_sampel_audit" class="form-label">Pemilihan Sampel Audit</label>
+                        <textarea name="pemilihan_sampel_audit" id="pemilihan_sampel_audit" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resiko" class="form-label">Resiko</label>
+                        <textarea name="resiko" id="resiko" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="kontrol" class="form-label">Kontrol</label>
+                        <textarea name="kontrol" id="kontrol" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="file_kka_toe" class="form-label">Upload File KKA ToE</label>
+                        <input type="file" name="file_kka_toe" id="file_kka_toe" class="form-control" accept=".pdf">
+                        <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Opsional</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Evaluasi Pengendalian</label>

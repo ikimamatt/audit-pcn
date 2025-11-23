@@ -8,6 +8,7 @@ use App\Models\Audit\PerencanaanAudit;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Models\MasterData\MasterAuditee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class WalkthroughAuditController extends Controller
@@ -77,6 +78,7 @@ class WalkthroughAuditController extends Controller
             'actual_walkthrough_date' => 'nullable|date',
             'auditee_id' => 'required|exists:master_auditee,id',
             'hasil_walkthrough' => 'required|string',
+            'file_bpm' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
         ]);
 
         // Ambil data PKA untuk mendapatkan planned date dari milestone
@@ -89,6 +91,12 @@ class WalkthroughAuditController extends Controller
         // Ambil nama auditee dari master auditee
         $auditee = MasterAuditee::findOrFail($request->auditee_id);
 
+        // Handle file upload
+        $fileBpmPath = null;
+        if ($request->hasFile('file_bpm')) {
+            $fileBpmPath = $request->file('file_bpm')->store('walkthrough/bpm', 'public');
+        }
+
         WalkthroughAudit::create([
             'perencanaan_audit_id' => $pka->perencanaan_audit_id,
             'program_kerja_audit_id' => $request->program_kerja_audit_id,
@@ -97,6 +105,7 @@ class WalkthroughAuditController extends Controller
             'tanggal_walkthrough' => $request->actual_walkthrough_date ?? $plannedDate,
             'auditee_nama' => $auditee->divisi,
             'hasil_walkthrough' => $request->hasil_walkthrough,
+            'file_bpm' => $fileBpmPath,
         ]);
 
         return redirect()->route('audit.walkthrough.index')->with('success', 'Hasil walkthrough berhasil ditambahkan!');
@@ -122,6 +131,7 @@ class WalkthroughAuditController extends Controller
             'actual_walkthrough_date' => 'nullable|date',
             'auditee_id' => 'required|exists:master_auditee,id',
             'hasil_walkthrough' => 'required|string',
+            'file_bpm' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
         ]);
 
         // Ambil data PKA untuk mendapatkan planned date dari milestone
@@ -134,7 +144,8 @@ class WalkthroughAuditController extends Controller
         // Ambil nama auditee dari master auditee
         $auditee = MasterAuditee::findOrFail($request->auditee_id);
 
-        $item->update([
+        // Handle file upload
+        $updateData = [
             'perencanaan_audit_id' => $pka->perencanaan_audit_id,
             'program_kerja_audit_id' => $request->program_kerja_audit_id,
             'planned_walkthrough_date' => $plannedDate,
@@ -142,7 +153,17 @@ class WalkthroughAuditController extends Controller
             'tanggal_walkthrough' => $request->actual_walkthrough_date ?? $plannedDate,
             'auditee_nama' => $auditee->divisi,
             'hasil_walkthrough' => $request->hasil_walkthrough,
-        ]);
+        ];
+
+        if ($request->hasFile('file_bpm')) {
+            // Hapus file lama jika ada
+            if ($item->file_bpm && Storage::disk('public')->exists($item->file_bpm)) {
+                Storage::disk('public')->delete($item->file_bpm);
+            }
+            $updateData['file_bpm'] = $request->file('file_bpm')->store('walkthrough/bpm', 'public');
+        }
+
+        $item->update($updateData);
 
         return redirect()->route('audit.walkthrough.index')->with('success', 'Hasil walkthrough berhasil diupdate!');
     }

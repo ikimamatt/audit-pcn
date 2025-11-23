@@ -32,23 +32,33 @@
                         <textarea name="nama_bpo" id="nama_bpo" class="form-control" rows="2" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="file_bpm" class="form-label">Upload File BPM <span class="text-danger">*</span></label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="file_bpm" id="file_bpm" class="form-control" accept=".pdf" required>
-                            <div class="file-info" id="file_bpm_info"></div>
-                        </div>
-                        <div class="invalid-feedback" id="file_bpm_error"></div>
-                        <div class="valid-feedback" id="file_bpm_success"></div>
-                        <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB)</small>
-                        
-                        <!-- File Preview -->
-                        <div class="file-preview" id="file_bpm_preview">
-                            <div class="file-name" id="file_bpm_name"></div>
-                            <div class="file-size" id="file_bpm_size"></div>
+                        <label for="resiko" class="form-label">Resiko</label>
+                        <textarea name="resiko" id="resiko" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="kontrol" class="form-label">Kontrol</label>
+                        <textarea name="kontrol" id="kontrol" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="walkthrough_id" class="form-label">Pilih File BPM dari Walkthrough <span class="text-danger">*</span></label>
+                        <select name="walkthrough_id" id="walkthrough_id" class="form-control" required>
+                            <option value="">Pilih Walkthrough</option>
+                        </select>
+                        <small class="text-muted">Hanya menampilkan walkthrough yang sudah approved dan memiliki file BPM untuk surat tugas yang dipilih</small>
+                        <div id="walkthrough-file-info" class="mt-2" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="mdi mdi-information-outline me-2"></i>
+                                <span id="walkthrough-file-name"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Hasil Evaluasi BPM</label>
+                        <label for="file_kka_tod" class="form-label">Upload File KKA ToD</label>
+                        <input type="file" name="file_kka_tod" id="file_kka_tod" class="form-control" accept=".pdf">
+                        <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Opsional</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hasil Evaluasi TOD</label>
                         <div id="evaluasi-container">
                             <div class="input-group mb-2 evaluasi-item">
                                 <textarea name="hasil_evaluasi[]" class="form-control" rows="2" required></textarea>
@@ -66,97 +76,63 @@
 </div>
 @endsection
 
-@section('style')
-<style>
-.file-upload-wrapper {
-    position: relative;
-}
-
-.file-upload-wrapper .form-control {
-    padding-right: 40px;
-}
-
-.file-upload-wrapper .file-info {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    color: #6c757d;
-}
-
-.file-upload-wrapper .file-info.success {
-    color: #198754;
-}
-
-.file-upload-wrapper .file-info.error {
-    color: #dc3545;
-}
-
-.is-valid {
-    border-color: #198754 !important;
-    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25) !important;
-}
-
-.is-invalid {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-.invalid-feedback {
-    display: block;
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875em;
-    color: #dc3545;
-}
-
-.valid-feedback {
-    display: block;
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875em;
-    color: #198754;
-}
-
-.file-preview {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    background-color: #f8f9fa;
-    display: none;
-}
-
-.file-preview.show {
-    display: block;
-}
-
-.file-preview .file-name {
-    font-weight: 600;
-    color: #495057;
-}
-
-.file-preview .file-size {
-    color: #6c757d;
-    font-size: 0.875em;
-}
-</style>
-@endsection
 
 @section('script')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('evaluasi-container');
     
-    // File validation elements
-    const fileBpmInput = document.getElementById('file_bpm');
-    const fileBpmError = document.getElementById('file_bpm_error');
-    const fileBpmSuccess = document.getElementById('file_bpm_success');
-    const fileBpmInfo = document.getElementById('file_bpm_info');
-    const fileBpmPreview = document.getElementById('file_bpm_preview');
-    const fileBpmName = document.getElementById('file_bpm_name');
-    const fileBpmSize = document.getElementById('file_bpm_size');
+    const walkthroughSelect = document.getElementById('walkthrough_id');
+    const perencanaanSelect = document.getElementById('perencanaan_audit_id');
+    const walkthroughFileInfo = document.getElementById('walkthrough-file-info');
+    const walkthroughFileName = document.getElementById('walkthrough-file-name');
+    
+    // Walkthrough data dari server
+    const walkthroughs = @json($walkthroughs);
+    
+    // Update walkthrough options berdasarkan perencanaan_audit_id
+    function updateWalkthroughOptions() {
+        const perencanaanId = perencanaanSelect.value;
+        walkthroughSelect.innerHTML = '<option value="">Pilih Walkthrough</option>';
+        walkthroughFileInfo.style.display = 'none';
+        
+        if (perencanaanId && walkthroughs[perencanaanId]) {
+            walkthroughs[perencanaanId].forEach(function(walkthrough) {
+                const option = document.createElement('option');
+                option.value = walkthrough.id;
+                option.textContent = 'Walkthrough - ' + (walkthrough.tanggal_walkthrough || 'N/A');
+                option.setAttribute('data-file', walkthrough.file_bpm || '');
+                walkthroughSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Tidak ada walkthrough dengan file BPM untuk surat tugas ini';
+            option.disabled = true;
+            walkthroughSelect.appendChild(option);
+        }
+    }
+    
+    // Handle perubahan surat tugas
+    perencanaanSelect.addEventListener('change', function() {
+        updateWalkthroughOptions();
+    });
+    
+    // Handle perubahan walkthrough selection
+    walkthroughSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const filePath = selectedOption.getAttribute('data-file');
+        
+        if (filePath) {
+            walkthroughFileName.textContent = 'File BPM: ' + filePath.split('/').pop();
+            walkthroughFileInfo.style.display = 'block';
+        } else {
+            walkthroughFileInfo.style.display = 'none';
+        }
+    });
+    
+    // Initialize walkthrough options
+    updateWalkthroughOptions();
     
     // Add evaluasi functionality
     document.getElementById('btn-add-evaluasi').onclick = function() {
@@ -174,104 +150,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // File validation function
-    function validatePdfFile(file, errorElement, successElement, infoElement, previewElement, nameElement, sizeElement, inputElement) {
-        // Reset all states
-        errorElement.textContent = '';
-        successElement.textContent = '';
-        infoElement.textContent = '';
-        inputElement.classList.remove('is-invalid', 'is-valid');
-        previewElement.classList.remove('show');
-        
-        if (!file) {
-            return false;
-        }
-        
-        // Check file type
-        if (file.type !== 'application/pdf') {
-            errorElement.textContent = 'Hanya file PDF yang diperbolehkan';
-            inputElement.classList.add('is-invalid');
-            infoElement.textContent = '❌';
-            infoElement.className = 'file-info error';
-            return false;
-        }
-        
-        // Check file size (5MB = 5 * 1024 * 1024 bytes)
-        const maxSize = 5 * 1024 * 1024;
-        if (file.size > maxSize) {
-            errorElement.textContent = 'Ukuran file maksimal 5MB';
-            inputElement.classList.add('is-invalid');
-            infoElement.textContent = '❌';
-            infoElement.className = 'file-info error';
-            return false;
-        }
-        
-        // File is valid
-        inputElement.classList.add('is-valid');
-        successElement.textContent = 'File PDF valid';
-        infoElement.textContent = '✅';
-        infoElement.className = 'file-info success';
-        
-        // Show file preview
-        nameElement.textContent = file.name;
-        sizeElement.textContent = formatFileSize(file.size);
-        previewElement.classList.add('show');
-        
-        return true;
-    }
-    
-    // Format file size function
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    
-    // File input change handler
-    fileBpmInput.addEventListener('change', function() {
-        validatePdfFile(
-            this.files[0], 
-            fileBpmError, 
-            fileBpmSuccess, 
-            fileBpmInfo, 
-            fileBpmPreview, 
-            fileBpmName, 
-            fileBpmSize, 
-            this
-        );
-    });
-    
     // Form submission validation
     document.querySelector('form').addEventListener('submit', function(e) {
         let isValid = true;
         
-        // Validate BPM file
-        if (fileBpmInput.files.length === 0) {
-            fileBpmError.textContent = 'File BPM harus diupload';
-            fileBpmInput.classList.add('is-invalid');
+        // Validasi walkthrough dipilih
+        if (!walkthroughSelect.value) {
+            alert('Silakan pilih walkthrough yang memiliki file BPM');
+            walkthroughSelect.classList.add('is-invalid');
             isValid = false;
-        } else if (!validatePdfFile(
-            fileBpmInput.files[0], 
-            fileBpmError, 
-            fileBpmSuccess, 
-            fileBpmInfo, 
-            fileBpmPreview, 
-            fileBpmName, 
-            fileBpmSize, 
-            fileBpmInput
-        )) {
-            isValid = false;
+        } else {
+            walkthroughSelect.classList.remove('is-invalid');
         }
         
         if (!isValid) {
             e.preventDefault();
             // Scroll to first error
-            const firstError = document.querySelector('.is-invalid');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            walkthroughSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 });

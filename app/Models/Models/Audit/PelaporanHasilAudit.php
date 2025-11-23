@@ -33,7 +33,7 @@ class PelaporanHasilAudit extends Model
 
     public function temuan()
     {
-        return $this->hasMany(PelaporanTemuan::class, 'pelaporan_hasil_audit_id');
+        return $this->hasMany(\App\Models\Audit\PelaporanTemuan::class, 'pelaporan_hasil_audit_id');
     }
 
     public function approver()

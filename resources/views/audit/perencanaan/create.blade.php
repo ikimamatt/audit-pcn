@@ -56,10 +56,26 @@
                     <div class="mb-3">
                         <label class="form-label">Nama Auditor</label>
                         <div id="auditor-list">
-                            @php $auditorList = old('auditor', ['']); @endphp
+                            @php 
+                                $auditorList = old('auditor', ['']); 
+                                // Jika old('auditor') adalah array dari ID, konversi ke format yang sesuai
+                                if (!empty(old('auditor')) && is_array(old('auditor'))) {
+                                    $auditorList = old('auditor');
+                                }
+                            @endphp
                             @foreach($auditorList as $i => $aud)
                             <div class="input-group mb-2 auditor-item">
-                                <input type="text" name="auditor[]" class="form-control" placeholder="Nama Auditor dan NIP" value="{{ $aud }}" required>
+                                <select name="auditor[]" class="form-select auditor-select" required>
+                                    <option value="">Pilih Auditor</option>
+                                    @foreach($auditors as $auditor)
+                                        <option value="{{ $auditor->id }}" 
+                                            data-nama="{{ $auditor->nama }}" 
+                                            data-nip="{{ $auditor->nip }}"
+                                            {{ (is_numeric($aud) && $aud == $auditor->id) || $aud == $auditor->id ? 'selected' : '' }}>
+                                            {{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses->nama_akses ?? '-' }})
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <button type="button" class="btn btn-danger btn-remove-auditor" @if($i==0) style="display:none" @endif>-</button>
                             </div>
                             @endforeach
@@ -185,12 +201,48 @@
         var list = document.getElementById('auditor-list');
         var item = document.createElement('div');
         item.className = 'input-group mb-2 auditor-item';
-        item.innerHTML = '<input type="text" name="auditor[]" class="form-control" placeholder="Nama Auditor dan NIP" required> <button type="button" class="btn btn-danger btn-remove-auditor">-</button>';
+        
+        // Buat select dropdown dengan opsi auditor
+        var selectHtml = '<select name="auditor[]" class="form-select auditor-select" required><option value="">Pilih Auditor</option>';
+        @foreach($auditors as $auditor)
+            selectHtml += '<option value="{{ $auditor->id }}" data-nama="{{ $auditor->nama }}" data-nip="{{ $auditor->nip }}">{{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses->nama_akses ?? "-" }})</option>';
+        @endforeach
+        selectHtml += '</select>';
+        
+        item.innerHTML = selectHtml + ' <button type="button" class="btn btn-danger btn-remove-auditor">-</button>';
         list.appendChild(item);
-        item.querySelector('.btn-remove-auditor').onclick = function() { item.remove(); };
+        
+        // Event handler untuk remove button
+        item.querySelector('.btn-remove-auditor').onclick = function() { 
+            item.remove(); 
+            // Update visibility tombol remove untuk item pertama
+            updateRemoveButtons();
+        };
+        
+        // Update visibility tombol remove
+        updateRemoveButtons();
     };
+    
+    // Update visibility tombol remove
+    function updateRemoveButtons() {
+        var items = document.querySelectorAll('.auditor-item');
+        items.forEach(function(item, index) {
+            var removeBtn = item.querySelector('.btn-remove-auditor');
+            if (removeBtn) {
+                removeBtn.style.display = items.length > 1 ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // Event handler untuk remove button yang sudah ada
     document.querySelectorAll('.btn-remove-auditor').forEach(function(btn) {
-        btn.onclick = function() { btn.closest('.auditor-item').remove(); };
+        btn.onclick = function() { 
+            btn.closest('.auditor-item').remove(); 
+            updateRemoveButtons();
+        };
     });
+    
+    // Inisialisasi visibility tombol remove saat halaman dimuat
+    updateRemoveButtons();
 </script>
 @endsection 

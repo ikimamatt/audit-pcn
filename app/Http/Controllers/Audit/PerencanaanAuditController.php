@@ -19,9 +19,10 @@ class PerencanaanAuditController extends Controller
     public function create()
     {
         $auditees = MasterAuditee::all();
+        // Ambil user dengan role "Auditor" dan "PIC Auditor" (atau "PIC Auditee" jika "PIC Auditor" tidak ada)
         $auditors = MasterUser::with('akses')->whereHas('akses', function($q) {
-            $q->where('nama_akses', 'Auditor');
-        })->get();
+            $q->whereIn('nama_akses', ['Auditor', 'PIC Auditor', 'PIC Auditee']);
+        })->orderBy('nama')->get();
         
         // Generate nomor surat tugas otomatis
         $nomorSuratTugas = $this->generateNomorSuratTugas();
@@ -35,6 +36,7 @@ class PerencanaanAuditController extends Controller
             'tanggal_surat_tugas' => 'required|date',
             'jenis_audit' => 'required',
             'auditor' => 'nullable|array',
+            'auditor.*' => 'nullable|exists:master_user,id',
             'auditee' => 'required|exists:master_auditee,id',
             'ruang_lingkup' => 'required|array',
             'tanggal_audit_mulai' => 'required|date',
@@ -46,11 +48,24 @@ class PerencanaanAuditController extends Controller
         // Generate nomor surat tugas otomatis berdasarkan jenis audit
         $nomorSuratTugas = $this->generateNomorSuratTugas($request->jenis_audit);
         
+        // Konversi ID auditor menjadi format nama + NIP
+        $auditorData = [];
+        if ($request->auditor && is_array($request->auditor)) {
+            foreach ($request->auditor as $auditorId) {
+                if (!empty($auditorId) && is_numeric($auditorId)) {
+                    $auditor = MasterUser::find($auditorId);
+                    if ($auditor) {
+                        $auditorData[] = $auditor->nama . ' - NIP: ' . $auditor->nip;
+                    }
+                }
+            }
+        }
+        
         $perencanaan = PerencanaanAudit::create([
             'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
             'nomor_surat_tugas' => $nomorSuratTugas,
             'jenis_audit' => $request->jenis_audit,
-            'auditor' => $request->auditor ?? [],
+            'auditor' => $auditorData,
             'auditee_id' => $request->auditee,
             'ruang_lingkup' => $request->ruang_lingkup,
             'tanggal_audit_mulai' => $request->tanggal_audit_mulai,
@@ -77,9 +92,27 @@ class PerencanaanAuditController extends Controller
         }
         
         $auditees = MasterAuditee::all();
+        // Ambil user dengan role "Auditor" dan "PIC Auditor" (atau "PIC Auditee" jika "PIC Auditor" tidak ada)
         $auditors = MasterUser::with('akses')->whereHas('akses', function($q) {
-            $q->where('nama_akses', 'Auditor');
-        })->get();
+            $q->whereIn('nama_akses', ['Auditor', 'PIC Auditor', 'PIC Auditee']);
+        })->orderBy('nama')->get();
+        
+        // Mencocokkan auditor lama dengan user baru berdasarkan NIP
+        $matchedAuditorIds = [];
+        if ($item->auditor && is_array($item->auditor)) {
+            foreach ($item->auditor as $auditorText) {
+                // Parse format: "Nama - NIP: xxxxx" atau format lain
+                if (preg_match('/NIP:\s*([^\s-]+)/', $auditorText, $matches)) {
+                    $nip = trim($matches[1]);
+                    $matchedUser = MasterUser::where('nip', $nip)->first();
+                    if ($matchedUser) {
+                        $matchedAuditorIds[] = $matchedUser->id;
+                    }
+                }
+            }
+        }
+        $item->matched_auditor_ids = $matchedAuditorIds;
+        
         return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors'));
     }
 
@@ -92,11 +125,24 @@ class PerencanaanAuditController extends Controller
             ? $this->generateNomorSuratTugas($request->jenis_audit)
             : $item->nomor_surat_tugas;
         
+        // Konversi ID auditor menjadi format nama + NIP
+        $auditorData = [];
+        if ($request->auditor && is_array($request->auditor)) {
+            foreach ($request->auditor as $auditorId) {
+                if (!empty($auditorId) && is_numeric($auditorId)) {
+                    $auditor = MasterUser::find($auditorId);
+                    if ($auditor) {
+                        $auditorData[] = $auditor->nama . ' - NIP: ' . $auditor->nip;
+                    }
+                }
+            }
+        }
+        
         $item->update([
             'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
             'nomor_surat_tugas' => $nomorSuratTugas,
             'jenis_audit' => $request->jenis_audit,
-            'auditor' => $request->auditor ?? [],
+            'auditor' => $auditorData,
             'auditee_id' => $request->auditee,
             'ruang_lingkup' => $request->ruang_lingkup,
             'tanggal_audit_mulai' => $request->tanggal_audit_mulai,

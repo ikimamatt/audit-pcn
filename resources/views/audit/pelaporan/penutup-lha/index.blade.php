@@ -97,9 +97,26 @@
                             <i class="mdi mdi-table me-2"></i>
                             Data Rekomendasi Penutup LHA/LHK
                         </h5>
+                        @if(isset($nomorSuratTugas) && $nomorSuratTugas)
+                            <div class="mt-2">
+                                <span class="badge bg-info">
+                                    <i class="mdi mdi-file-document-outline me-1"></i>
+                                    Nomor Surat Tugas: {{ $nomorSuratTugas }}
+                                </span>
+                                @if($perencanaanAudit)
+                                    <span class="badge bg-secondary ms-2">
+                                        {{ $perencanaanAudit->jenis_audit }}
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                     <div class="col-md-6 text-end">
-                        <a href="{{ route('audit.penutup-lha-rekomendasi.create', ['pelaporan_isi_lha_id' => $isiLhaId]) }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <a href="{{ route('audit.penutup-lha-rekomendasi.select-nomor-surat-tugas') }}" class="btn btn-secondary me-2" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="mdi mdi-file-document-outline me-2"></i>
+                            Pilih Nomor Surat Tugas
+                        </a>
+                        <a href="{{ route('audit.penutup-lha-rekomendasi.create', ['pelaporan_isi_lha_id' => $isiLhaId, 'nomor_surat_tugas' => $nomorSuratTugas ?? '']) }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <i class="mdi mdi-plus-circle me-2"></i>
                             Tambah Rekomendasi
                         </a>
@@ -116,6 +133,9 @@
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <form method="GET" action="{{ route('audit.penutup-lha-rekomendasi.index') }}" class="row g-3">
+                            @if(isset($nomorSuratTugas) && $nomorSuratTugas)
+                                <input type="hidden" name="nomor_surat_tugas" value="{{ $nomorSuratTugas }}">
+                            @endif
                             <div class="col-md-3">
                                 <label for="status_approval" class="form-label">Status Approval</label>
                                 <select name="status_approval" id="status_approval" class="form-select">
@@ -178,7 +198,19 @@
                                         {{ Str::limit($item->rekomendasi, 50) }}
                                     </div>
                                 </td>
-                                <td>{{ $item->pic_rekomendasi }}</td>
+                                <td>
+                                    @if($item->picUsers->count() > 0)
+                                        <div class="d-flex flex-column gap-1">
+                                            @foreach($item->picUsers as $picUser)
+                                                <span class="badge bg-info text-dark">
+                                                    {{ $picUser->nama }} - {{ $picUser->auditee->divisi ?? '-' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-muted">{{ $item->pic_rekomendasi ?? '-' }}</span>
+                                    @endif
+                                </td>
                                 <td>{{ $item->target_waktu }}</td>
                                 <td>
                                     @if($item->status_approval == 'approved')
@@ -265,7 +297,21 @@
                     <dt class="col-sm-4">Eviden Rekomendasi</dt>
                     <dd class="col-sm-8">{{ $item->eviden_rekomendasi }}</dd>
                     <dt class="col-sm-4">PIC Rekomendasi</dt>
-                    <dd class="col-sm-8">{{ $item->pic_rekomendasi }}</dd>
+                    <dd class="col-sm-8">
+                        @if($item->picUsers->count() > 0)
+                            <ul class="list-unstyled mb-0">
+                                @foreach($item->picUsers as $picUser)
+                                    <li>
+                                        <span class="badge bg-info text-dark me-1">
+                                            {{ $picUser->nama }} - {{ $picUser->auditee->divisi ?? '-' }}
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            {{ $item->pic_rekomendasi ?? '-' }}
+                        @endif
+                    </dd>
                     <dt class="col-sm-4">Target Waktu</dt>
                     <dd class="col-sm-8">{{ $item->target_waktu }}</dd>
                     <dt class="col-sm-4">Status Approval</dt>

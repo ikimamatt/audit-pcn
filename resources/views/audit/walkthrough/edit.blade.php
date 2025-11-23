@@ -14,7 +14,7 @@
             <div class="card-body">
                 @include('components.alert')
                 
-                <form action="{{ route('audit.walkthrough.update', $item->id) }}" method="POST" id="walkthroughForm">
+                <form action="{{ route('audit.walkthrough.update', $item->id) }}" method="POST" id="walkthroughForm" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -52,6 +52,19 @@
                     <div class="mb-3">
                         <label for="hasil_walkthrough" class="form-label">Hasil Walkthrough</label>
                         <textarea name="hasil_walkthrough" id="hasil_walkthrough" class="form-control" rows="4" required>{{ $item->hasil_walkthrough }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file_bpm" class="form-label">File BPM</label>
+                        @if($item->file_bpm)
+                            <div class="mb-2">
+                                <a href="{{ asset('storage/' . $item->file_bpm) }}" target="_blank" class="btn btn-sm btn-info">
+                                    <i class="mdi mdi-download me-1"></i> Download File Saat Ini
+                                </a>
+                            </div>
+                        @endif
+                        <input type="file" name="file_bpm" id="file_bpm" class="form-control" accept=".pdf">
+                        <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Kosongkan jika tidak ingin mengganti file</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary">

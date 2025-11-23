@@ -49,6 +49,10 @@
                                 <th>Surat Tugas</th>
                                 <th>Judul BPM</th>
                                 <th>Pengendalian Eksisting</th>
+                                <th>Pemilihan Sampel Audit</th>
+                                <th>Resiko</th>
+                                <th>Kontrol</th>
+                                <th>File KKA ToE</th>
                                 <th>Status</th>
                                 <th>Alasan Penolakan</th>
                                 <th>Evaluasi</th>
@@ -61,7 +65,42 @@
                                 <td>{{ $i+1 }}</td>
                                 <td>{{ $item->perencanaanAudit ? $item->perencanaanAudit->nomor_surat_tugas : '-' }}</td>
                                 <td>{{ $item->judul_bpm }}</td>
-                                <td>{{ $item->pengendalian_eksisting }}</td>
+                                <td>
+                                    @if($item->pengendalian_eksisting)
+                                        <span title="{{ $item->pengendalian_eksisting }}">{{ Str::limit($item->pengendalian_eksisting, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->pemilihan_sampel_audit)
+                                        <span title="{{ $item->pemilihan_sampel_audit }}">{{ Str::limit($item->pemilihan_sampel_audit, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->resiko)
+                                        <span title="{{ $item->resiko }}">{{ Str::limit($item->resiko, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->kontrol)
+                                        <span title="{{ $item->kontrol }}">{{ Str::limit($item->kontrol, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->file_kka_toe)
+                                        <a href="{{ asset('storage/' . $item->file_kka_toe) }}" target="_blank" class="btn btn-sm btn-info">View</a>
+                                        <a href="{{ asset('storage/' . $item->file_kka_toe) }}" download class="btn btn-sm btn-primary">Download</a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($item->status_approval == 'approved')
                                         <span class="badge bg-success">Approved</span>

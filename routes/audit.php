@@ -77,6 +77,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
     // Route::post('isi-lha/{id}/approval', [\App\Http\Controllers\Audit\PelaporanIsiLhaController::class, 'approval'])->name('isi-lha.approval');
 
     // Penutup LHA/LHK Rekomendasi
+    Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
     Route::resource('penutup-lha-rekomendasi', \App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class);
     Route::post('penutup-lha-rekomendasi/{id}/approval', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
     Route::get('penutup-lha-rekomendasi/get-iss-data', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');

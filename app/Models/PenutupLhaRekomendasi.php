@@ -48,4 +48,9 @@ class PenutupLhaRekomendasi extends Model
     {
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by');
     }
+
+    public function picUsers()
+    {
+        return $this->belongsToMany(\App\Models\MasterData\MasterUser::class, 'penutup_lha_rekomendasi_pic', 'penutup_lha_rekomendasi_id', 'master_user_id');
+    }
 } 
