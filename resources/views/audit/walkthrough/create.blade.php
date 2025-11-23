@@ -24,7 +24,7 @@
                         <i class="mdi mdi-plus me-1"></i> Buat Surat Tugas Baru
                     </a>
                 @else
-                    <form action="{{ route('audit.walkthrough.store') }}" method="POST" id="walkthroughForm">
+                    <form action="{{ route('audit.walkthrough.store') }}" method="POST" id="walkthroughForm" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-3">
                             <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
@@ -77,6 +77,12 @@
                         <div class="mb-3">
                             <label for="hasil_walkthrough" class="form-label">Hasil Walkthrough</label>
                             <textarea name="hasil_walkthrough" id="hasil_walkthrough" class="form-control" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="file_bpm" class="form-label">Upload File BPM</label>
+                            <input type="file" name="file_bpm" id="file_bpm" class="form-control" accept=".pdf">
+                            <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Opsional</small>
                         </div>
 
                         <button type="submit" class="btn btn-primary">

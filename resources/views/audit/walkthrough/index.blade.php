@@ -54,6 +54,7 @@
                                 <th>Actual Date</th>
                                 <th>Auditee</th>
                                 <th>Hasil</th>
+                                <th>File BPM</th>
                                 <th>Status</th>
                                 <th>Alasan Penolakan</th>
                                 <th>Aksi</th>
@@ -74,7 +75,25 @@
                                     @endif
                                 </td>
                                 <td>{{ $item->auditee_nama }}</td>
-                                <td>{{ Str::limit($item->hasil_walkthrough, 50) }}</td>
+                                <td>
+                                    @if($item->hasil_walkthrough)
+                                        <span title="{{ $item->hasil_walkthrough }}">{{ Str::limit($item->hasil_walkthrough, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->file_bpm)
+                                        <a href="{{ asset('storage/' . $item->file_bpm) }}" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="mdi mdi-eye"></i> View
+                                        </a>
+                                        <a href="{{ asset('storage/' . $item->file_bpm) }}" download class="btn btn-sm btn-primary">
+                                            <i class="mdi mdi-download"></i> Download
+                                        </a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($item->status_approval == 'approved')
                                         <span class="badge bg-success">Approved</span>

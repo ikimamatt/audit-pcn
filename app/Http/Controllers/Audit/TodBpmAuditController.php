@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\TodBpmAudit;
 use App\Models\Audit\PerencanaanAudit;
 use App\Models\TodBpmEvaluasi;
+use App\Models\WalkthroughAudit;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class TodBpmAuditController extends Controller
@@ -43,7 +45,14 @@ class TodBpmAuditController extends Controller
     public function create()
     {
         $suratTugas = PerencanaanAudit::all();
-        return view('audit.tod-bpm.create', compact('suratTugas'));
+        // Ambil walkthrough yang sudah memiliki file BPM
+        $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
+            ->where('status_approval', 'approved')
+            ->with('perencanaanAudit')
+            ->get()
+            ->groupBy('perencanaan_audit_id');
+        
+        return view('audit.tod-bpm.create', compact('suratTugas', 'walkthroughs'));
     }
 
     /**
@@ -55,23 +64,45 @@ class TodBpmAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'judul_bpm' => 'required|string',
             'nama_bpo' => 'required|string',
-            'file_bpm' => 'required|file',
+            'resiko' => 'nullable|string',
+            'kontrol' => 'nullable|string',
+            'walkthrough_id' => 'required|exists:walkthrough_audit,id',
+            'file_kka_tod' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
             'hasil_evaluasi' => 'required|array|min:1',
             'hasil_evaluasi.*' => 'required|string',
         ]);
-        $filePath = $request->file('file_bpm')->store('bpm', 'public');
+
+        // Gunakan file dari walkthrough (wajib)
+        $walkthrough = WalkthroughAudit::findOrFail($request->walkthrough_id);
+        if (!$walkthrough->file_bpm) {
+            return redirect()->back()->with('error', 'File BPM dari walkthrough tidak ditemukan! Pastikan walkthrough sudah memiliki file BPM.')->withInput();
+        }
+        
+        $filePath = $walkthrough->file_bpm;
+
+        // Handle upload file KKA ToD
+        $fileKkaTodPath = null;
+        if ($request->hasFile('file_kka_tod')) {
+            $fileKkaTodPath = $request->file('file_kka_tod')->store('tod-bpm/kka-tod', 'public');
+        }
+
         $bpm = TodBpmAudit::create([
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'nama_bpo' => $request->nama_bpo,
+            'resiko' => $request->resiko,
+            'kontrol' => $request->kontrol,
             'file_bpm' => $filePath,
+            'file_kka_tod' => $fileKkaTodPath,
         ]);
+        
         foreach ($request->hasil_evaluasi as $hasil) {
             TodBpmEvaluasi::create([
                 'tod_bpm_audit_id' => $bpm->id,
                 'hasil_evaluasi' => $hasil,
             ]);
         }
+        
         return redirect()->route('audit.tod-bpm.index')->with('success', 'BPM dan hasil evaluasi berhasil disimpan!');
     }
 
@@ -91,7 +122,14 @@ class TodBpmAuditController extends Controller
     {
         $item = TodBpmAudit::with('perencanaanAudit')->findOrFail($id);
         $suratTugas = PerencanaanAudit::all();
-        return view('audit.tod-bpm.edit', compact('item', 'suratTugas'));
+        // Ambil walkthrough yang sudah memiliki file BPM
+        $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
+            ->where('status_approval', 'approved')
+            ->with('perencanaanAudit')
+            ->get()
+            ->groupBy('perencanaan_audit_id');
+        
+        return view('audit.tod-bpm.edit', compact('item', 'suratTugas', 'walkthroughs'));
     }
 
     /**
@@ -104,15 +142,38 @@ class TodBpmAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'judul_bpm' => 'required|string',
             'nama_bpo' => 'required|string',
+            'resiko' => 'nullable|string',
+            'kontrol' => 'nullable|string',
+            'walkthrough_id' => 'nullable|exists:walkthrough_audit,id',
+            'file_kka_tod' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
         ]);
+        
         $data = [
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'nama_bpo' => $request->nama_bpo,
+            'resiko' => $request->resiko,
+            'kontrol' => $request->kontrol,
         ];
-        if ($request->hasFile('file_bpm')) {
-            $data['file_bpm'] = $request->file('file_bpm')->store('bpm', 'public');
+        
+        // Jika walkthrough_id dipilih, gunakan file dari walkthrough
+        if ($request->walkthrough_id) {
+            $walkthrough = WalkthroughAudit::findOrFail($request->walkthrough_id);
+            if ($walkthrough->file_bpm) {
+                $data['file_bpm'] = $walkthrough->file_bpm;
+            }
         }
+        // Jika tidak dipilih, tetap gunakan file yang sudah ada
+        
+        // Handle upload file KKA ToD
+        if ($request->hasFile('file_kka_tod')) {
+            // Hapus file lama jika ada
+            if ($item->file_kka_tod && Storage::disk('public')->exists($item->file_kka_tod)) {
+                Storage::disk('public')->delete($item->file_kka_tod);
+            }
+            $data['file_kka_tod'] = $request->file('file_kka_tod')->store('tod-bpm/kka-tod', 'public');
+        }
+        
         $item->update($data);
         return redirect()->route('audit.tod-bpm.index')->with('success', 'Data BPM berhasil diupdate!');
     }

@@ -8,18 +8,92 @@ use App\Models\PenutupLhaTindakLanjut;
 // use App\Models\Models\Audit\PelaporanIsiLha;
 use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\Audit\PelaporanTemuan;
+use App\Models\Audit\PerencanaanAudit;
 use App\Models\MasterData\MasterUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class PenutupLhaRekomendasiController extends Controller
 {
+    public function selectNomorSuratTugas(Request $request)
+    {
+        // Ambil semua nomor surat tugas yang memiliki PelaporanHasilAudit dengan temuan yang sudah approved
+        $query = PerencanaanAudit::with(['pelaporanHasilAudit.temuan'])
+            ->whereHas('pelaporanHasilAudit.temuan', function($q) {
+                $q->where('status_approval', 'approved');
+            });
+        
+        // Filter berdasarkan jenis audit
+        if ($request->filled('jenis_audit')) {
+            $query->where('jenis_audit', $request->jenis_audit);
+        }
+        
+        // Filter berdasarkan search (nomor surat tugas atau nomor LHA/LHK)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nomor_surat_tugas', 'like', '%' . $search . '%')
+                  ->orWhereHas('pelaporanHasilAudit', function($q2) use ($search) {
+                      $q2->where('nomor_lha_lhk', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+        
+        $nomorSuratTugasList = $query->get()
+            ->map(function($perencanaan) {
+                $totalTemuan = 0;
+                $nomorLhaLhkList = [];
+                
+                foreach ($perencanaan->pelaporanHasilAudit as $lha) {
+                    $approvedTemuan = $lha->temuan->where('status_approval', 'approved');
+                    $totalTemuan += $approvedTemuan->count();
+                    if ($lha->nomor_lha_lhk) {
+                        $nomorLhaLhkList[] = $lha->nomor_lha_lhk;
+                    }
+                }
+                
+                return [
+                    'nomor_surat_tugas' => $perencanaan->nomor_surat_tugas,
+                    'perencanaan_audit_id' => $perencanaan->id,
+                    'jenis_audit' => $perencanaan->jenis_audit,
+                    'nomor_lha_lhk' => implode(', ', array_unique($nomorLhaLhkList)),
+                    'count_temuan' => $totalTemuan,
+                ];
+            })
+            ->sortBy('nomor_surat_tugas')
+            ->values();
+        
+        // Ambil daftar jenis audit untuk filter dropdown
+        $jenisAuditList = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan', function($q) {
+                $q->where('status_approval', 'approved');
+            })
+            ->distinct()
+            ->pluck('jenis_audit')
+            ->sort()
+            ->values();
+        
+        return view('audit.pelaporan.penutup-lha.select-nomor-surat-tugas', compact('nomorSuratTugasList', 'jenisAuditList'));
+    }
+
     public function index(Request $request)
     {
+        // Jika tidak ada nomor_surat_tugas, redirect ke halaman pemilihan
+        if (!$request->filled('nomor_surat_tugas')) {
+            return redirect()->route('audit.penutup-lha-rekomendasi.select-nomor-surat-tugas');
+        }
+        
+        $nomorSuratTugas = $request->get('nomor_surat_tugas');
         $isiLhaId = $request->get('pelaporan_isi_lha_id');
         
         // Get all data first with relationships
-        $query = PenutupLhaRekomendasi::with(['approvedBy', 'temuan.pelaporanHasilAudit']);
+        $query = PenutupLhaRekomendasi::with(['approvedBy', 'temuan.pelaporanHasilAudit.perencanaanAudit', 'picUsers.auditee']);
+        
+        // Filter berdasarkan nomor surat tugas
+        if ($nomorSuratTugas) {
+            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($nomorSuratTugas) {
+                $q->where('nomor_surat_tugas', $nomorSuratTugas);
+            });
+        }
         
         // Apply filters
         if ($isiLhaId) {
@@ -39,7 +113,14 @@ class PenutupLhaRekomendasiController extends Controller
         }
         
         $data = $query->get();
-        return view('audit.pelaporan.penutup-lha.index', compact('data', 'isiLhaId'));
+        
+        // Ambil info perencanaan audit untuk ditampilkan
+        $perencanaanAudit = null;
+        if ($nomorSuratTugas) {
+            $perencanaanAudit = \App\Models\Audit\PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas)->first();
+        }
+        
+        return view('audit.pelaporan.penutup-lha.index', compact('data', 'isiLhaId', 'nomorSuratTugas', 'perencanaanAudit'));
     }
 
     public function create(Request $request)
@@ -60,7 +141,15 @@ class PenutupLhaRekomendasiController extends Controller
                 ];
             });
         
-        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss'));
+        // Ambil user dengan role PIC Auditee
+        $picUsers = MasterUser::with(['akses', 'auditee'])
+            ->whereHas('akses', function($q) {
+                $q->where('nama_akses', 'PIC Auditee');
+            })
+            ->orderBy('nama')
+            ->get();
+        
+        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers'));
     }
 
     public function getIssData()
@@ -89,23 +178,58 @@ class PenutupLhaRekomendasiController extends Controller
             'rekomendasi' => 'required|string|max:5000',
             'rencana_aksi' => 'required|string|max:5000',
             'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_rekomendasi' => 'required|string|max:500',
+            'pic_rekomendasi_id' => 'required|array|min:1',
+            'pic_rekomendasi_id.*' => 'required|exists:master_user,id',
             'target_waktu' => 'required|date',
         ]);
         
+        // Ambil data user untuk format PIC Rekomendasi (gabungan)
+        $picUsers = MasterUser::with('auditee')->whereIn('id', $request->pic_rekomendasi_id)->get();
+        $picRekomendasiList = $picUsers->map(function($user) {
+            return $user->nama . ' - ' . ($user->auditee->divisi ?? '-');
+        })->toArray();
+        $picRekomendasi = implode(', ', $picRekomendasiList);
+        
         // Create record with pelaporan_temuan_id stored in pelaporan_isi_lha_id field for compatibility
         $data = $request->all();
+        $data['pic_rekomendasi'] = $picRekomendasi;
+        unset($data['pic_rekomendasi_id']); // Hapus pic_rekomendasi_id karena tidak ada di tabel
         
-        PenutupLhaRekomendasi::create($data);
-        return redirect()->route('audit.penutup-lha-rekomendasi.index')
+        $rekomendasi = PenutupLhaRekomendasi::create($data);
+        
+        // Attach PIC users to rekomendasi
+        $rekomendasi->picUsers()->attach($request->pic_rekomendasi_id);
+        
+        // Reload dengan relasi untuk mendapatkan nomor surat tugas
+        $rekomendasi->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
+        
+        // Ambil nomor surat tugas dari temuan
+        $nomorSuratTugas = null;
+        if ($rekomendasi->temuan && $rekomendasi->temuan->pelaporanHasilAudit && $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit) {
+            $nomorSuratTugas = $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
+        }
+        
+        return redirect()->route('audit.penutup-lha-rekomendasi.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', 'Rekomendasi penutup LHA/LHK berhasil ditambahkan!');
     }
 
     public function edit($id)
     {
-        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
-        // $isiLhaList = PelaporanIsiLha::all();
-        return view('audit.pelaporan.penutup-lha.edit', compact('item'));
+        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'picUsers.auditee'])->findOrFail($id);
+        
+        // Ambil user dengan role PIC Auditee
+        $picUsers = MasterUser::with(['akses', 'auditee'])
+            ->whereHas('akses', function($q) {
+                $q->where('nama_akses', 'PIC Auditee');
+            })
+            ->orderBy('nama')
+            ->get();
+        
+        // Ambil ID PIC yang sudah terpilih dari relasi
+        $selectedPicUserIds = $item->picUsers->pluck('id')->toArray();
+        $item->selected_pic_user_ids = $selectedPicUserIds;
+        
+        return view('audit.pelaporan.penutup-lha.edit', compact('item', 'picUsers'));
     }
 
     public function update(Request $request, $id)
@@ -116,20 +240,50 @@ class PenutupLhaRekomendasiController extends Controller
             'rekomendasi' => 'required|string|max:5000',
             'rencana_aksi' => 'required|string|max:5000',
             'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_rekomendasi' => 'required|string|max:500',
+            'pic_rekomendasi_id' => 'required|array|min:1',
+            'pic_rekomendasi_id.*' => 'required|exists:master_user,id',
             'target_waktu' => 'required|date',
         ]);
-        $item->update($request->all());
-        return redirect()->route('audit.penutup-lha-rekomendasi.index', ['pelaporan_isi_lha_id' => $item->pelaporan_isi_lha_id])
+        
+        // Ambil data user untuk format PIC Rekomendasi (gabungan)
+        $picUsers = MasterUser::with('auditee')->whereIn('id', $request->pic_rekomendasi_id)->get();
+        $picRekomendasiList = $picUsers->map(function($user) {
+            return $user->nama . ' - ' . ($user->auditee->divisi ?? '-');
+        })->toArray();
+        $picRekomendasi = implode(', ', $picRekomendasiList);
+        
+        $data = $request->all();
+        $data['pic_rekomendasi'] = $picRekomendasi;
+        unset($data['pic_rekomendasi_id']); // Hapus pic_rekomendasi_id karena tidak ada di tabel
+        
+        $item->update($data);
+        
+        // Sync PIC users to rekomendasi
+        $item->picUsers()->sync($request->pic_rekomendasi_id);
+        
+        // Ambil nomor surat tugas dari temuan
+        $nomorSuratTugas = null;
+        if ($item->temuan && $item->temuan->pelaporanHasilAudit && $item->temuan->pelaporanHasilAudit->perencanaanAudit) {
+            $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
+        }
+        
+        return redirect()->route('audit.penutup-lha-rekomendasi.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', 'Rekomendasi penutup LHA/LHK berhasil diupdate!');
     }
 
     public function destroy($id)
     {
-        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
-        $isiLhaId = $item->pelaporan_isi_lha_id;
+        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit.perencanaanAudit'])->findOrFail($id);
+        
+        // Ambil nomor surat tugas dari temuan sebelum delete
+        $nomorSuratTugas = null;
+        if ($item->temuan && $item->temuan->pelaporanHasilAudit && $item->temuan->pelaporanHasilAudit->perencanaanAudit) {
+            $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
+        }
+        
         $item->delete();
-        return redirect()->route('audit.penutup-lha-rekomendasi.index', ['pelaporan_isi_lha_id' => $isiLhaId])
+        
+        return redirect()->route('audit.penutup-lha-rekomendasi.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', 'Rekomendasi penutup LHA/LHK berhasil dihapus!');
     }
 

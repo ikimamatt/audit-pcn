@@ -8,6 +8,7 @@ use App\Models\ToeAudit;
 use App\Models\Audit\PerencanaanAudit;
 use App\Models\ToeEvaluasi;
 use App\Models\TodBpmAudit;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class ToeAuditController extends Controller
@@ -48,13 +49,28 @@ class ToeAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'judul_bpm' => 'required|string',
             'pengendalian_eksisting' => 'required|string',
+            'pemilihan_sampel_audit' => 'nullable|string',
+            'resiko' => 'nullable|string',
+            'kontrol' => 'nullable|string',
+            'file_kka_toe' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
             'hasil_evaluasi' => 'required|array|min:1',
             'hasil_evaluasi.*' => 'required|string',
         ]);
+
+        // Handle upload file KKA ToE
+        $fileKkaToePath = null;
+        if ($request->hasFile('file_kka_toe')) {
+            $fileKkaToePath = $request->file('file_kka_toe')->store('toe/kka-toe', 'public');
+        }
+
         $toe = ToeAudit::create([
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'pengendalian_eksisting' => $request->pengendalian_eksisting,
+            'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
+            'resiko' => $request->resiko,
+            'kontrol' => $request->kontrol,
+            'file_kka_toe' => $fileKkaToePath,
         ]);
         foreach ($request->hasil_evaluasi as $hasil) {
             ToeEvaluasi::create([
@@ -86,12 +102,30 @@ class ToeAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'judul_bpm' => 'required|string',
             'pengendalian_eksisting' => 'required|string',
+            'pemilihan_sampel_audit' => 'nullable|string',
+            'resiko' => 'nullable|string',
+            'kontrol' => 'nullable|string',
+            'file_kka_toe' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
         ]);
+        
         $data = [
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'pengendalian_eksisting' => $request->pengendalian_eksisting,
+            'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
+            'resiko' => $request->resiko,
+            'kontrol' => $request->kontrol,
         ];
+
+        // Handle upload file KKA ToE
+        if ($request->hasFile('file_kka_toe')) {
+            // Hapus file lama jika ada
+            if ($item->file_kka_toe && Storage::disk('public')->exists($item->file_kka_toe)) {
+                Storage::disk('public')->delete($item->file_kka_toe);
+            }
+            $data['file_kka_toe'] = $request->file('file_kka_toe')->store('toe/kka-toe', 'public');
+        }
+
         $item->update($data);
         return redirect()->route('audit.toe.index')->with('success', 'Data TOE berhasil diupdate!');
     }

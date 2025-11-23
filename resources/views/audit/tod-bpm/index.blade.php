@@ -42,7 +42,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <a href="{{ route('audit.tod-bpm.create') }}" class="btn btn-primary mb-3">Tambah BPM</a>
+                <a href="{{ route('audit.tod-bpm.create') }}" class="btn btn-primary mb-3">Tambah TOD</a>
                 <div class="table-responsive">
                     <table class="table table-bordered table-bordered dt-responsive nowrap" id="responsive-datatable">
                         <thead>
@@ -52,7 +52,10 @@
                                 <th>Tanggal Audit</th>
                                 <th>Judul BPM</th>
                                 <th>Nama BPO</th>
+                                <th>Resiko</th>
+                                <th>Kontrol</th>
                                 <th>File BPM</th>
+                                <th>File KKA ToD</th>
                                 <th>Status</th>
                                 <th>Alasan Penolakan</th>
                                 <th>Evaluasi</th>
@@ -75,11 +78,33 @@
                                 <td>{{ $item->judul_bpm }}</td>
                                 <td>{{ $item->nama_bpo }}</td>
                                 <td>
+                                    @if($item->resiko)
+                                        <span title="{{ $item->resiko }}">{{ Str::limit($item->resiko, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->kontrol)
+                                        <span title="{{ $item->kontrol }}">{{ Str::limit($item->kontrol, 50) }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if($item->file_bpm)
                                         <a href="{{ asset('storage/' . $item->file_bpm) }}" target="_blank" class="btn btn-sm btn-info">View</a>
                                         <a href="{{ asset('storage/' . $item->file_bpm) }}" download class="btn btn-sm btn-primary">Download</a>
                                     @else
-                                        -
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($item->file_kka_tod)
+                                        <a href="{{ asset('storage/' . $item->file_kka_tod) }}" target="_blank" class="btn btn-sm btn-info">View</a>
+                                        <a href="{{ asset('storage/' . $item->file_kka_tod) }}" download class="btn btn-sm btn-primary">Download</a>
+                                    @else
+                                        <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>

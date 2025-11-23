@@ -21,11 +21,11 @@
                     <form action="{{ route('audit.penutup-lha-rekomendasi.update', $item->id) }}" method="POST">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="pelaporan_isi_lha_id" value="{{ $item->pelaporan_isi_lha_id }}">
                         <div class="mb-3">
-                            <label for="pelaporan_isi_lha_id" class="form-label">Nomor ISS (LHA/LHK)</label>
-                            <input type="text" name="pelaporan_isi_lha_id" id="pelaporan_isi_lha_id" class="form-control" value="{{ $item->temuan->nomor_iss ?? $item->pelaporan_isi_lha_id }}" readonly>
+                            <label class="form-label">Nomor ISS (LHA/LHK)</label>
+                            <input type="text" class="form-control" value="{{ $item->temuan->nomor_iss ?? $item->pelaporan_isi_lha_id }}" readonly>
                             <div class="form-text">Field ini tidak dapat diubah setelah dibuat</div>
-                            @error('pelaporan_isi_lha_id')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         
                         <div class="mb-3" id="iss-details">
@@ -66,10 +66,39 @@
                             @error('eviden_rekomendasi')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="mb-3">
-                            <label for="pic_rekomendasi" class="form-label">PIC Rekomendasi</label>
-                            <input type="text" name="pic_rekomendasi" id="pic_rekomendasi" class="form-control" maxlength="500" value="{{ old('pic_rekomendasi', $item->pic_rekomendasi) }}" required>
-                            <div class="form-text">Tulis PIC rekomendasi, maksimal 500 karakter.</div>
-                            @error('pic_rekomendasi')<div class="text-danger small">{{ $message }}</div>@enderror
+                            <label for="pic_rekomendasi_id" class="form-label">PIC Rekomendasi</label>
+                            <div id="pic-list">
+                                @php 
+                                    // Gunakan selected_pic_user_ids jika ada, jika tidak gunakan array kosong untuk dropdown baru
+                                    $picList = old('pic_rekomendasi_id', $item->selected_pic_user_ids ?? []);
+                                    // Jika tidak ada selected, buat satu dropdown kosong
+                                    if (empty($picList)) {
+                                        $picList = [''];
+                                    }
+                                @endphp
+                                @foreach($picList as $i => $picId)
+                                <div class="input-group mb-2 pic-item">
+                                    <select name="pic_rekomendasi_id[]" class="form-select pic-select" required>
+                                        <option value="">Pilih PIC Rekomendasi</option>
+                                        @foreach($picUsers as $picUser)
+                                            <option value="{{ $picUser->id }}" 
+                                                data-nama="{{ $picUser->nama }}" 
+                                                data-divisi="{{ $picUser->auditee->divisi ?? '-' }}"
+                                                {{ (is_numeric($picId) && $picId == $picUser->id) || $picId == $picUser->id ? 'selected' : '' }}>
+                                                {{ $picUser->nama }} - {{ $picUser->auditee->divisi ?? '-' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-danger btn-remove-pic" @if($i==0 && count($picList) == 1) style="display:none" @endif>-</button>
+                                </div>
+                                @endforeach
+                            </div>
+                            <button type="button" class="btn btn-sm btn-info" id="btn-add-pic">Tambah PIC</button>
+                            <div class="form-text">
+                                Pilih PIC yang bertanggung jawab atas rekomendasi ini (hanya user dengan role PIC Auditee).
+                            </div>
+                            @error('pic_rekomendasi_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                            @error('pic_rekomendasi_id.*')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="mb-3">
                             <label for="target_waktu" class="form-label">Target Waktu Penyelesaian</label>
@@ -87,4 +116,57 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('script')
+<script>
+    // PIC dinamis
+    document.getElementById('btn-add-pic').onclick = function() {
+        var list = document.getElementById('pic-list');
+        var item = document.createElement('div');
+        item.className = 'input-group mb-2 pic-item';
+        
+        // Buat select dropdown dengan opsi PIC
+        var selectHtml = '<select name="pic_rekomendasi_id[]" class="form-select pic-select" required><option value="">Pilih PIC Rekomendasi</option>';
+        @foreach($picUsers as $picUser)
+            selectHtml += '<option value="{{ $picUser->id }}" data-nama="{{ $picUser->nama }}" data-divisi="{{ $picUser->auditee->divisi ?? "-" }}">{{ $picUser->nama }} - {{ $picUser->auditee->divisi ?? "-" }}</option>';
+        @endforeach
+        selectHtml += '</select>';
+        
+        item.innerHTML = selectHtml + ' <button type="button" class="btn btn-danger btn-remove-pic">-</button>';
+        list.appendChild(item);
+        
+        // Event handler untuk remove button
+        item.querySelector('.btn-remove-pic').onclick = function() { 
+            item.remove(); 
+            // Update visibility tombol remove untuk item pertama
+            updateRemovePicButtons();
+        };
+        
+        // Update visibility tombol remove
+        updateRemovePicButtons();
+    };
+    
+    // Update visibility tombol remove
+    function updateRemovePicButtons() {
+        var items = document.querySelectorAll('.pic-item');
+        items.forEach(function(item, index) {
+            var removeBtn = item.querySelector('.btn-remove-pic');
+            if (removeBtn) {
+                removeBtn.style.display = items.length > 1 ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // Event handler untuk remove button yang sudah ada
+    document.querySelectorAll('.btn-remove-pic').forEach(function(btn) {
+        btn.onclick = function() { 
+            btn.closest('.pic-item').remove(); 
+            updateRemovePicButtons();
+        };
+    });
+    
+    // Inisialisasi visibility tombol remove saat halaman dimuat
+    updateRemovePicButtons();
+</script>
 @endsection 
