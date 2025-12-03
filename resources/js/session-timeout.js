@@ -50,7 +50,7 @@ class SessionTimeoutHandler {
                     this.resetTimer();
                 }
             });
-        }
+        });
     }
     
     showWarning() {

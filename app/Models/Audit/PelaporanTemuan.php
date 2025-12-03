@@ -54,6 +54,11 @@ class PelaporanTemuan extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'approved_by');
     }
+
+    public function penutupLhaRekomendasi()
+    {
+        return $this->hasOne(\App\Models\PenutupLhaRekomendasi::class, 'pelaporan_isi_lha_id');
+    }
 }
 
 

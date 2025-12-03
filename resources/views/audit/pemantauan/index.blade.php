@@ -6,9 +6,27 @@
         <div class="card">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h4 class="card-title mb-0">PEMANTAUAN HASIL AUDIT</h4>
+                <a href="{{ route('audit.pemantauan.select-nomor-surat-tugas') }}" class="btn btn-secondary">
+                    <i class="mdi mdi-file-document-outline me-2"></i>Pilih Nomor Surat Tugas
+                </a>
             </div>
             <div class="card-body">
+                @if($nomorSuratTugas && $perencanaanAudit)
+                    <div class="alert alert-info mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Nomor Surat Tugas:</strong> {{ $nomorSuratTugas }}<br>
+                                <strong>Jenis Audit:</strong> {{ $perencanaanAudit->jenis_audit }}
+                            </div>
+                            <a href="{{ route('audit.pemantauan.select-nomor-surat-tugas') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="mdi mdi-refresh me-1"></i>Ganti Nomor Surat Tugas
+                            </a>
+                        </div>
+                    </div>
+                @endif
+                
                 <form method="GET" class="mb-3 d-flex align-items-center" action="">
+                    <input type="hidden" name="nomor_surat_tugas" value="{{ $nomorSuratTugas }}">
                     <label for="bulan" class="me-2 mb-0">Filter Bulan:</label>
                     <input type="month" name="bulan" id="bulan" class="form-control me-2" style="max-width:200px;" value="{{ request('bulan') }}">
                     <button type="submit" class="btn btn-primary">Tampilkan</button>
@@ -167,15 +185,7 @@
                                 </td>
                             </tr>
                             @empty
-                            <tr>
-                                <td colspan="12" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="mdi mdi-information-outline mdi-36px mb-3"></i>
-                                        <p class="mb-0">Belum ada data rekomendasi untuk ditampilkan.</p>
-                                        <small>Silakan buat rekomendasi terlebih dahulu di menu Penutup LHA/LHK.</small>
-                                    </div>
-                                </td>
-                            </tr>
+                                {{-- DataTables will show emptyTable message automatically --}}
                             @endforelse
                         </tbody>
                     </table>

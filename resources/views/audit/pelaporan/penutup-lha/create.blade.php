@@ -165,9 +165,11 @@ $(document).ready(function() {
     
     // Auto-refresh ISS data if needed
     function refreshIssData() {
+        const nomorSuratTugas = '{{ $nomorSuratTugas ?? "" }}';
         $.ajax({
             url: '{{ route("audit.penutup-lha-rekomendasi.get-iss-data") }}',
             type: 'GET',
+            data: nomorSuratTugas ? { nomor_surat_tugas: nomorSuratTugas } : {},
             success: function(response) {
                 const select = $('#pelaporan_isi_lha_id');
                 const currentValue = select.val();

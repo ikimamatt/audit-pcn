@@ -8,7 +8,13 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">Edit Rekomendasi (Pemantauan Hasil Audit)</h4>
-                        <a href="{{ route('audit.pemantauan.index') }}" class="btn btn-secondary">
+                        @php
+                            $nomorSuratTugas = null;
+                            if ($item->temuan && $item->temuan->pelaporanHasilAudit && $item->temuan->pelaporanHasilAudit->perencanaanAudit) {
+                                $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
+                            }
+                        @endphp
+                        <a href="{{ route('audit.pemantauan.index', $nomorSuratTugas ? ['nomor_surat_tugas' => $nomorSuratTugas] : []) }}" class="btn btn-secondary">
                             <i class="mdi mdi-arrow-left me-2"></i>Kembali
                         </a>
                     </div>

@@ -67,8 +67,8 @@ class ExitMeetingController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai', // Tanggal selesai harus setelah atau sama dengan tanggal mulai
-            'file_undangan' => 'nullable|file|mimes:pdf|max:2048',
-            'file_absensi' => 'nullable|file|mimes:pdf|max:2048',
+            'file_undangan' => 'required|file|mimes:pdf|max:5120', // 5MB = 5120 KB
+            'file_absensi' => 'required|file|mimes:pdf|max:5120', // 5MB = 5120 KB
         ]);
 
         $data = $request->all();

@@ -18,7 +18,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('audit.exit-meeting.store') }}" method="POST">
+                <form action="{{ route('audit.exit-meeting.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
                     <div class="row">
@@ -285,8 +285,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
-        // Check file size (5MB = 5 * 1024 * 1024 bytes)
-        const maxSize = 5 * 1024 * 1024;
+        // Check file size (5MB = 5 * 1024 * 1024 bytes = 5242880 bytes)
+        const maxSize = 5 * 1024 * 1024; // 5242880 bytes
         if (file.size > maxSize) {
             errorElement.textContent = 'Ukuran file maksimal 5MB';
             inputElement.classList.add('is-invalid');

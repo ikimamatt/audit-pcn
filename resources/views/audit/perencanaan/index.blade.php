@@ -57,7 +57,7 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $item->nomor_surat_tugas }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($item->tanggal_surat_tugas)->format('d/m/Y') }}</td>
+                                    <td>{{ $item->tanggal_surat_tugas ? \Carbon\Carbon::parse($item->tanggal_surat_tugas)->format('d/m/Y') : '-' }}</td>
                                     <td>{{ $item->jenis_audit }}</td>
                                     <td>{{ $item->auditee->divisi ?? '-' }}</td>
                                     <td>

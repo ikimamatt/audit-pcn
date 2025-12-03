@@ -120,9 +120,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="9" class="text-center">Tidak ada data realisasi audit yang sudah diapprove.</td>
-                                </tr>
+                                {{-- DataTables will show emptyTable message automatically --}}
                             @endforelse
                         </tbody>
                     </table>

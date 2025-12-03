@@ -126,11 +126,20 @@ class PenutupLhaRekomendasiController extends Controller
     public function create(Request $request)
     {
         $isiLhaId = $request->get('pelaporan_isi_lha_id');
+        $nomorSuratTugas = $request->get('nomor_surat_tugas');
         
         // Get approved ISS data from PelaporanTemuan
-        $approvedIss = PelaporanTemuan::where('status_approval', 'approved')
-            ->with(['pelaporanHasilAudit'])
-            ->get()
+        $query = PelaporanTemuan::where('status_approval', 'approved')
+            ->with(['pelaporanHasilAudit.perencanaanAudit']);
+        
+        // Filter berdasarkan nomor surat tugas jika ada
+        if ($nomorSuratTugas) {
+            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($nomorSuratTugas) {
+                $q->where('nomor_surat_tugas', $nomorSuratTugas);
+            });
+        }
+        
+        $approvedIss = $query->get()
             ->map(function($item) {
                 return [
                     'id' => $item->id,
@@ -149,15 +158,25 @@ class PenutupLhaRekomendasiController extends Controller
             ->orderBy('nama')
             ->get();
         
-        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers'));
+        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers', 'nomorSuratTugas'));
     }
 
-    public function getIssData()
+    public function getIssData(Request $request)
     {
+        $nomorSuratTugas = $request->get('nomor_surat_tugas');
+        
         // Get approved ISS data for dropdown
-        $approvedIss = PelaporanTemuan::where('status_approval', 'approved')
-            ->with(['pelaporanHasilAudit'])
-            ->get()
+        $query = PelaporanTemuan::where('status_approval', 'approved')
+            ->with(['pelaporanHasilAudit.perencanaanAudit']);
+        
+        // Filter berdasarkan nomor surat tugas jika ada
+        if ($nomorSuratTugas) {
+            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($nomorSuratTugas) {
+                $q->where('nomor_surat_tugas', $nomorSuratTugas);
+            });
+        }
+        
+        $approvedIss = $query->get()
             ->map(function($item) {
                 return [
                     'id' => $item->id,

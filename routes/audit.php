@@ -102,6 +102,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::get('monitoring-tindak-lanjut', [\App\Http\Controllers\Audit\MonitoringTindakLanjutController::class, 'index'])->name('monitoring-tindak-lanjut.index');
     
     // Pemantauan Hasil Audit
+    Route::get('pemantauan/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');
     Route::get('pemantauan', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'index'])->name('pemantauan.index');
     Route::get('pemantauan/{id}/edit', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'edit'])->name('pemantauan.edit');
     Route::put('pemantauan/{id}', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'update'])->name('pemantauan.update');

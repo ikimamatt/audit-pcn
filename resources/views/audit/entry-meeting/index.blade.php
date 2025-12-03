@@ -73,7 +73,7 @@
                                             -
                                         @endif
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
+                                    <td>{{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}</td>
                                     <td>
                                         @if($item->actual_meeting_date)
                                             {{ \Carbon\Carbon::parse($item->actual_meeting_date)->format('d/m/Y') }}
@@ -145,9 +145,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="10" class="text-center">Tidak ada data</td>
-                                </tr>
+                                {{-- DataTables will show emptyTable message automatically --}}
                             @endforelse
                         </tbody>
                     </table>

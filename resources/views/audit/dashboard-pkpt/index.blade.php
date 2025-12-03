@@ -220,9 +220,7 @@
                                     @endforeach
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="{{ 3 + count($months) }}" class="text-center">Tidak ada data Entry Meeting atau Exit Meeting.</td>
-                                </tr>
+                                {{-- DataTables will show emptyTable message automatically --}}
                             @endforelse
                         </tbody>
                     </table>

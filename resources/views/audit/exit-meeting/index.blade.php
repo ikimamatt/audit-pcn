@@ -141,8 +141,8 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($realisasiAudit->tanggal_mulai)->format('d M Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($realisasiAudit->tanggal_selesai)->format('d M Y') }}</td>
+                                    <td>{{ $realisasiAudit->tanggal_mulai ? \Carbon\Carbon::parse($realisasiAudit->tanggal_mulai)->format('d M Y') : '-' }}</td>
+                                    <td>{{ $realisasiAudit->tanggal_selesai ? \Carbon\Carbon::parse($realisasiAudit->tanggal_selesai)->format('d M Y') : '-' }}</td>
                                     <td>
                                         @php
                                             $statusClass = '';
@@ -249,9 +249,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="13" class="text-center">Tidak ada data exit meeting.</td>
-                                </tr>
+                                {{-- DataTables will show emptyTable message automatically --}}
                             @endforelse
                         </tbody>
                     </table>

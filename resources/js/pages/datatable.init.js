@@ -31,11 +31,26 @@ $(document).ready(function () {
 
     // Responsive Datatable
     console.log('Inisialisasi DataTables untuk #responsive-datatable dimulai');
-    $("#responsive-datatable").DataTable({
-        scrollX: true,
-        responsive: false
-    });
-    console.log('Inisialisasi DataTables untuk #responsive-datatable selesai');
+    if ($("#responsive-datatable").length) {
+        try {
+            var table = $("#responsive-datatable").DataTable({
+                scrollX: true,
+                responsive: false,
+                keys: false, // Disable keyTable to prevent errors with empty tables
+                language: {
+                    emptyTable: "Tidak ada data exit meeting."
+                }
+            });
+            
+            // Prevent keyTable from initializing on this table
+            if (table && table.keys) {
+                table.keys.disable();
+            }
+            console.log('Inisialisasi DataTables untuk #responsive-datatable selesai');
+        } catch (e) {
+            console.error('Error initializing DataTable:', e);
+        }
+    }
 
     // Multi Selection Datatable
     $('#selection-datatable').DataTable({
