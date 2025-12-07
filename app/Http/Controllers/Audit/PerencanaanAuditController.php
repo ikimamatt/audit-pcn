@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Audit\PerencanaanAudit;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterUser;
+use App\Models\MasterData\MasterJenisAudit;
 use Illuminate\Http\Request;
 
 class PerencanaanAuditController extends Controller
@@ -19,22 +20,21 @@ class PerencanaanAuditController extends Controller
     public function create()
     {
         $auditees = MasterAuditee::all();
+        $jenisAudits = MasterJenisAudit::all();
         // Ambil user dengan role "Auditor" dan "PIC Auditor" (atau "PIC Auditee" jika "PIC Auditor" tidak ada)
         $auditors = MasterUser::with('akses')->whereHas('akses', function($q) {
             $q->whereIn('nama_akses', ['Auditor', 'PIC Auditor', 'PIC Auditee']);
         })->orderBy('nama')->get();
         
-        // Generate nomor surat tugas otomatis
-        $nomorSuratTugas = $this->generateNomorSuratTugas();
-        
-        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'nomorSuratTugas'));
+        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'tanggal_surat_tugas' => 'required|date',
-            'jenis_audit' => 'required',
+            'nomor_surat_tugas' => 'required|string|max:255',
+            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
             'auditor' => 'nullable|array',
             'auditor.*' => 'nullable|exists:master_user,id',
             'auditee' => 'required|exists:master_auditee,id',
@@ -45,8 +45,8 @@ class PerencanaanAuditController extends Controller
             'periode_akhir' => 'required',
         ]);
         
-        // Generate nomor surat tugas otomatis berdasarkan jenis audit
-        $nomorSuratTugas = $this->generateNomorSuratTugas($request->jenis_audit);
+        // Gunakan nomor surat tugas dari input manual
+        $nomorSuratTugas = $request->nomor_surat_tugas;
         
         // Konversi ID auditor menjadi format nama + NIP
         $auditorData = [];
@@ -61,10 +61,14 @@ class PerencanaanAuditController extends Controller
             }
         }
         
+        // Ambil nama jenis audit dari master data
+        $jenisAudit = MasterJenisAudit::find($request->jenis_audit_id);
+        
         $perencanaan = PerencanaanAudit::create([
             'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
             'nomor_surat_tugas' => $nomorSuratTugas,
-            'jenis_audit' => $request->jenis_audit,
+            'jenis_audit_id' => $request->jenis_audit_id,
+            'jenis_audit' => $jenisAudit ? $jenisAudit->nama_jenis_audit : null, // Simpan juga untuk backward compatibility
             'auditor' => $auditorData,
             'auditee_id' => $request->auditee,
             'ruang_lingkup' => $request->ruang_lingkup,
@@ -120,10 +124,22 @@ class PerencanaanAuditController extends Controller
     {
         $item = PerencanaanAudit::findOrFail($id);
         
-        // Generate nomor surat tugas otomatis jika jenis audit berubah
-        $nomorSuratTugas = $item->jenis_audit !== $request->jenis_audit 
-            ? $this->generateNomorSuratTugas($request->jenis_audit)
-            : $item->nomor_surat_tugas;
+        $request->validate([
+            'tanggal_surat_tugas' => 'required|date',
+            'nomor_surat_tugas' => 'required|string|max:255',
+            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
+            'auditor' => 'nullable|array',
+            'auditor.*' => 'nullable|exists:master_user,id',
+            'auditee' => 'required|exists:master_auditee,id',
+            'ruang_lingkup' => 'required|array',
+            'tanggal_audit_mulai' => 'required|date',
+            'tanggal_audit_sampai' => 'required|date',
+            'periode_awal' => 'required',
+            'periode_akhir' => 'required',
+        ]);
+        
+        // Gunakan nomor surat tugas dari input manual
+        $nomorSuratTugas = $request->nomor_surat_tugas;
         
         // Konversi ID auditor menjadi format nama + NIP
         $auditorData = [];
@@ -138,10 +154,14 @@ class PerencanaanAuditController extends Controller
             }
         }
         
+        // Ambil nama jenis audit dari master data
+        $jenisAudit = MasterJenisAudit::find($request->jenis_audit_id);
+        
         $item->update([
             'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
             'nomor_surat_tugas' => $nomorSuratTugas,
-            'jenis_audit' => $request->jenis_audit,
+            'jenis_audit_id' => $request->jenis_audit_id,
+            'jenis_audit' => $jenisAudit ? $jenisAudit->nama_jenis_audit : null, // Simpan juga untuk backward compatibility
             'auditor' => $auditorData,
             'auditee_id' => $request->auditee,
             'ruang_lingkup' => $request->ruang_lingkup,

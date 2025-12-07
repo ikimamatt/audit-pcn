@@ -6,6 +6,7 @@ use App\Http\Controllers\MasterData\MasterKodeRiskController;
 use App\Http\Controllers\MasterData\MasterAuditeeController;
 use App\Http\Controllers\MasterData\MasterUserController;
 use App\Http\Controllers\MasterData\MasterAksesUserController;
+use App\Http\Controllers\MasterData\MasterJenisAuditController;
 
 // Master Data Routes
 Route::prefix('master')->name('master.')->group(function () {
@@ -31,4 +32,9 @@ Route::prefix('master')->name('master.')->group(function () {
     
     // Akses User
     Route::get('akses-user', [MasterAksesUserController::class, 'index'])->name('akses-user.index');
+    
+    // Jenis Audit
+    Route::resource('jenis-audit', MasterJenisAuditController::class)
+        ->names('jenis-audit')
+        ->parameters(['jenis-audit' => 'masterJenisAudit']);
 }); 
