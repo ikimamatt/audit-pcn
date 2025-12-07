@@ -5,21 +5,21 @@
         <!--- Sidemenu -->
         <div id="sidebar-menu">
 
-            <div class="logo-box" style="margin-bottom: 20px; margin-top: -40px;">
+            <div class="logo-box" style="margin-bottom: 20px;">
                 <a href="{{ route('any', 'index') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="150">
+                        <img src="/images/logo-pln.png" alt="" height="50">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="150">
+                        <img src="/images/logo-pln.png" alt="" height="50">
                     </span>
                 </a>
                 <a href="{{ route('any', 'index') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="150">
+                        <img src="/images/logo-pln.png" alt="" height="50">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="150">
+                        <img src="/images/logo-pln.png" alt="" height="50">
                     </span>
                 </a>
             </div>
@@ -302,6 +302,7 @@
                             <li><a class="tp-link" href="{{ route('second', ['tables', 'master_kode_risk']) }}">Master Kode Risk</a></li>
                             <li><a class="tp-link" href="{{ route('second', ['tables', 'master_auditee']) }}">Master Auditee</a></li>
                             <li><a class="tp-link" href="{{ route('second', ['tables', 'master_user']) }}">Master User</a></li>
+                            <li><a class="tp-link" href="{{ route('master.jenis-audit.index') }}">Master Jenis Audit</a></li>
                             <!-- <li><a class="tp-link" href="{{ route('second', ['tables', 'master_akses_user']) }}">Master Akses User</a></li> -->
                         </ul>
                     </div>

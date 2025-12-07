@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MasterAuditeeSeeder::class);
         $this->call(MasterAksesUserSeeder::class);
         $this->call(MasterUserSeeder::class);
+        $this->call(MasterJenisAuditSeeder::class);
 
         // Pastikan MasterAuditeeSeeder dijalankan sebelum PerencanaanAuditSeeder
         $this->call(PerencanaanAuditSeeder::class);

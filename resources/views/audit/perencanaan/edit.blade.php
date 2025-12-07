@@ -32,17 +32,18 @@
                         <input type="date" name="tanggal_surat_tugas" class="form-control" value="{{ old('tanggal_surat_tugas', $item->tanggal_surat_tugas) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Nomor Surat Tugas <small class="text-muted">(Otomatis)</small></label>
-                        <input type="text" name="nomor_surat_tugas" id="nomor_surat_tugas" class="form-control" value="{{ old('nomor_surat_tugas', $item->nomor_surat_tugas) }}" readonly>
-                        <small class="text-info">Nomor akan otomatis ter-generate berdasarkan jenis audit yang dipilih</small>
+                        <label class="form-label">Nomor Surat Tugas</label>
+                        <input type="text" name="nomor_surat_tugas" id="nomor_surat_tugas" class="form-control" value="{{ old('nomor_surat_tugas', $item->nomor_surat_tugas) }}" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Jenis Audit</label>
-                        <select name="jenis_audit" id="jenis_audit" class="form-select" required>
+                        <select name="jenis_audit_id" id="jenis_audit_id" class="form-select" required>
                             <option value="">Pilih Jenis Audit</option>
-                            <option value="Audit Operasional" {{ old('jenis_audit', $item->jenis_audit) == 'Audit Operasional' ? 'selected' : '' }}>Audit Operasional - SPI.01.02</option>
-                            <option value="Audit Khusus" {{ old('jenis_audit', $item->jenis_audit) == 'Audit Khusus' ? 'selected' : '' }}>Audit Khusus - SPI.01.03</option>
-                            <option value="Konsultasi" {{ old('jenis_audit', $item->jenis_audit) == 'Konsultasi' ? 'selected' : '' }}>Konsultasi - SPI.01.04</option>
+                            @foreach($jenisAudits as $jenisAudit)
+                                <option value="{{ $jenisAudit->id }}" {{ old('jenis_audit_id', $item->jenis_audit_id) == $jenisAudit->id ? 'selected' : '' }}>
+                                    {{ $jenisAudit->nama_jenis_audit }}@if($jenisAudit->kode) - {{ $jenisAudit->kode }}@endif
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
@@ -130,52 +131,6 @@
 
 @section('script')
 <script>
-    // Event listener untuk perubahan jenis audit
-    document.getElementById('jenis_audit').addEventListener('change', function() {
-        const jenisAudit = this.value;
-        if (jenisAudit) {
-            // Panggil API untuk mendapatkan nomor surat tugas otomatis
-            fetch(`{{ route('audit.perencanaan.get-nomor-surat-tugas') }}?jenis_audit=${encodeURIComponent(jenisAudit)}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('nomor_surat_tugas').value = data.nomor_surat_tugas;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Fallback ke generate lokal jika API gagal
-                    const nomorSuratTugas = generateNomorSuratTugas(jenisAudit);
-                    document.getElementById('nomor_surat_tugas').value = nomorSuratTugas;
-                });
-        }
-    });
-    
-    // Fungsi fallback untuk generate nomor surat tugas (jika API gagal)
-    function generateNomorSuratTugas(jenisAudit) {
-        const tahun = new Date().getFullYear();
-        let kodeJenis = '02'; // Default untuk audit operasional
-        
-        // Mapping jenis audit ke kode
-        switch (jenisAudit.toLowerCase()) {
-            case 'audit operasional':
-                kodeJenis = '02';
-                break;
-            case 'audit khusus':
-                kodeJenis = '03';
-                break;
-            case 'konsultasi':
-                kodeJenis = '04';
-                break;
-            default:
-                kodeJenis = '02';
-                break;
-        }
-        
-        // Untuk demo, kita gunakan nomor urut 001
-        const nomorUrut = '001';
-        
-        return `${nomorUrut}.STG/SPI.01.${kodeJenis}/SPI-PCN/${tahun}`;
-    }
-    
     // Ruang lingkup dinamis
     document.getElementById('btn-add-rl').onclick = function() {
         var list = document.getElementById('ruang-lingkup-list');

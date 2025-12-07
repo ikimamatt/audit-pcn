@@ -31,6 +31,7 @@
                                 <th>Surat Tugas</th>
                                 <th>No PKA</th>
                                 <th>Tanggal PKA</th>
+                                <th>Resiko</th>
                                 <th>Milestone</th>
                                 <th>Aksi</th>
                             </tr>
@@ -42,6 +43,17 @@
                                 <td>{{ $item->perencanaanAudit->nomor_surat_tugas ?? '-' }}</td>
                                 <td>{{ $item->no_pka }}</td>
                                 <td>{{ $item->tanggal_pka }}</td>
+                                <td>
+                                    @if($item->risks && $item->risks->count() > 0)
+                                        <ul class="mb-0 ps-3">
+                                        @foreach($item->risks as $risk)
+                                            <li>{{ $risk->deskripsi_resiko }}</li>
+                                        @endforeach
+                                        </ul>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <ul class="mb-0 ps-3">
                                     @foreach($item->milestones as $m)

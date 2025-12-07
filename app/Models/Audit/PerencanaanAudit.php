@@ -40,5 +40,9 @@ class PerencanaanAudit extends Model
         return $this->hasMany(WalkthroughAudit::class, 'perencanaan_audit_id');
     }
 
+    public function jenisAudit()
+    {
+        return $this->belongsTo(\App\Models\MasterData\MasterJenisAudit::class, 'jenis_audit_id');
+    }
 
 } 
