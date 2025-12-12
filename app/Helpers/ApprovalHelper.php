@@ -228,6 +228,10 @@ class ApprovalHelper
                     $tableName = $item->getTable();
                     $itemId = $item->getKey();
                     
+                    // Simpan status sebelumnya untuk menentukan pesan
+                    $previousStatus = $item->status_approval;
+                    $isRejectBerjenjang = ($previousStatus === 'rejected_level1');
+                    
                     // Check if level fields exist in database
                     $columns = DB::select("SHOW COLUMNS FROM `{$tableName}` LIKE 'rejected_by_level2'");
                     if (empty($columns)) {
@@ -252,6 +256,8 @@ class ApprovalHelper
                     Log::info('Updating reject level 2', [
                         'table' => $tableName,
                         'id' => $itemId,
+                        'previous_status' => $previousStatus,
+                        'is_berjenjang' => $isRejectBerjenjang,
                         'data' => $updateData
                     ]);
                     
@@ -285,7 +291,7 @@ class ApprovalHelper
                     ]);
                     
                     // Pesan berbeda untuk reject berjenjang vs reject langsung
-                    if ($item->status_approval === 'rejected_level1') {
+                    if ($isRejectBerjenjang) {
                         $message = 'Data berhasil ditolak di Level 2 (KSPI) setelah reject Level 1 dengan alasan: ' . $rejectionReason;
                     } else {
                         $message = 'Data berhasil ditolak di Level 2 (KSPI) dengan alasan: ' . $rejectionReason;
