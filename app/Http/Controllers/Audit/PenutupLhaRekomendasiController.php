@@ -314,30 +314,29 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function approval(Request $request, $id)
     {
-        $request->validate([
-            'action' => 'required|in:approve,reject'
-        ]);
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
-        if ($request->action === 'approve') {
-            $item->update([
-                'status_approval' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now()
-            ]);
-            $message = 'Rekomendasi berhasil diapprove!';
-        } else {
+        
+        // Validasi alasan penolakan jika reject
+        if ($request->action == 'reject') {
             $request->validate([
-                'alasan_reject' => 'required|string|max:1000'
+                'rejection_reason' => 'required|string|min:10',
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan harus diisi',
+                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
             ]);
-            $item->update([
-                'status_approval' => 'rejected',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-                'alasan_reject' => $request->alasan_reject
-            ]);
-            $message = 'Rekomendasi berhasil direject!';
         }
-        return redirect()->back()->with('success', $message);
+
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $item,
+            $request->action,
+            $request->rejection_reason ?? $request->alasan_reject ?? null
+        );
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
 
     // TINDAK LANJUT

@@ -101,7 +101,7 @@ class AuthHelper
         }
 
         // Jika tidak ada user ASMAN KSPI, KSPI bisa langsung approve dari pending
-        if (!self::hasAsmanKspiUser()) {
+        if (!self::hasAsmanKspiUsers()) {
             return $item->status_approval === 'pending';
         }
 
@@ -155,6 +155,33 @@ class AuthHelper
             ->count();
 
         return $asmanKspiCount > 0;
+    }
+
+    /**
+     * Check if there are any users with ASMAN KSPI access in the database
+     * Alias for hasAsmanKspiUser() for consistency
+     * 
+     * @return bool
+     */
+    public static function hasAsmanKspiUsers(): bool
+    {
+        // Cache the result to avoid multiple database queries in a single request
+        static $hasAsmanKspi = null;
+
+        if ($hasAsmanKspi === null) {
+            $asmanKspiAksesId = DB::table('master_akses_user')
+                                ->where('nama_akses', 'ASMAN KSPI')
+                                ->value('id');
+
+            if ($asmanKspiAksesId) {
+                $hasAsmanKspi = DB::table('master_user')
+                                ->where('master_akses_user_id', $asmanKspiAksesId)
+                                ->exists();
+            } else {
+                $hasAsmanKspi = false;
+            }
+        }
+        return $hasAsmanKspi;
     }
 
     /**

@@ -141,8 +141,10 @@
                                 <select name="status_approval" id="status_approval" class="form-select">
                                     <option value="">Semua Status</option>
                                     <option value="pending" {{ request('status_approval') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="approved" {{ request('status_approval') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                    <option value="rejected" {{ request('status_approval') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                    <option value="approved_level1" {{ request('status_approval') == 'approved_level1' ? 'selected' : '' }}>Approved Level 1</option>
+                                    <option value="approved" {{ request('status_approval') == 'approved' ? 'selected' : '' }}>Approved (Final)</option>
+                                    <option value="rejected_level1" {{ request('status_approval') == 'rejected_level1' ? 'selected' : '' }}>Rejected Level 1</option>
+                                    <option value="rejected" {{ request('status_approval') == 'rejected' ? 'selected' : '' }}>Rejected (Final)</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -213,13 +215,32 @@
                                 </td>
                                 <td>{{ $item->target_waktu }}</td>
                                 <td>
-                                    @if($item->status_approval == 'approved')
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif($item->status_approval == 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
-                                    @else
-                                        <span class="badge bg-warning">Pending</span>
-                                    @endif
+                                    @php
+                                        $statusApprovalClass = '';
+                                        $statusApprovalText = '';
+                                        switch($item->status_approval) {
+                                            case 'approved':
+                                                $statusApprovalClass = 'bg-success';
+                                                $statusApprovalText = 'Approved (Final)';
+                                                break;
+                                            case 'approved_level1':
+                                                $statusApprovalClass = 'bg-info';
+                                                $statusApprovalText = 'Approved Level 1';
+                                                break;
+                                            case 'rejected':
+                                                $statusApprovalClass = 'bg-danger';
+                                                $statusApprovalText = 'Rejected (Final)';
+                                                break;
+                                            case 'rejected_level1':
+                                                $statusApprovalClass = 'bg-warning';
+                                                $statusApprovalText = 'Rejected Level 1';
+                                                break;
+                                            default:
+                                                $statusApprovalClass = 'bg-secondary';
+                                                $statusApprovalText = 'Pending';
+                                        }
+                                    @endphp
+                                    <span class="badge {{ $statusApprovalClass }}">{{ $statusApprovalText }}</span>
                                 </td>
                                 <td>
                                     <div class="btn-group-vertical btn-group-sm" role="group">
@@ -237,21 +258,70 @@
                                             <i class="mdi mdi-pencil me-1"></i>Edit
                                         </a>
                                         
-                                        @if($item->status_approval == 'pending')
-                                            <button type="button" 
-                                                    class="btn btn-outline-success btn-sm mb-1 btn-custom" 
-                                                    title="Approve"
-                                                    onclick="approveData({{ $item->id }})">
-                                                <i class="mdi mdi-check me-1"></i>Approve
-                                            </button>
-                                            
-                                            <button type="button" 
-                                                    class="btn btn-outline-warning btn-sm mb-1 btn-custom" 
-                                                    title="Reject"
-                                                    onclick="rejectData({{ $item->id }})">
-                                                <i class="mdi mdi-close me-1"></i>Reject
-                                            </button>
-                                        @endif
+                                        @canApproveReject
+                                            @if($item->status_approval == 'pending')
+                                                {{-- Level 1: ASMAN KSPI can approve/reject --}}
+                                                @isAsmanKspi
+                                                    <form id="approval-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
+                                                            <i class="mdi mdi-check me-1"></i> Approve Level 1
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
+                                                            <i class="mdi mdi-close me-1"></i> Reject Level 1
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    </form>
+                                                @endisAsmanKspi
+                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
+                                                @isKspi
+                                                    @php
+                                                        $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
+                                                    @endphp
+                                                    <form id="approval-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        @if($hasAsmanKspi)
+                                                            <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
+                                                                <i class="mdi mdi-check me-1"></i> Approve Level 2
+                                                            </button>
+                                                        @else
+                                                            <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
+                                                                <i class="mdi mdi-check me-1"></i> Approve
+                                                            </button>
+                                                        @endif
+                                                        <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
+                                                            <i class="mdi mdi-close me-1"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @elseif($item->status_approval == 'approved_level1')
+                                                {{-- Level 2: KSPI can approve/reject after level 1 --}}
+                                                @isKspi
+                                                    <form id="approval-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
+                                                            <i class="mdi mdi-check me-1"></i> Approve Level 2
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
+                                                            <i class="mdi mdi-close me-1"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @elseif($item->status_approval == 'rejected_level1')
+                                                {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
+                                                @isKspi
+                                                    <form id="approval-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
+                                                            <i class="mdi mdi-close me-1"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @endif
+                                        @endcanApproveReject
                                         
                                         <button type="button" 
                                                 class="btn btn-outline-danger btn-sm btn-custom" 
@@ -316,17 +386,44 @@
                     <dd class="col-sm-8">{{ $item->target_waktu }}</dd>
                     <dt class="col-sm-4">Status Approval</dt>
                     <dd class="col-sm-8">
-                        @if($item->status_approval == 'approved')
-                            <span class="badge bg-success">Approved</span>
-                        @elseif($item->status_approval == 'rejected')
-                            <span class="badge bg-danger">Rejected</span>
-                        @else
-                            <span class="badge bg-warning">Pending</span>
-                        @endif
+                        @php
+                            $statusApprovalClass = '';
+                            $statusApprovalText = '';
+                            switch($item->status_approval) {
+                                case 'approved':
+                                    $statusApprovalClass = 'bg-success';
+                                    $statusApprovalText = 'Approved (Final)';
+                                    break;
+                                case 'approved_level1':
+                                    $statusApprovalClass = 'bg-info';
+                                    $statusApprovalText = 'Approved Level 1';
+                                    break;
+                                case 'rejected':
+                                    $statusApprovalClass = 'bg-danger';
+                                    $statusApprovalText = 'Rejected (Final)';
+                                    break;
+                                case 'rejected_level1':
+                                    $statusApprovalClass = 'bg-warning';
+                                    $statusApprovalText = 'Rejected Level 1';
+                                    break;
+                                default:
+                                    $statusApprovalClass = 'bg-secondary';
+                                    $statusApprovalText = 'Pending';
+                            }
+                        @endphp
+                        <span class="badge {{ $statusApprovalClass }}">{{ $statusApprovalText }}</span>
                     </dd>
-                    @if($item->status_approval == 'rejected' && $item->alasan_reject)
+                    @if(in_array($item->status_approval, ['rejected', 'rejected_level1']) && ($item->rejection_reason_level2 ?? $item->rejection_reason_level1 ?? $item->alasan_reject))
                         <dt class="col-sm-4">Alasan Reject</dt>
-                        <dd class="col-sm-8 text-danger">{{ $item->alasan_reject }}</dd>
+                        <dd class="col-sm-8 text-danger">
+                            @if($item->rejection_reason_level2)
+                                <strong>Level 2:</strong> {{ $item->rejection_reason_level2 }}
+                            @elseif($item->rejection_reason_level1)
+                                <strong>Level 1:</strong> {{ $item->rejection_reason_level1 }}
+                            @else
+                                {{ $item->alasan_reject }}
+                            @endif
+                        </dd>
                     @endif
                 </dl>
             </div>
@@ -379,20 +476,40 @@ function approveData(id) {
         cancelButtonText: 'Batal'
     }).then((result) => {
         if (result.isConfirmed) {
-            document.getElementById('approve-form-' + id).submit();
+            const form = document.getElementById('approval-form-' + id);
+            const actionInput = document.getElementById('action-' + id);
+            if (actionInput) {
+                actionInput.value = 'approve';
+            }
+            form.submit();
         }
+    });
+}
+
+function approveDataPending(id) {
+    Swal.fire({
+        title: 'Tidak Dapat Approve',
+        html: '<div class="text-start">' +
+              '<p><strong>Data belum diapprove oleh ASMAN KSPI!</strong></p>' +
+              '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN KSPI terlebih dahulu (Level 1).</p>' +
+              '<p class="text-muted">Status saat ini: <strong>Pending</strong></p>' +
+              '</div>',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Mengerti'
     });
 }
 
 function rejectData(id) {
     Swal.fire({
         title: 'Reject Rekomendasi',
-        text: 'Masukkan alasan reject:',
+        text: 'Masukkan alasan reject (minimal 10 karakter):',
         icon: 'warning',
         input: 'textarea',
         inputPlaceholder: 'Ketik alasan reject di sini...',
         inputAttributes: {
-            'aria-label': 'Alasan reject'
+            'aria-label': 'Alasan reject',
+            'minlength': 10
         },
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
@@ -403,16 +520,22 @@ function rejectData(id) {
             if (!value) {
                 return 'Alasan reject harus diisi!'
             }
+            if (value.length < 10) {
+                return 'Alasan reject minimal 10 karakter!'
+            }
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // Create form with alasan_reject
-            const form = document.getElementById('reject-form-' + id);
-            const alasanInput = document.createElement('input');
-            alasanInput.type = 'hidden';
-            alasanInput.name = 'alasan_reject';
-            alasanInput.value = result.value;
-            form.appendChild(alasanInput);
+            const form = document.getElementById('approval-form-' + id);
+            const actionInput = document.getElementById('action-' + id);
+            if (actionInput) {
+                actionInput.value = 'reject';
+            }
+            const rejectionInput = document.createElement('input');
+            rejectionInput.type = 'hidden';
+            rejectionInput.name = 'rejection_reason';
+            rejectionInput.value = result.value;
+            form.appendChild(rejectionInput);
             form.submit();
         }
     });
@@ -425,15 +548,5 @@ function rejectData(id) {
         @csrf
         @method('DELETE')
     </form>
-    @if($item->status_approval == 'pending')
-        <form id="approve-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" class="d-none">
-            @csrf
-            <input type="hidden" name="action" value="approve">
-        </form>
-        <form id="reject-form-{{ $item->id }}" action="{{ route('audit.penutup-lha-rekomendasi.approval', $item->id) }}" method="POST" class="d-none">
-            @csrf
-            <input type="hidden" name="action" value="reject">
-        </form>
-    @endif
 @endforeach
 @endsection 

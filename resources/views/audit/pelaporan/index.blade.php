@@ -365,7 +365,7 @@
                                                     {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
                                                     @isKspi
                                                         @php
-                                                            $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUser();
+                                                            $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
                                                         @endphp
                                                         <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
                                                             @csrf

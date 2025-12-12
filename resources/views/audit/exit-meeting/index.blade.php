@@ -265,10 +265,22 @@
                                                         <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
                                                     </form>
                                                 @endisAsmanKspi
-                                                {{-- Level 2: KSPI can reject from pending --}}
+                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
                                                 @isKspi
+                                                    @php
+                                                        $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
+                                                    @endphp
                                                     <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
+                                                        @if($hasAsmanKspi)
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveDataPending({{ $realisasiAudit->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
+                                                                <i class="mdi mdi-check"></i> Approve Level 2
+                                                            </button>
+                                                        @else
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
+                                                                <i class="mdi mdi-check"></i> Approve
+                                                            </button>
+                                                        @endif
                                                         <button type="button" class="btn btn-sm btn-danger" onclick="rejectData({{ $realisasiAudit->id }})">
                                                             <i class="mdi mdi-close"></i> Reject Level 2
                                                         </button>
@@ -360,6 +372,20 @@
                     document.getElementById('action-' + id).value = 'approve';
                     form.submit();
                 }
+            });
+        }
+
+        function approveDataPending(id) {
+            Swal.fire({
+                title: 'Tidak Dapat Approve',
+                html: '<div class="text-start">' +
+                      '<p><strong>Data belum diapprove oleh ASMAN KSPI!</strong></p>' +
+                      '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN KSPI terlebih dahulu (Level 1).</p>' +
+                      '<p class="text-muted">Status saat ini: <strong>Pending</strong></p>' +
+                      '</div>',
+                icon: 'warning',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Mengerti'
             });
         }
 

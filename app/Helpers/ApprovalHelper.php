@@ -28,6 +28,7 @@ class ApprovalHelper
         $user = Auth::user();
         $isAsmanKspi = AuthHelper::isAsmanKspi();
         $isKspi = AuthHelper::isKspi();
+        $hasAsmanKspiUsers = AuthHelper::hasAsmanKspiUsers(); // Check if ASMAN KSPI users exist
         
         // Log untuk debugging
         Log::info('Processing approval', [
@@ -37,6 +38,7 @@ class ApprovalHelper
             'current_status' => $item->status_approval,
             'isAsmanKspi' => $isAsmanKspi,
             'isKspi' => $isKspi,
+            'hasAsmanKspiUsers' => $hasAsmanKspiUsers,
             'user_id' => $user->id,
         ]);
 
@@ -85,59 +87,54 @@ class ApprovalHelper
             }
 
             // Level 2 Approval (KSPI)
-            // Jika tidak ada user ASMAN KSPI, KSPI bisa langsung approve dari pending
-            if ($isKspi && $item->status_approval === 'pending') {
-                if (AuthHelper::hasAsmanKspiUser()) {
-                    return [
-                        'success' => false,
-                        'message' => 'Data belum diapprove oleh ASMAN KSPI. Harap tunggu approval Level 1 terlebih dahulu!'
+            // KSPI can approve directly if no ASMAN KSPI users exist AND status is pending
+            if ($isKspi && $item->status_approval === 'pending' && !$hasAsmanKspiUsers) {
+                try {
+                    $tableName = $item->getTable();
+                    $itemId = $item->getKey();
+                    
+                    $updateData = [
+                        'status_approval' => 'approved',
+                        'approved_by_level1' => $user->id, // KSPI acts as Level 1
+                        'approved_at_level1' => now(),
+                        'approved_by_level2' => $user->id, // KSPI acts as Level 2
+                        'approved_at_level2' => now(),
+                        'approved_by' => $user->id, // backward compatibility
+                        'approved_at' => now(), // backward compatibility
                     ];
-                } else {
-                    // Tidak ada ASMAN KSPI, KSPI bisa langsung approve final
-                    try {
-                        $tableName = $item->getTable();
-                        $itemId = $item->getKey();
-                        
-                        $updateData = [
-                            'status_approval' => 'approved',
-                            'approved_by_level2' => $user->id,
-                            'approved_at_level2' => now(),
-                            'approved_by' => $user->id, // backward compatibility
-                            'approved_at' => now(), // backward compatibility
-                        ];
-                        
-                        $updated = DB::table($tableName)
-                            ->where('id', $itemId)
-                            ->update($updateData);
-                        
-                        if ($updated === false || $updated === 0) {
-                            Log::error('Failed to update approve level 2 (no ASMAN KSPI)', [
-                                'table' => $tableName,
-                                'id' => $itemId,
-                                'data' => $updateData
-                            ]);
-                            return [
-                                'success' => false,
-                                'message' => 'Gagal mengupdate status! Silakan coba lagi.'
-                            ];
-                        }
-                        
-                        $item->refresh();
-                        
-                        return [
-                            'success' => true,
-                            'message' => 'Data berhasil diapprove (KSPI) - Tidak ada ASMAN KSPI!'
-                        ];
-                    } catch (\Exception $e) {
-                        Log::error('Error approving at level 2 (no ASMAN KSPI): ' . $e->getMessage());
+                    
+                    $updated = DB::table($tableName)
+                        ->where('id', $itemId)
+                        ->update($updateData);
+                    
+                    if ($updated === false || $updated === 0) {
+                        Log::error('Failed to update direct approve by KSPI', [
+                            'table' => $tableName,
+                            'id' => $itemId,
+                            'data' => $updateData
+                        ]);
                         return [
                             'success' => false,
-                            'message' => 'Terjadi kesalahan saat approve data: ' . $e->getMessage()
+                            'message' => 'Gagal mengupdate status! Silakan coba lagi.'
                         ];
                     }
+                    
+                    $item->refresh();
+                    
+                    return [
+                        'success' => true,
+                        'message' => 'Data berhasil diapprove langsung oleh KSPI (Tidak ada ASMAN KSPI)!'
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error direct approving by KSPI: ' . $e->getMessage());
+                    return [
+                        'success' => false,
+                        'message' => 'Terjadi kesalahan saat approve data: ' . $e->getMessage()
+                    ];
                 }
             }
             
+            // KSPI can approve only if status is approved_level1
             if ($isKspi && $item->status_approval === 'approved_level1') {
                 try {
                     $tableName = $item->getTable();
