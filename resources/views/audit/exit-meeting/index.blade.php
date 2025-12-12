@@ -174,11 +174,19 @@
                                             switch($realisasiAudit->status_approval) {
                                                 case 'approved':
                                                     $statusApprovalClass = 'bg-success';
-                                                    $statusApprovalText = 'Approved';
+                                                    $statusApprovalText = 'Approved (Final)';
+                                                    break;
+                                                case 'approved_level1':
+                                                    $statusApprovalClass = 'bg-info';
+                                                    $statusApprovalText = 'Approved Level 1';
                                                     break;
                                                 case 'rejected':
                                                     $statusApprovalClass = 'bg-danger';
-                                                    $statusApprovalText = 'Rejected';
+                                                    $statusApprovalText = 'Rejected (Final)';
+                                                    break;
+                                                case 'rejected_level1':
+                                                    $statusApprovalClass = 'bg-warning';
+                                                    $statusApprovalText = 'Rejected Level 1';
                                                     break;
                                                 case 'pending':
                                                     $statusApprovalClass = 'bg-warning';
@@ -192,8 +200,16 @@
                                         <span class="badge {{ $statusApprovalClass }}">{{ $statusApprovalText }}</span>
                                     </td>
                                     <td>
-                                        @if($realisasiAudit->alasan_penolakan)
-                                            <span class="badge bg-danger">{{ $realisasiAudit->alasan_penolakan }}</span>
+                                        @if($realisasiAudit->status_approval == 'rejected' && $realisasiAudit->rejection_reason_level2)
+                                            <span class="text-danger" title="{{ $realisasiAudit->rejection_reason_level2 }}">
+                                                Level 2: {{ Str::limit($realisasiAudit->rejection_reason_level2, 30) }}
+                                            </span>
+                                        @elseif($realisasiAudit->status_approval == 'rejected_level1' && $realisasiAudit->rejection_reason_level1)
+                                            <span class="text-danger" title="{{ $realisasiAudit->rejection_reason_level1 }}">
+                                                Level 1: {{ Str::limit($realisasiAudit->rejection_reason_level1, 30) }}
+                                            </span>
+                                        @elseif($realisasiAudit->alasan_penolakan)
+                                            <span class="badge bg-danger">{{ Str::limit($realisasiAudit->alasan_penolakan, 30) }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
@@ -234,18 +250,58 @@
                                                 <i class="mdi mdi-delete"></i> Hapus
                                             </button>
                                         </form>
-                                        @if($realisasiAudit->status_approval == 'pending' || !$realisasiAudit->status_approval)
-                                        <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
-                                            @csrf
-                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})">
-                                                <i class="mdi mdi-check"></i> Approve
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-secondary" onclick="rejectData({{ $realisasiAudit->id }})">
-                                                <i class="mdi mdi-close"></i> Reject
-                                            </button>
-                                            <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
-                                        </form>
-                                        @endif
+                                        @canApproveReject
+                                            @if($realisasiAudit->status_approval == 'pending' || !$realisasiAudit->status_approval)
+                                                {{-- Level 1: ASMAN KSPI can approve/reject --}}
+                                                @isAsmanKspi
+                                                    <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-check"></i> Approve Level 1
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" onclick="rejectData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-close"></i> Reject Level 1
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
+                                                    </form>
+                                                @endisAsmanKspi
+                                                {{-- Level 2: KSPI can reject from pending --}}
+                                                @isKspi
+                                                    <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="rejectData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-close"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @elseif($realisasiAudit->status_approval == 'approved_level1')
+                                                {{-- Level 2: KSPI can approve/reject after level 1 --}}
+                                                @isKspi
+                                                    <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-check"></i> Approve Level 2
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" onclick="rejectData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-close"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @elseif($realisasiAudit->status_approval == 'rejected_level1')
+                                                {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
+                                                @isKspi
+                                                    <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="rejectData({{ $realisasiAudit->id }})">
+                                                            <i class="mdi mdi-close"></i> Reject Level 2
+                                                        </button>
+                                                        <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
+                                                    </form>
+                                                @endisKspi
+                                            @endif
+                                        @endcanApproveReject
                                     </td>
                                 </tr>
                             @empty

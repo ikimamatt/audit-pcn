@@ -209,43 +209,43 @@ class ExitMeetingController extends Controller
     {
         $item = RealisasiAudit::findOrFail($id);
         
-        if ($request->action == 'approve') {
-            $item->status_approval = 'approved';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-            
-            // Auto update status menjadi 'selesai' ketika diapprove
-            $item->status = 'selesai';
-            
-            // Jika belum ada tanggal selesai, set tanggal selesai = tanggal sekarang
-            if (!$item->tanggal_selesai) {
-                $item->tanggal_selesai = now()->toDateString();
-            }
-            
-            $item->save();
-            return redirect()->back()->with('success', 'Exit Meeting berhasil diapprove dan status diubah menjadi Selesai!');
-        } elseif ($request->action == 'reject') {
-            // Validasi alasan penolakan
+        // Validasi alasan penolakan jika reject
+        if ($request->action == 'reject') {
             $request->validate([
                 'rejection_reason' => 'required|string|min:10',
             ], [
                 'rejection_reason.required' => 'Alasan penolakan harus diisi',
                 'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
             ]);
-
-            $item->status_approval = 'rejected';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-            $item->rejection_reason = $request->rejection_reason;
-            
-            // Ketika di-reject, status tetap sesuai kondisi tanggal
-            $this->updateStatusBasedOnDates($item);
-            
-            $item->save();
-            return redirect()->back()->with('success', 'Exit Meeting berhasil ditolak dengan alasan: ' . $request->rejection_reason);
         }
 
-        return redirect()->back()->with('error', 'Aksi tidak valid!');
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $item,
+            $request->action,
+            $request->rejection_reason ?? null
+        );
+
+        if ($result['success']) {
+            // Jika approve final (level 2), update status menjadi 'selesai'
+            if ($request->action == 'approve' && $item->status_approval === 'approved') {
+                $item->status = 'selesai';
+                if (!$item->tanggal_selesai) {
+                    $item->tanggal_selesai = now()->toDateString();
+                }
+                $item->save();
+                return redirect()->back()->with('success', $result['message'] . ' Status diubah menjadi Selesai!');
+            }
+            
+            // Jika reject, update status berdasarkan tanggal
+            if ($request->action == 'reject') {
+                $this->updateStatusBasedOnDates($item);
+                $item->save();
+            }
+            
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
     
     /**

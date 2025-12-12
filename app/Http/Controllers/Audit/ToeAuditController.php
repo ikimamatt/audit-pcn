@@ -141,29 +141,26 @@ class ToeAuditController extends Controller
     {
         $item = ToeAudit::findOrFail($id);
         
-        if ($request->action == 'approve') {
-            $item->status_approval = 'approved';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-            $item->save();
-            return redirect()->back()->with('success', 'TOE berhasil diapprove!');
-        } elseif ($request->action == 'reject') {
-            // Validasi alasan penolakan
+        // Validasi alasan penolakan jika reject
+        if ($request->action == 'reject') {
             $request->validate([
                 'rejection_reason' => 'required|string|min:10',
             ], [
                 'rejection_reason.required' => 'Alasan penolakan harus diisi',
                 'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
             ]);
-
-            $item->status_approval = 'rejected';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-            $item->rejection_reason = $request->rejection_reason;
-            $item->save();
-            return redirect()->back()->with('success', 'TOE berhasil ditolak dengan alasan: ' . $request->rejection_reason);
         }
 
-        return redirect()->back()->with('error', 'Aksi tidak valid!');
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $item,
+            $request->action,
+            $request->rejection_reason ?? null
+        );
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
 } 

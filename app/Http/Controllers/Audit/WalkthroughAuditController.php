@@ -178,33 +178,27 @@ class WalkthroughAuditController extends Controller
     public function approval(Request $request, $id)
     {
         $item = WalkthroughAudit::findOrFail($id);
-        $action = $request->input('action');
-
-        if ($action === 'approve') {
-            $item->update([
-                'status_approval' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-            ]);
-            return redirect()->route('audit.walkthrough.index')->with('success', 'Walkthrough berhasil diapprove!');
-        } elseif ($action === 'reject') {
-            // Validasi alasan penolakan
+        
+        // Validasi alasan penolakan jika reject
+        if ($request->input('action') === 'reject') {
             $request->validate([
                 'rejection_reason' => 'required|string|min:10',
             ], [
                 'rejection_reason.required' => 'Alasan penolakan harus diisi',
                 'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
             ]);
-
-            $item->update([
-                'status_approval' => 'rejected',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-                'rejection_reason' => $request->rejection_reason,
-            ]);
-            return redirect()->route('audit.walkthrough.index')->with('success', 'Walkthrough berhasil ditolak dengan alasan: ' . $request->rejection_reason);
         }
 
-        return redirect()->route('audit.walkthrough.index')->with('error', 'Aksi tidak valid!');
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $item,
+            $request->input('action'),
+            $request->rejection_reason ?? null
+        );
+
+        if ($result['success']) {
+            return redirect()->route('audit.walkthrough.index')->with('success', $result['message']);
+        }
+
+        return redirect()->route('audit.walkthrough.index')->with('error', $result['message']);
     }
 }

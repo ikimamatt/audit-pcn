@@ -1,48 +1,5 @@
 <?php
 
-// namespace Database\Seeders;
-
-// use Illuminate\Database\Seeder;
-// use Illuminate\Support\Facades\DB;
-
-// class MasterUserSeeder extends Seeder
-// {
-//     public function run(): void
-//     {
-//         DB::table('master_user')->insert([
-//             [
-//                 'nama' => 'Ical KSPI',
-//                 'nip' => '11111111',
-//                 'master_akses_user_id' => 1,
-//                 'created_at' => now(),
-//                 'updated_at' => now(),
-//             ],
-//             [
-//                 'nama' => 'Budi Auditor',
-//                 'nip' => '22222222',
-//                 'master_akses_user_id' => 2,
-//                 'created_at' => now(),
-//                 'updated_at' => now(),
-//             ],
-//             [
-//                 'nama' => 'Sari PIC Auditee',
-//                 'nip' => '33333333',
-//                 'master_akses_user_id' => 3,
-//                 'created_at' => now(),
-//                 'updated_at' => now(),
-//             ],
-//             [
-//                 'nama' => 'Dewi BOD',
-//                 'nip' => '44444444',
-//                 'master_akses_user_id' => 4,
-//                 'created_at' => now(),
-//                 'updated_at' => now(),
-//             ],
-//         ]);
-//     }
-// } 
-
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -119,6 +76,141 @@ class MasterUserSeeder extends Seeder
                 'nip' => $user['nip'],
                 'password' => Hash::make('PCNJAYA123'),
                 'master_auditee_id' => $divisiMap[$divisiKey],
+            ]);
+        }
+
+        // 5 Divisi yang dipilih untuk user PIC Auditee, Manager, dan Assistant Manager
+        $selectedDivisi = [
+            'Divisi Operasi',
+            'Divisi Renus',
+            'SETPER',
+            'DIVISI Keuangan',
+            'Divisi HC & Adm',
+        ];
+
+        // Ambil akses ID
+        $picAuditeeAkses = DB::table('master_akses_user')->where('nama_akses', 'PIC Auditee')->first();
+        $managerAkses = DB::table('master_akses_user')->where('nama_akses', 'Manager')->first();
+        $assistantManagerAkses = DB::table('master_akses_user')->where('nama_akses', 'Assistant Manager')->first();
+        
+        if (!$picAuditeeAkses) {
+            echo "Akses 'PIC Auditee' tidak ditemukan!" . PHP_EOL;
+        }
+        if (!$managerAkses) {
+            echo "Akses 'Manager' tidak ditemukan!" . PHP_EOL;
+        }
+        if (!$assistantManagerAkses) {
+            echo "Akses 'Assistant Manager' tidak ditemukan!" . PHP_EOL;
+        }
+
+        // Tambahkan 5 user dengan akses PIC Auditee (masing-masing ke 5 divisi yang berbeda)
+        $picAuditeeUsers = [
+            ['divisi' => 'Divisi Operasi', 'nama' => 'PIC Auditee Operasi', 'user' => 'PIC_OPS_01', 'nip' => '9001001OPS'],
+            ['divisi' => 'Divisi Renus', 'nama' => 'PIC Auditee Renus', 'user' => 'PIC_REN_01', 'nip' => '9002001REN'],
+            ['divisi' => 'SETPER', 'nama' => 'PIC Auditee SETPER', 'user' => 'PIC_SET_01', 'nip' => '9003001SET'],
+            ['divisi' => 'DIVISI Keuangan', 'nama' => 'PIC Auditee Keuangan', 'user' => 'PIC_KEU_01', 'nip' => '9004001KEU'],
+            ['divisi' => 'Divisi HC & Adm', 'nama' => 'PIC Auditee HC', 'user' => 'PIC_HC_01', 'nip' => '9005001HC'],
+        ];
+
+        foreach ($picAuditeeUsers as $picUser) {
+            $divisiKey = strtolower(trim($picUser['divisi']));
+            if (!isset($divisiMap[$divisiKey])) {
+                echo "Divisi tidak ditemukan: " . $picUser['divisi'] . PHP_EOL;
+                continue;
+            }
+            
+            // Check if user already exists
+            $existingUser = DB::table('master_user')->where('username', $picUser['user'])->first();
+            if ($existingUser) {
+                echo "User sudah ada: " . $picUser['user'] . PHP_EOL;
+                continue;
+            }
+            
+            if (!$picAuditeeAkses) {
+                continue;
+            }
+            
+            DB::table('master_user')->insert([
+                'nama' => $picUser['nama'],
+                'username' => $picUser['user'],
+                'nip' => $picUser['nip'],
+                'password' => Hash::make('PCNJAYA123'),
+                'master_auditee_id' => $divisiMap[$divisiKey],
+                'master_akses_user_id' => $picAuditeeAkses->id,
+            ]);
+        }
+
+        // Tambahkan 5 user dengan akses Manager (masing-masing ke 5 divisi yang sama)
+        $managerUsers = [
+            ['divisi' => 'Divisi Operasi', 'nama' => 'Manager Operasi', 'user' => 'MAN_OPS_01', 'nip' => '9101001MGR'],
+            ['divisi' => 'Divisi Renus', 'nama' => 'Manager Renus', 'user' => 'MAN_REN_01', 'nip' => '9102001MGR'],
+            ['divisi' => 'SETPER', 'nama' => 'Manager SETPER', 'user' => 'MAN_SET_01', 'nip' => '9103001MGR'],
+            ['divisi' => 'DIVISI Keuangan', 'nama' => 'Manager Keuangan', 'user' => 'MAN_KEU_01', 'nip' => '9104001MGR'],
+            ['divisi' => 'Divisi HC & Adm', 'nama' => 'Manager HC', 'user' => 'MAN_HC_01', 'nip' => '9105001MGR'],
+        ];
+
+        foreach ($managerUsers as $mgrUser) {
+            $divisiKey = strtolower(trim($mgrUser['divisi']));
+            if (!isset($divisiMap[$divisiKey])) {
+                echo "Divisi tidak ditemukan: " . $mgrUser['divisi'] . PHP_EOL;
+                continue;
+            }
+            
+            // Check if user already exists
+            $existingUser = DB::table('master_user')->where('username', $mgrUser['user'])->first();
+            if ($existingUser) {
+                echo "User sudah ada: " . $mgrUser['user'] . PHP_EOL;
+                continue;
+            }
+            
+            if (!$managerAkses) {
+                continue;
+            }
+            
+            DB::table('master_user')->insert([
+                'nama' => $mgrUser['nama'],
+                'username' => $mgrUser['user'],
+                'nip' => $mgrUser['nip'],
+                'password' => Hash::make('PCNJAYA123'),
+                'master_auditee_id' => $divisiMap[$divisiKey],
+                'master_akses_user_id' => $managerAkses->id,
+            ]);
+        }
+
+        // Tambahkan 5 user dengan akses Assistant Manager (masing-masing ke 5 divisi yang sama)
+        $assistantManagerUsers = [
+            ['divisi' => 'Divisi Operasi', 'nama' => 'Assistant Manager Operasi', 'user' => 'ASMAN_OPS_01', 'nip' => '9201001ASM'],
+            ['divisi' => 'Divisi Renus', 'nama' => 'Assistant Manager Renus', 'user' => 'ASMAN_REN_01', 'nip' => '9202001ASM'],
+            ['divisi' => 'SETPER', 'nama' => 'Assistant Manager SETPER', 'user' => 'ASMAN_SET_01', 'nip' => '9203001ASM'],
+            ['divisi' => 'DIVISI Keuangan', 'nama' => 'Assistant Manager Keuangan', 'user' => 'ASMAN_KEU_01', 'nip' => '9204001ASM'],
+            ['divisi' => 'Divisi HC & Adm', 'nama' => 'Assistant Manager HC', 'user' => 'ASMAN_HC_01', 'nip' => '9205001ASM'],
+        ];
+
+        foreach ($assistantManagerUsers as $asmUser) {
+            $divisiKey = strtolower(trim($asmUser['divisi']));
+            if (!isset($divisiMap[$divisiKey])) {
+                echo "Divisi tidak ditemukan: " . $asmUser['divisi'] . PHP_EOL;
+                continue;
+            }
+            
+            // Check if user already exists
+            $existingUser = DB::table('master_user')->where('username', $asmUser['user'])->first();
+            if ($existingUser) {
+                echo "User sudah ada: " . $asmUser['user'] . PHP_EOL;
+                continue;
+            }
+            
+            if (!$assistantManagerAkses) {
+                continue;
+            }
+            
+            DB::table('master_user')->insert([
+                'nama' => $asmUser['nama'],
+                'username' => $asmUser['user'],
+                'nip' => $asmUser['nip'],
+                'password' => Hash::make('PCNJAYA123'),
+                'master_auditee_id' => $divisiMap[$divisiKey],
+                'master_akses_user_id' => $assistantManagerAkses->id,
             ]);
         }
     }

@@ -9,11 +9,21 @@ class MasterAksesUserSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('master_akses_user')->insert([
-            ['nama_akses' => 'KSPI'],
-            ['nama_akses' => 'Auditor'],
-            ['nama_akses' => 'PIC Auditee'],
-            ['nama_akses' => 'BOD'],
-        ]);
+        $aksesList = [
+            'KSPI',
+            'Auditor',
+            'PIC Auditee',
+            'BOD',
+            'ASMAN KSPI',
+            'Manager',
+            'Assistant Manager',
+        ];
+
+        foreach ($aksesList as $akses) {
+            DB::table('master_akses_user')->updateOrInsert(
+                ['nama_akses' => $akses],
+                ['nama_akses' => $akses]
+            );
+        }
     }
 } 

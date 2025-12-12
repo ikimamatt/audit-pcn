@@ -96,15 +96,27 @@
                                 </td>
                                 <td>
                                     @if($item->status_approval == 'approved')
-                                        <span class="badge bg-success">Approved</span>
+                                        <span class="badge bg-success">Approved (Final)</span>
+                                    @elseif($item->status_approval == 'approved_level1')
+                                        <span class="badge bg-info">Approved Level 1</span>
                                     @elseif($item->status_approval == 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
+                                        <span class="badge bg-danger">Rejected (Final)</span>
+                                    @elseif($item->status_approval == 'rejected_level1')
+                                        <span class="badge bg-warning">Rejected Level 1</span>
                                     @else
                                         <span class="badge bg-warning">Pending</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($item->status_approval == 'rejected' && $item->rejection_reason)
+                                    @if($item->status_approval == 'rejected' && $item->rejection_reason_level2)
+                                        <span class="text-danger" title="{{ $item->rejection_reason_level2 }}">
+                                            Level 2: {{ Str::limit($item->rejection_reason_level2, 30) }}
+                                        </span>
+                                    @elseif($item->status_approval == 'rejected_level1' && $item->rejection_reason_level1)
+                                        <span class="text-danger" title="{{ $item->rejection_reason_level1 }}">
+                                            Level 1: {{ Str::limit($item->rejection_reason_level1, 30) }}
+                                        </span>
+                                    @elseif($item->status_approval == 'rejected' && $item->rejection_reason)
                                         <span class="text-danger" title="{{ $item->rejection_reason }}">
                                             {{ Str::limit($item->rejection_reason, 30) }}
                                         </span>
@@ -122,18 +134,58 @@
                                             <i class="mdi mdi-delete"></i> Hapus
                                         </button>
                                     </form>
-                                    @if($item->status_approval == 'pending')
-                                    <form action="{{ route('audit.walkthrough.approval', $item->id) }}" method="POST" style="display:inline-block" id="approval-form-{{ $item->id }}">
-                                        @csrf
-                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                        <button type="button" class="btn btn-success btn-sm btn-approve-swal" data-id="{{ $item->id }}">
-                                            <i class="mdi mdi-check"></i> Approve
-                                        </button>
-                                        <button type="button" class="btn btn-secondary btn-sm btn-reject-swal" data-id="{{ $item->id }}">
-                                            <i class="mdi mdi-close"></i> Reject
-                                        </button>
-                                    </form>
-                                    @endif
+                                    @canApproveReject
+                                        @if($item->status_approval == 'pending')
+                                            {{-- Level 1: ASMAN KSPI can approve/reject --}}
+                                            @isAsmanKspi
+                                                <form action="{{ route('audit.walkthrough.approval', $item->id) }}" method="POST" style="display:inline-block" id="approval-form-{{ $item->id }}">
+                                                    @csrf
+                                                    <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    <button type="button" class="btn btn-success btn-sm btn-approve-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-check"></i> Approve Level 1
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary btn-sm btn-reject-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-close"></i> Reject Level 1
+                                                    </button>
+                                                </form>
+                                            @endisAsmanKspi
+                                            {{-- Level 2: KSPI can reject from pending --}}
+                                            @isKspi
+                                                <form action="{{ route('audit.walkthrough.approval', $item->id) }}" method="POST" style="display:inline-block" id="approval-form-{{ $item->id }}">
+                                                    @csrf
+                                                    <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    <button type="button" class="btn btn-danger btn-sm btn-reject-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-close"></i> Reject Level 2
+                                                    </button>
+                                                </form>
+                                            @endisKspi
+                                        @elseif($item->status_approval == 'approved_level1')
+                                            {{-- Level 2: KSPI can approve/reject after level 1 --}}
+                                            @isKspi
+                                                <form action="{{ route('audit.walkthrough.approval', $item->id) }}" method="POST" style="display:inline-block" id="approval-form-{{ $item->id }}">
+                                                    @csrf
+                                                    <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    <button type="button" class="btn btn-success btn-sm btn-approve-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-check"></i> Approve Level 2
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary btn-sm btn-reject-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-close"></i> Reject Level 2
+                                                    </button>
+                                                </form>
+                                            @endisKspi
+                                        @elseif($item->status_approval == 'rejected_level1')
+                                            {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
+                                            @isKspi
+                                                <form action="{{ route('audit.walkthrough.approval', $item->id) }}" method="POST" style="display:inline-block" id="approval-form-{{ $item->id }}">
+                                                    @csrf
+                                                    <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    <button type="button" class="btn btn-danger btn-sm btn-reject-swal" data-id="{{ $item->id }}">
+                                                        <i class="mdi mdi-close"></i> Reject Level 2
+                                                    </button>
+                                                </form>
+                                            @endisKspi
+                                        @endif
+                                    @endcanApproveReject
                                 </td>
                             </tr>
                             @endforeach
