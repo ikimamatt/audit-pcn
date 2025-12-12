@@ -247,62 +247,57 @@ class PelaporanHasilAuditController extends Controller
 
     public function approval($id, Request $request)
     {
-        $request->validate([
-            'action' => 'required|in:approve,reject'
-        ]);
-
         $item = PelaporanHasilAudit::with(['temuan'])->findOrFail($id);
         
-        if ($request->action == 'approve') {
-            // Approve pelaporan hasil audit
-            $item->update([
-                'status_approval' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now()
-            ]);
-            
-            // Approve semua ISS yang terkait
-            if ($item->temuan && $item->temuan->count() > 0) {
-                foreach ($item->temuan as $temuan) {
-                    $temuan->update([
-                        'status_approval' => 'approved',
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now()
-                    ]);
-                }
-                $message = 'Status pelaporan hasil audit dan semua ISS berhasil diapprove!';
-            } else {
-                $message = 'Status pelaporan hasil audit berhasil diapprove! (Tidak ada ISS yang perlu diapprove)';
-            }
-        } elseif ($request->action == 'reject') {
+        // Validasi alasan penolakan jika reject
+        if ($request->action == 'reject') {
             $request->validate([
-                'alasan_reject' => 'required|string|max:1000'
+                'rejection_reason' => 'required|string|min:10',
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan harus diisi',
+                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
             ]);
-            
-            // Reject pelaporan hasil audit
-            $item->update([
-                'status_approval' => 'rejected',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-                'alasan_reject' => $request->alasan_reject
-            ]);
-            
-            // Reject semua ISS yang terkait
-            if ($item->temuan && $item->temuan->count() > 0) {
-                foreach ($item->temuan as $temuan) {
-                    $temuan->update([
-                        'status_approval' => 'rejected',
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now()
-                    ]);
-                }
-                $message = 'Status pelaporan hasil audit dan semua ISS berhasil direject!';
-            } else {
-                $message = 'Status pelaporan hasil audit berhasil direject! (Tidak ada ISS yang perlu direject)';
-            }
         }
-        
-        return redirect()->back()->with('success', $message);
+
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $item,
+            $request->action,
+            $request->rejection_reason ?? $request->alasan_reject ?? null
+        );
+
+        if ($result['success']) {
+            // Jika approve final (level 2), approve semua ISS yang terkait
+            if ($request->action == 'approve' && $item->status_approval === 'approved') {
+                if ($item->temuan && $item->temuan->count() > 0) {
+                    foreach ($item->temuan as $temuan) {
+                        $temuan->update([
+                            'status_approval' => 'approved',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now()
+                        ]);
+                    }
+                    return redirect()->back()->with('success', $result['message'] . ' Semua ISS juga berhasil diapprove!');
+                }
+            }
+            
+            // Jika reject final (level 2), reject semua ISS yang terkait
+            if ($request->action == 'reject' && $item->status_approval === 'rejected') {
+                if ($item->temuan && $item->temuan->count() > 0) {
+                    foreach ($item->temuan as $temuan) {
+                        $temuan->update([
+                            'status_approval' => 'rejected',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now()
+                        ]);
+                    }
+                    return redirect()->back()->with('success', $result['message'] . ' Semua ISS juga berhasil direject!');
+                }
+            }
+            
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
 
     public function generateNomorLhk(Request $request)
