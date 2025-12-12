@@ -31,6 +31,9 @@ class MasterUserController extends Controller
             'username' => 'required|string|max:255|unique:master_user,username',
             'nip' => 'required|string|max:255',
             'password' => 'required|string|min:6',
+            'email' => 'nullable|email|max:255',
+            'no_telpon' => 'nullable|string|max:20',
+            'jabatan' => 'nullable|string|max:255',
             'master_auditee_id' => 'required|exists:master_auditee,id',
             'master_akses_user_id' => 'required|exists:master_akses_user,id',
         ]);
@@ -40,6 +43,9 @@ class MasterUserController extends Controller
             'username' => $request->username,
             'nip' => $request->nip,
             'password' => Hash::make($request->password),
+            'email' => $request->email,
+            'no_telpon' => $request->no_telpon,
+            'jabatan' => $request->jabatan,
             'master_auditee_id' => $request->master_auditee_id,
             'master_akses_user_id' => $request->master_akses_user_id,
         ]);
@@ -60,6 +66,9 @@ class MasterUserController extends Controller
             'nama' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:master_user,username,' . $masterUser->id,
             'nip' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'no_telpon' => 'nullable|string|max:20',
+            'jabatan' => 'nullable|string|max:255',
             'master_auditee_id' => 'required|exists:master_auditee,id',
             'master_akses_user_id' => 'required|exists:master_akses_user,id',
         ]);
@@ -68,6 +77,9 @@ class MasterUserController extends Controller
             'nama' => $request->nama,
             'username' => $request->username,
             'nip' => $request->nip,
+            'email' => $request->email,
+            'no_telpon' => $request->no_telpon,
+            'jabatan' => $request->jabatan,
             'master_auditee_id' => $request->master_auditee_id,
             'master_akses_user_id' => $request->master_akses_user_id,
         ];

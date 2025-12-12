@@ -45,6 +45,9 @@
                                 <th>Nama</th>
                                 <th>Username</th>
                                 <th>NIP</th>
+                                <th>Email</th>
+                                <th>No. Telpon</th>
+                                <th>Jabatan</th>
                                 <th>Divisi</th>
                                 <th>Akses</th>
                                 <th>Aksi</th>
@@ -57,6 +60,9 @@
                                     <td>{{ $item->nama }}</td>
                                     <td>{{ $item->username }}</td>
                                     <td>{{ $item->nip }}</td>
+                                    <td>{{ $item->email ?? '-' }}</td>
+                                    <td>{{ $item->no_telpon ?? '-' }}</td>
+                                    <td>{{ $item->jabatan ?? '-' }}</td>
                                     <td>{{ $item->auditee->divisi ?? '-' }}</td>
                                     <td>{{ $item->akses->nama_akses ?? '-' }}</td>
                                     <td>
@@ -83,7 +89,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Tidak ada data</td>
+                                    <td colspan="10" class="text-center">Tidak ada data</td>
                                 </tr>
                             @endforelse
                         </tbody>

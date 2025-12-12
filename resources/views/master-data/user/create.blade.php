@@ -82,6 +82,61 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" 
+                                       class="form-control @error('email') is-invalid @enderror" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ old('email') }}" 
+                                       placeholder="Masukkan email">
+                                @error('email')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="no_telpon" class="form-label">No. Telpon</label>
+                                <input type="text" 
+                                       class="form-control @error('no_telpon') is-invalid @enderror" 
+                                       id="no_telpon" 
+                                       name="no_telpon" 
+                                       value="{{ old('no_telpon') }}" 
+                                       placeholder="Masukkan nomor telpon">
+                                @error('no_telpon')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="jabatan" class="form-label">Jabatan</label>
+                                <input type="text" 
+                                       class="form-control @error('jabatan') is-invalid @enderror" 
+                                       id="jabatan" 
+                                       name="jabatan" 
+                                       value="{{ old('jabatan') }}" 
+                                       placeholder="Masukkan jabatan">
+                                @error('jabatan')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
                                 <input type="password" 
                                        class="form-control @error('password') is-invalid @enderror" 
