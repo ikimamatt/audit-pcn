@@ -44,28 +44,24 @@ class ExitMeetingController extends Controller
     public function create()
     {
         // Get all perencanaan audit with their PKA and entry meetings
-        $allPerencanaanAudits = PerencanaanAudit::with(['auditee', 'programKerjaAudit.entryMeeting'])->get();
+        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
+        $query = PerencanaanAudit::with(['auditee', 'programKerjaAudit.entryMeeting']);
         
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $query->where('auditee_id', $userAuditeeId);
+        }
+        
+        $allPerencanaanAudits = $query->get();
+        
+        // Filter perencanaan audit yang bisa digunakan untuk exit meeting
+        // Tampilkan semua perencanaan audit yang belum pernah dibuat exit meeting
         $perencanaanAudits = $allPerencanaanAudits->filter(function($perencanaan) {
-            // Jika tidak ada PKA, bisa digunakan
-            if ($perencanaan->programKerjaAudit->isEmpty()) {
-                return true;
-            }
+            // Check jika sudah ada exit meeting untuk perencanaan audit ini
+            $hasExitMeeting = \App\Models\RealisasiAudit::where('perencanaan_audit_id', $perencanaan->id)->exists();
             
-            // Check setiap PKA untuk entry meeting
-            foreach ($perencanaan->programKerjaAudit as $pka) {
-                // Jika PKA tidak memiliki entry meeting, bisa digunakan
-                if (!$pka->entryMeeting) {
-                    return true;
-                }
-                
-                // Jika entry meeting di-reject, bisa digunakan
-                if ($pka->entryMeeting->status === 'rejected') {
-                    return true;
-                }
-            }
-            
-            return false;
+            // Tampilkan semua perencanaan audit yang belum ada exit meeting
+            return !$hasExitMeeting;
         });
             
         return view('audit.exit-meeting.create', compact('perencanaanAudits'));

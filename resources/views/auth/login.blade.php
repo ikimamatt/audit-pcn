@@ -60,15 +60,15 @@
             </script>
         @endif
 
-        <label for="username" class="block text-xs font-normal text-gray-700 mb-1">Username</label>
+        <label for="nip" class="block text-xs font-normal text-gray-700 mb-1">NIP</label>
         <input
-          id="username"
-          name="username"
+          id="nip"
+          name="nip"
           type="text"
-          placeholder="Username"
+          placeholder="NIP"
           class="w-full rounded-md border border-gray-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 px-3 py-2 mb-5 text-gray-500 placeholder-gray-400 outline-none"
           required 
-          value="{{ old('username') }}" 
+          value="{{ old('nip') }}" 
           autofocus
         />
 
@@ -97,7 +97,7 @@
         <!-- Development Notice -->
         <div class="mb-4 p-3 bg-blue-100 border border-blue-400 rounded-md">
           <p class="text-xs text-blue-800">
-            <strong>Info:</strong> Gunakan username dan password yang telah didaftarkan. Password tidak akan ditampilkan otomatis untuk keamanan.
+            <strong>Info:</strong> Gunakan NIP dan password yang telah didaftarkan. Password tidak akan ditampilkan otomatis untuk keamanan.
           </p>
         </div>
         
@@ -130,7 +130,7 @@
     }
   });
 
-  // Auto-focus username field
-  document.getElementById('username').focus();
+  // Auto-focus NIP field
+  document.getElementById('nip').focus();
 </script>
 @endsection

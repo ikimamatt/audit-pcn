@@ -17,7 +17,7 @@ class MasterUser extends Authenticatable
      *
      * @var string
      */
-    protected $username = 'username';
+    protected $username = 'nip';
 
     /**
      * The attributes that should be hidden for serialization.
