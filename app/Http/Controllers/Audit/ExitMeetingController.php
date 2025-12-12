@@ -13,18 +13,28 @@ class ExitMeetingController extends Controller
 {
     public function index(Request $request)
     {
-        $realisasiAudits = RealisasiAudit::with([
+        $query = RealisasiAudit::with([
             'perencanaanAudit.auditee',
             'perencanaanAudit.programKerjaAudit.milestones'
-        ])
-            ->when($request->filled('bulan'), function ($query) use ($request) {
-                $selectedMonth = Carbon::parse($request->bulan);
-                $query->whereHas('perencanaanAudit', function ($q) use ($selectedMonth) {
-                    $q->whereYear('tanggal_audit_mulai', $selectedMonth->year)
-                        ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
-                });
-            })
-            ->orderByDesc('id')
+        ]);
+
+        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
+            });
+        }
+
+        $query->when($request->filled('bulan'), function ($q) use ($request) {
+            $selectedMonth = Carbon::parse($request->bulan);
+            $q->whereHas('perencanaanAudit', function ($subQ) use ($selectedMonth) {
+                $subQ->whereYear('tanggal_audit_mulai', $selectedMonth->year)
+                    ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
+            });
+        });
+
+        $realisasiAudits = $query->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
 

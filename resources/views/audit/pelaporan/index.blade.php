@@ -362,13 +362,22 @@
                                                             <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                         </form>
                                                     @endisAsmanKspi
-                                                    {{-- Level 2: KSPI can only reject from pending (must wait for ASMAN KSPI approval first) --}}
+                                                    {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
                                                     @isKspi
+                                                        @php
+                                                            $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUser();
+                                                        @endphp
                                                         <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
                                                             @csrf
-                                                            <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
-                                                                <i class="mdi mdi-check me-1"></i> Approve Level 2
-                                                            </button>
+                                                            @if($hasAsmanKspi)
+                                                                <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
+                                                                    <i class="mdi mdi-check me-1"></i> Approve Level 2
+                                                                </button>
+                                                            @else
+                                                                <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
+                                                                    <i class="mdi mdi-check me-1"></i> Approve
+                                                                </button>
+                                                            @endif
                                                             <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
                                                                 <i class="mdi mdi-close me-1"></i> Reject Level 2
                                                             </button>

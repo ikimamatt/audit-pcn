@@ -156,5 +156,69 @@ class AuthHelper
 
         return $asmanKspiCount > 0;
     }
+
+    /**
+     * Get current user's auditee_id (divisi/cabang)
+     * Returns null if user doesn't have auditee or if user has special access
+     * 
+     * @return int|null
+     */
+    public static function getUserAuditeeId(): ?int
+    {
+        if (!Auth::check()) {
+            return null;
+        }
+
+        $user = Auth::user();
+        
+        // Load akses relationship if not loaded
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return null;
+        }
+
+        $namaAkses = $user->akses->nama_akses;
+        
+        // User dengan akses KSPI, ASMAN KSPI, atau Auditor bisa melihat semua data
+        if (in_array($namaAkses, ['KSPI', 'ASMAN KSPI', 'Auditor'])) {
+            return null; // null berarti bisa melihat semua
+        }
+
+        // Load auditee relationship if not loaded
+        if (!$user->relationLoaded('auditee')) {
+            $user->load('auditee');
+        }
+
+        return $user->master_auditee_id ?? null;
+    }
+
+    /**
+     * Check if current user can see all data (KSPI, ASMAN KSPI, Auditor)
+     * 
+     * @return bool
+     */
+    public static function canSeeAllData(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return false;
+        }
+
+        $namaAkses = $user->akses->nama_akses;
+        
+        return in_array($namaAkses, ['KSPI', 'ASMAN KSPI', 'Auditor']);
+    }
 }
 

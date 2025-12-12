@@ -17,6 +17,14 @@ class EntryMeetingController extends Controller
         // Simple approach - get all data and filter in memory
         $data = EntryMeeting::with(['auditee', 'programKerjaAudit.perencanaanAudit'])->get();
 
+        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $data = $data->filter(function($item) use ($userAuditeeId) {
+                return $item->auditee_id == $userAuditeeId;
+            });
+        }
+
         // Filter by month if provided
         if ($request->filled('bulan')) {
             $selectedMonth = Carbon::parse($request->bulan);

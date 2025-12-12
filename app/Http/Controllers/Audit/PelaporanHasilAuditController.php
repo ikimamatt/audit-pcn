@@ -14,7 +14,15 @@ class PelaporanHasilAuditController extends Controller
     public function index(Request $request)
     {
         // Get all data first
-        $query = PelaporanHasilAudit::with(['perencanaanAudit', 'temuan.kodeAoi', 'temuan.kodeRisk']);
+        $query = PelaporanHasilAudit::with(['perencanaanAudit.auditee', 'temuan.kodeAoi', 'temuan.kodeRisk']);
+        
+        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
+            });
+        }
         
         // Apply filters
         if ($request->filled('jenis_lha_lhk')) {
@@ -30,13 +38,26 @@ class PelaporanHasilAuditController extends Controller
         }
         
         $data = $query->get();
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
+        
+        // Filter surat tugas juga berdasarkan divisi user
+        $suratTugasQuery = \App\Models\Audit\PerencanaanAudit::query();
+        if ($userAuditeeId !== null) {
+            $suratTugasQuery->where('auditee_id', $userAuditeeId);
+        }
+        $suratTugas = $suratTugasQuery->get();
+        
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $selectedAudit = null;
         $temuanList = collect();
         if ($request->has('audit_id')) {
             $selectedAudit = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->find($request->audit_id);
+            // Check if user has access to this audit
+            if ($selectedAudit && $userAuditeeId !== null) {
+                if ($selectedAudit->perencanaanAudit && $selectedAudit->perencanaanAudit->auditee_id != $userAuditeeId) {
+                    $selectedAudit = null; // User tidak memiliki akses
+                }
+            }
             $temuanList = $selectedAudit ? $selectedAudit->temuan : collect();
         }
         return view('audit.pelaporan.index', compact('data', 'suratTugas', 'kodeAoi', 'kodeRisk', 'selectedAudit', 'temuanList'));

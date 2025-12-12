@@ -16,7 +16,15 @@ class ToeAuditController extends Controller
     public function index(Request $request)
     {
         // Simple approach - get all data and filter in memory
-        $data = ToeAudit::with(['perencanaanAudit', 'evaluasi'])->get();
+        $data = ToeAudit::with(['perencanaanAudit.auditee', 'evaluasi'])->get();
+
+        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $data = $data->filter(function($item) use ($userAuditeeId) {
+                return $item->perencanaanAudit && $item->perencanaanAudit->auditee_id == $userAuditeeId;
+            });
+        }
 
         // Filter by month if provided
         if ($request->filled('bulan')) {
