@@ -17,6 +17,7 @@ class MasterAksesUserSeeder extends Seeder
             'ASMAN KSPI',
             'Manager',
             'Assistant Manager',
+            'Auditee',
         ];
 
         foreach ($aksesList as $akses) {

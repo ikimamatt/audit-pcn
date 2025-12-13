@@ -37,7 +37,9 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                @canModifyData
                 <a href="{{ route('audit.entry-meeting.create') }}" class="btn btn-primary mb-3">Tambah Entry Meeting</a>
+                @endcanModifyData
                 <div class="table-responsive">
                     <table id="responsive-datatable" class="table table-bordered table-bordered dt-responsive nowrap">
                         <thead>
@@ -131,6 +133,7 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @canModifyData
                                         <a href="{{ route('audit.entry-meeting.edit', $item->id) }}" class="btn btn-sm btn-warning">
                                             <i class="mdi mdi-pencil"></i>
                                         </a>
@@ -141,6 +144,7 @@
                                             @csrf
                                             @method('DELETE')
                                         </form>
+                                        @endcanModifyData
                                         
                                         @canApproveReject
                                             @if($item->status_approval == 'pending')

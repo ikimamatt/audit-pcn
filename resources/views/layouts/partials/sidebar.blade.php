@@ -28,6 +28,11 @@
 
                 <li class="menu-title">Menu</li>
 
+                @php
+                    $userAkses = auth()->user()->akses->nama_akses ?? '';
+                    $isAuditee = $userAkses === 'Auditee';
+                @endphp
+
                 <li>
                     <a href="#sidebarDashboards" data-bs-toggle="collapse">
                         <i data-feather="home"></i>
@@ -161,6 +166,7 @@
                     </a>
                 </li> --}}
 
+                @if(!$isAuditee)
                 <li class="menu-title mt-2">General</li>
 
                 {{-- <li>
@@ -385,6 +391,7 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!--  -->
 
@@ -480,12 +487,14 @@
                     </a>
                 </li>
 
+                @if(!$isAuditee)
                 <li>
                     <a href="{{ route('audit.monitoring-tindak-lanjut.index') }}">
                         <i data-feather="trending-up"></i>
                         <span> Monitoring Tindak Lanjut </span>
                     </a>
                 </li>
+                @endif
 
 
             </ul>

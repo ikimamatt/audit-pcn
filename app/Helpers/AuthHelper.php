@@ -247,5 +247,40 @@ class AuthHelper
         
         return in_array($namaAkses, ['KSPI', 'ASMAN KSPI', 'Auditor']);
     }
+
+    /**
+     * Check if current user is BOD
+     * 
+     * @return bool
+     */
+    public static function isBod(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return false;
+        }
+
+        return $user->akses->nama_akses === 'BOD';
+    }
+
+    /**
+     * Check if current user can create, edit, or delete data
+     * BOD cannot create, edit, or delete
+     * 
+     * @return bool
+     */
+    public static function canModifyData(): bool
+    {
+        return !self::isBod();
+    }
 }
 

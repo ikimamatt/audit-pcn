@@ -34,5 +34,15 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('isKspi', function () {
             return \App\Helpers\AuthHelper::isKspi();
         });
+
+        // Register Blade directive for checking if user is BOD
+        Blade::if('isBod', function () {
+            return \App\Helpers\AuthHelper::isBod();
+        });
+
+        // Register Blade directive for checking if user can modify data (create, edit, delete)
+        Blade::if('canModifyData', function () {
+            return \App\Helpers\AuthHelper::canModifyData();
+        });
     }
 }

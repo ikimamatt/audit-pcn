@@ -29,9 +29,11 @@
             <div class="card-body">
                 <div class="row mb-2">
                     <div class="col-sm-5">
+                        @canModifyData
                         <a href="{{ route('master.user.create') }}" class="btn btn-primary mb-2">
                             <i class="mdi mdi-plus-circle me-2"></i> Tambah User
                         </a>
+                        @endcanModifyData
                     </div>
                 </div>
 

@@ -43,6 +43,8 @@ class AuthenticatedSessionController extends Controller
                     return redirect()->intended(RouteServiceProvider::HOME);
                 case 'PIC Auditee':
                     return redirect()->intended('/audit/pemantauan-hasil-audit/tindak-lanjut'); // Assuming this route exists
+                case 'Auditee':
+                    return redirect()->intended(RouteServiceProvider::HOME); // Dashboard
                 case 'BOD':
                     return redirect()->intended('/dashboard'); // Assuming this route exists
                 default:

@@ -40,9 +40,11 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                @canModifyData
                 <a href="{{ route('audit.walkthrough.create') }}" class="btn btn-primary mb-3">
                     <i class="mdi mdi-plus me-1"></i> Tambah Walkthrough
                 </a>
+                @endcanModifyData
                 <div class="table-responsive">
                     <table class="table table-bordered table-bordered dt-responsive nowrap" id="responsive-datatable">
                         <thead>

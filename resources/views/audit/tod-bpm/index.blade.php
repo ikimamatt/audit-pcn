@@ -42,7 +42,9 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                @canModifyData
                 <a href="{{ route('audit.tod-bpm.create') }}" class="btn btn-primary mb-3">Tambah TOD</a>
+                @endcanModifyData
                 <div class="table-responsive">
                     <table class="table table-bordered table-bordered dt-responsive nowrap" id="responsive-datatable">
                         <thead>
@@ -141,11 +143,13 @@
                                     <a href="#" class="btn btn-info btn-sm btn-evaluasi-modal" data-bpm-id="{{ $item->id }}">Evaluasi ({{ $item->evaluasi->count() }})</a>
                                 </td>
                                 <td>
+                                    @canModifyData
                                     <a href="{{ route('audit.tod-bpm.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                     <form action="{{ route('audit.tod-bpm.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm btn-delete-swal">Hapus</button>
                                     </form>
+                                    @endcanModifyData
                                     @canApproveReject
                                         @if($item->status_approval == 'pending')
                                             {{-- Level 1: ASMAN KSPI can approve/reject --}}

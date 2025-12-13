@@ -181,10 +181,12 @@
                                 <i class="mdi mdi-pencil me-2"></i>
                                 Test Edit ISS
                             </button>
+                            @canModifyData
                             <a href="{{ route('audit.pelaporan-hasil-audit.create') }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <i class="mdi mdi-plus-circle me-2"></i>
                                 Tambah Pelaporan
                             </a>
+                            @endcanModifyData
                             <div class="dropdown">
                                 <a class="nav-link dropdown-toggle nav-user" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                                     <span class="pro-user-name">
@@ -341,11 +343,13 @@
                                     </td>
                                     <td>
                                         <div class="btn-group-vertical btn-group-sm" role="group">
+                                            @canModifyData
                                             <a href="{{ route('audit.pelaporan-hasil-audit.edit', $item->id) }}" 
                                                class="btn btn-outline-primary btn-sm mb-1 btn-custom" 
                                                title="Edit">
                                                 <i class="mdi mdi-pencil me-1"></i>Edit
                                             </a>
+                                            @endcanModifyData
                                             
                                             @canApproveReject
                                                 @if($item->status_approval == 'pending')

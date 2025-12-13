@@ -116,10 +116,12 @@
                             <i class="mdi mdi-file-document-outline me-2"></i>
                             Pilih Nomor Surat Tugas
                         </a>
+                        @canModifyData
                         <a href="{{ route('audit.penutup-lha-rekomendasi.create', ['pelaporan_isi_lha_id' => $isiLhaId, 'nomor_surat_tugas' => $nomorSuratTugas ?? '']) }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <i class="mdi mdi-plus-circle me-2"></i>
                             Tambah Rekomendasi
                         </a>
+                        @endcanModifyData
                     </div>
                 </div>
             </div>
@@ -252,11 +254,13 @@
                                             <i class="mdi mdi-eye me-1"></i>View
                                         </button>
                                         
+                                        @canModifyData
                                         <a href="{{ route('audit.penutup-lha-rekomendasi.edit', $item->id) }}" 
                                            class="btn btn-outline-primary btn-sm mb-1 btn-custom" 
                                            title="Edit">
                                             <i class="mdi mdi-pencil me-1"></i>Edit
                                         </a>
+                                        @endcanModifyData
                                         
                                         @canApproveReject
                                             @if($item->status_approval == 'pending')

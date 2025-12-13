@@ -15,7 +15,9 @@
     <div class="col-12">
         <div class="page-title-box">
             <div class="page-title-right">
+                @canModifyData
                 <a href="{{ route('audit.exit-meeting.create') }}" class="btn btn-primary">
+                @endcanModifyData
                     <i class="mdi mdi-plus"></i> Tambah Exit Meeting
                 </a>
             </div>
@@ -237,6 +239,7 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @canModifyData
                                         <a href="{{ route('audit.exit-meeting.edit', $realisasiAudit->id) }}" 
                                            class="btn btn-sm btn-info">
                                             <i class="mdi mdi-pencil"></i> Edit
@@ -250,6 +253,7 @@
                                                 <i class="mdi mdi-delete"></i> Hapus
                                             </button>
                                         </form>
+                                        @endcanModifyData
                                         @canApproveReject
                                             @if($realisasiAudit->status_approval == 'pending' || !$realisasiAudit->status_approval)
                                                 {{-- Level 1: ASMAN KSPI can approve/reject --}}
