@@ -18,8 +18,13 @@
                                 <dt class="col-sm-4">Jenis</dt>
                                 <dd class="col-sm-8">{{ $item->jenis_lha_lhk ?? '-' }}</dd>
                                 
-                                <dt class="col-sm-4">PO/Konsul</dt>
-                                <dd class="col-sm-8">{{ $item->po_audit_konsul ?? '-' }}</dd>
+                                <dt class="col-sm-4">Jenis Audit</dt>
+                                <dd class="col-sm-8">
+                                    @php
+                                        $jenisAudit = $item->jenisAudit ?? \App\Models\MasterData\MasterJenisAudit::where('kode', $item->kode_spi)->first();
+                                    @endphp
+                                    {{ $jenisAudit ? $jenisAudit->nama_jenis_audit : '-' }}
+                                </dd>
                                 
                                 <dt class="col-sm-4">Kode SPI</dt>
                                 <dd class="col-sm-8">{{ $item->kode_spi ?? '-' }}</dd>

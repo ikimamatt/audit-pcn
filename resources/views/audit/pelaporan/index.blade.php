@@ -214,6 +214,7 @@
                 @if(session('success'))
                     @include('components.alert')
                 @endif
+                
 
                 <!-- Filter Section -->
                 <div class="row mb-3">
@@ -228,11 +229,15 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label for="po_audit_konsul" class="form-label">PO/Konsul</label>
-                                <select name="po_audit_konsul" id="po_audit_konsul" class="form-select">
+                                <label for="kode_spi" class="form-label">Jenis Audit</label>
+                                <select name="kode_spi" id="kode_spi" class="form-select">
                                     <option value="">Semua</option>
-                                    <option value="PO AUDIT" {{ request('po_audit_konsul') == 'PO AUDIT' ? 'selected' : '' }}>PO AUDIT</option>
-                                    <option value="KONSUL" {{ request('po_audit_konsul') == 'KONSUL' ? 'selected' : '' }}>KONSUL</option>
+                                    @php
+                                        $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
+                                    @endphp
+                                    @foreach($jenisAudit as $ja)
+                                        <option value="{{ $ja->kode }}" {{ request('kode_spi') == $ja->kode ? 'selected' : '' }}>{{ $ja->nama_jenis_audit }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -272,7 +277,7 @@
                                 <th>Surat Tugas</th>
                                 <th>Nomor LHA/LHK</th>
                                 <th width="80">Jenis</th>
-                                <th width="100">PO/Konsul</th>
+                                <th width="150">Jenis Audit</th>
                                 <th width="100">Kode SPI</th>
                                 <th width="80">ISS</th>
                                 <th width="100">Status</th>
@@ -297,8 +302,12 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge {{ $item->po_audit_konsul == 'PO AUDIT' ? 'bg-success' : 'bg-warning' }} status-badge">
-                                            {{ $item->po_audit_konsul }}
+                                        @php
+                                            $jenisAudit = \App\Models\MasterData\MasterJenisAudit::where('kode', $item->kode_spi)->first();
+                                            $namaJenisAudit = $jenisAudit ? $jenisAudit->nama_jenis_audit : '-';
+                                        @endphp
+                                        <span class="badge bg-info status-badge">
+                                            {{ $namaJenisAudit }}
                                         </span>
                                     </td>
                                     <td class="text-center">

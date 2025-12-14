@@ -22,12 +22,14 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::post('walkthrough/{walkthrough}/approval', [\App\Http\Controllers\Audit\WalkthroughAuditController::class, 'approval'])->name('walkthrough.approval');
     Route::resource('tod-bpm', \App\Http\Controllers\Audit\TodBpmAuditController::class);
     Route::post('tod-bpm/{tod_bpm}/approval', [\App\Http\Controllers\Audit\TodBpmAuditController::class, 'approval'])->name('tod-bpm.approval');
+    Route::get('tod-bpm/get-risks/{perencanaanId}', [\App\Http\Controllers\Audit\TodBpmAuditController::class, 'getRisksByPerencanaan'])->name('tod-bpm.get-risks');
     Route::resource('tod-bpm-evaluasi', \App\Http\Controllers\Audit\TodBpmEvaluasiController::class);
     Route::get('tod-bpm-evaluasi-modal/{bpmId}', [\App\Http\Controllers\Audit\TodBpmEvaluasiController::class, 'modal'])->name('tod-bpm-evaluasi.modal');
 
     // TOE Audit
     Route::resource('toe', ToeAuditController::class);
     Route::post('toe/{id}/approval', [ToeAuditController::class, 'approval'])->name('toe.approval');
+    Route::get('toe/get-risks/{perencanaanId}', [ToeAuditController::class, 'getRisksByPerencanaan'])->name('toe.get-risks');
 
     // TOE Evaluasi
     Route::get('toe-evaluasi', [ToeEvaluasiController::class, 'index'])->name('toe-evaluasi.index');

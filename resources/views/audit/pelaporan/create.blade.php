@@ -40,9 +40,12 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">PO/Konsul <span class="text-danger">*</span></label>
-                            <select name="po_audit_konsul" id="po_audit_konsul" class="form-select" required disabled>
-                                <option value="">Pilih Jenis terlebih dahulu</option>
+                            <label class="form-label">Jenis Audit <span class="text-danger">*</span></label>
+                            <select name="jenis_audit_id" id="jenis_audit_id" class="form-select" required>
+                                <option value="">Pilih Jenis Audit</option>
+                                @foreach($jenisAudit as $ja)
+                                    <option value="{{ $ja->id }}" data-kode="{{ $ja->kode }}">{{ $ja->nama_jenis_audit }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -51,21 +54,13 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Nomor LHA/LHK <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="text" name="nomor_lha_lhk" id="nomor_lha_lhk" class="form-control" value="" placeholder="xxx/AA/BB/CC/SPI.PCN.yyyy" required readonly>
-                                <button type="button" class="btn btn-outline-secondary" id="generate-lha-lhk-btn">
-                                    <i class="mdi mdi-refresh"></i> Generate
-                                </button>
-                            </div>
+                            <input type="text" name="nomor_lha_lhk" id="nomor_lha_lhk" class="form-control" value="" placeholder="xxx/AA/BB/CC/SPI.PCN.yyyy" required>
+                            <small class="text-muted">Masukkan nomor LHA/LHK secara manual</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Kode SPI <span class="text-danger">*</span></label>
-                            <select name="kode_spi" id="kode_spi" class="form-select" required>
-                                <option value="">Pilih Kode SPI</option>
-                                <option value="SPI.01.02">SPI.01.02</option>
-                                <option value="SPI.01.03">SPI.01.03</option>
-                                <option value="SPI.01.04">SPI.01.04</option>
-                            </select>
+                            <input type="text" name="kode_spi" id="kode_spi" class="form-control" value="" placeholder="Kode SPI akan terisi otomatis" required readonly>
+                            <small class="text-muted">Kode SPI otomatis terisi dari jenis audit yang dipilih</small>
                         </div>
                     </div>
 
@@ -269,102 +264,30 @@ $(document).ready(function() {
     let issIndex = 0;
     let currentEditingIndex = -1;
 
-    // Auto-set PO/Konsul berdasarkan jenis LHA/LHK
-    $('#jenis_lha_lhk').change(function() {
-        const jenis = $(this).val();
-        const poKonsulSelect = $('#po_audit_konsul');
+    // Auto-set Kode SPI berdasarkan jenis audit yang dipilih
+    $('#jenis_audit_id').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const kodeSpi = selectedOption.data('kode');
         
-        // Reset nomor LHA/LHK ketika jenis berubah
-        $('#nomor_lha_lhk').val('');
-        
-        if (jenis === 'LHA') {
-            poKonsulSelect.html('<option value="PO AUDIT">PO AUDIT</option>');
-            poKonsulSelect.val('PO AUDIT');
-        } else if (jenis === 'LHK') {
-            poKonsulSelect.html('<option value="KONSUL">KONSUL</option>');
-            poKonsulSelect.val('KONSUL');
+        if (kodeSpi) {
+            $('#kode_spi').val(kodeSpi);
         } else {
-            poKonsulSelect.html('<option value="">Pilih Jenis terlebih dahulu</option>');
+            $('#kode_spi').val('');
         }
-        
-        poKonsulSelect.prop('disabled', false);
-        
-        // Auto-generate nomor LHA/LHK jika semua field sudah dipilih
-        autoGenerateNomorLhaLhk();
     });
 
-    // Reset nomor LHA/LHK ketika surat tugas audit berubah
-    $('#perencanaan_audit_id').change(function() {
-        $('#nomor_lha_lhk').val('');
-    });
-
-    // Auto-generate nomor LHA/LHK ketika PO/Konsul atau Kode SPI berubah
-    $('#po_audit_konsul, #kode_spi').change(function() {
-        // Reset nomor LHA/LHK ketika ada perubahan
-        $('#nomor_lha_lhk').val('');
-        // Reset semua nomor ISS ketika kode SPI berubah
-        $('.nomor-iss-input').val('');
-        autoGenerateNomorLhaLhk();
-    });
-
-    // Function untuk auto-generate nomor LHA/LHK
-    function autoGenerateNomorLhaLhk() {
-        const jenis = $('#jenis_lha_lhk').val();
-        const poKonsul = $('#po_audit_konsul').val();
-        const kodeSpi = $('#kode_spi').val();
+    // Reset kode SPI ketika jenis audit berubah
+    $('#jenis_audit_id').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const kodeSpi = selectedOption.data('kode');
         
-        if (jenis && poKonsul && kodeSpi) {
-            // Auto-generate langsung tanpa perlu klik tombol
-            $.ajax({
-                url: '{{ route("audit.pelaporan-hasil-audit.generate-nomor-lhk") }}',
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    jenis_lha_lhk: jenis,
-                    po_audit_konsul: poKonsul,
-                    kode_spi: kodeSpi
-                },
-                success: function(response) {
-                    $('#nomor_lha_lhk').val(response.nomor_lha_lhk);
-                    // Reset semua nomor ISS ketika nomor LHA/LHK berubah
-                    $('.nomor-iss-input').val('');
-                },
-                error: function(xhr) {
-                    console.error('Error generating nomor LHA/LHK:', xhr);
-                    alert('Gagal generate nomor LHA/LHK');
-                }
-            });
+        if (kodeSpi) {
+            $('#kode_spi').val(kodeSpi);
+            // Reset semua nomor ISS ketika kode SPI berubah
+            $('.nomor-iss-input').val('');
+        } else {
+            $('#kode_spi').val('');
         }
-    }
-
-    // Generate Nomor LHA/LHK
-    $('#generate-lha-lhk-btn').click(function() {
-        const jenis = $('#jenis_lha_lhk').val();
-        const poKonsul = $('#po_audit_konsul').val();
-        const kodeSpi = $('#kode_spi').val();
-        
-        if (!jenis || !poKonsul || !kodeSpi) {
-            alert('Mohon pilih Jenis, PO/Konsul, dan Kode SPI terlebih dahulu');
-            return;
-        }
-        
-        $.ajax({
-            url: '{{ route("audit.pelaporan-hasil-audit.generate-nomor-lhk") }}',
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                jenis_lha_lhk: jenis,
-                po_audit_konsul: poKonsul,
-                kode_spi: kodeSpi
-            },
-            success: function(response) {
-                $('#nomor_lha_lhk').val(response.nomor_lha_lhk);
-            },
-            error: function(xhr) {
-                console.error('Error generating nomor LHA/LHK:', xhr);
-                alert('Gagal generate nomor LHA/LHK');
-            }
-        });
     });
 
     // Add ISS Item
