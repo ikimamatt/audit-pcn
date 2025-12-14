@@ -42,21 +42,20 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">PO/Konsul</label>
-                            <select name="po_audit_konsul" class="form-select" required>
-                                <option value="PO AUDIT" {{ $item->po_audit_konsul=='PO AUDIT'?'selected':'' }}>PO AUDIT</option>
-                                <option value="KONSUL" {{ $item->po_audit_konsul=='KONSUL'?'selected':'' }}>KONSUL</option>
+                            <label class="form-label">Jenis Audit</label>
+                            <select name="jenis_audit_id" id="jenis_audit_id" class="form-select" required>
+                                <option value="">Pilih Jenis Audit</option>
+                                @foreach($jenisAudit as $ja)
+                                    <option value="{{ $ja->id }}" data-kode="{{ $ja->kode }}" {{ $item->jenis_audit_id == $ja->id ? 'selected' : '' }}>{{ $ja->nama_jenis_audit }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-md-3">
                             <label class="form-label">Kode SPI</label>
-                            <select name="kode_spi" class="form-select" required>
-                                <option value="SPI.01.02" {{ $item->kode_spi=='SPI.01.02'?'selected':'' }}>SPI.01.02</option>
-                                <option value="SPI.01.03" {{ $item->kode_spi=='SPI.01.03'?'selected':'' }}>SPI.01.03</option>
-                                <option value="SPI.01.04" {{ $item->kode_spi=='SPI.01.04'?'selected':'' }}>SPI.01.04</option>
-                            </select>
+                            <input type="text" name="kode_spi" id="kode_spi" class="form-control" value="{{ $item->kode_spi }}" required readonly>
+                            <small class="text-muted">Kode SPI otomatis terisi dari jenis audit yang dipilih</small>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label">Nomor ISS</label>
@@ -98,4 +97,27 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('script')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-set Kode SPI berdasarkan jenis audit yang dipilih
+    $('#jenis_audit_id').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const kodeSpi = selectedOption.data('kode');
+        
+        if (kodeSpi) {
+            $('#kode_spi').val(kodeSpi);
+        } else {
+            $('#kode_spi').val('');
+        }
+    });
+    
+    // Trigger on page load if jenis audit already selected
+    if ($('#jenis_audit_id').val()) {
+        $('#jenis_audit_id').trigger('change');
+    }
+});
+</script>
 @endsection 

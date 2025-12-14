@@ -15,8 +15,8 @@ class PelaporanHasilAudit extends Model
         'perencanaan_audit_id',
         'nomor_lha_lhk',
         'jenis_lha_lhk',
-        'po_audit_konsul',
         'kode_spi',
+        'jenis_audit_id',
         'nomor_urut',
         'tahun',
         'status_approval',
@@ -42,6 +42,11 @@ class PelaporanHasilAudit extends Model
     public function approver()
     {
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by');
+    }
+
+    public function jenisAudit()
+    {
+        return $this->belongsTo(\App\Models\MasterData\MasterJenisAudit::class, 'jenis_audit_id');
     }
 }
 

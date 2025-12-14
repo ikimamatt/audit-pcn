@@ -8,6 +8,7 @@ use App\Models\ToeAudit;
 use App\Models\Audit\PerencanaanAudit;
 use App\Models\ToeEvaluasi;
 use App\Models\TodBpmAudit;
+use App\Models\Models\Audit\ProgramKerjaAudit;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
@@ -58,8 +59,10 @@ class ToeAuditController extends Controller
             'judul_bpm' => 'required|string',
             'pengendalian_eksisting' => 'required|string',
             'pemilihan_sampel_audit' => 'nullable|string',
-            'resiko' => 'nullable|string',
-            'kontrol' => 'nullable|string',
+            'resiko' => 'nullable|array',
+            'resiko.*' => 'nullable|string',
+            'kontrol' => 'nullable|array',
+            'kontrol.*' => 'nullable|string',
             'file_kka_toe' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
             'hasil_evaluasi' => 'required|array|min:1',
             'hasil_evaluasi.*' => 'required|string',
@@ -71,13 +74,21 @@ class ToeAuditController extends Controller
             $fileKkaToePath = $request->file('file_kka_toe')->store('toe/kka-toe', 'public');
         }
 
+        // Convert resiko and kontrol arrays to JSON strings
+        $resikoJson = $request->has('resiko') && is_array($request->resiko) 
+            ? json_encode(array_filter($request->resiko)) 
+            : null;
+        $kontrolJson = $request->has('kontrol') && is_array($request->kontrol) 
+            ? json_encode(array_filter($request->kontrol)) 
+            : null;
+
         $toe = ToeAudit::create([
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'pengendalian_eksisting' => $request->pengendalian_eksisting,
             'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
-            'resiko' => $request->resiko,
-            'kontrol' => $request->kontrol,
+            'resiko' => $resikoJson,
+            'kontrol' => $kontrolJson,
             'file_kka_toe' => $fileKkaToePath,
         ]);
         foreach ($request->hasil_evaluasi as $hasil) {
@@ -111,18 +122,28 @@ class ToeAuditController extends Controller
             'judul_bpm' => 'required|string',
             'pengendalian_eksisting' => 'required|string',
             'pemilihan_sampel_audit' => 'nullable|string',
-            'resiko' => 'nullable|string',
-            'kontrol' => 'nullable|string',
+            'resiko' => 'nullable|array',
+            'resiko.*' => 'nullable|string',
+            'kontrol' => 'nullable|array',
+            'kontrol.*' => 'nullable|string',
             'file_kka_toe' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
         ]);
         
+        // Convert resiko and kontrol arrays to JSON strings
+        $resikoJson = $request->has('resiko') && is_array($request->resiko) 
+            ? json_encode(array_filter($request->resiko)) 
+            : null;
+        $kontrolJson = $request->has('kontrol') && is_array($request->kontrol) 
+            ? json_encode(array_filter($request->kontrol)) 
+            : null;
+
         $data = [
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'judul_bpm' => $request->judul_bpm,
             'pengendalian_eksisting' => $request->pengendalian_eksisting,
             'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
-            'resiko' => $request->resiko,
-            'kontrol' => $request->kontrol,
+            'resiko' => $resikoJson,
+            'kontrol' => $kontrolJson,
         ];
 
         // Handle upload file KKA ToE
@@ -170,5 +191,31 @@ class ToeAuditController extends Controller
         }
 
         return redirect()->back()->with('error', $result['message']);
+    }
+
+    /**
+     * Get risks from PKA based on perencanaan_audit_id
+     */
+    public function getRisksByPerencanaan($perencanaanId)
+    {
+        $pka = ProgramKerjaAudit::where('perencanaan_audit_id', $perencanaanId)
+            ->with('risks')
+            ->first();
+        
+        if (!$pka) {
+            return response()->json(['risks' => []]);
+        }
+        
+        $risks = $pka->risks->map(function($risk) {
+            return [
+                'id' => $risk->id,
+                'deskripsi_resiko' => $risk->deskripsi_resiko,
+                'penyebab_resiko' => $risk->penyebab_resiko,
+                'dampak_resiko' => $risk->dampak_resiko,
+                'pengendalian_eksisting' => $risk->pengendalian_eksisting,
+            ];
+        });
+        
+        return response()->json(['risks' => $risks]);
     }
 } 

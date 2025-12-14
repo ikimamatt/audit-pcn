@@ -13,38 +13,26 @@ class PelaporanHasilAuditController extends Controller
 {
     public function index(Request $request)
     {
-        // Get all data first
+        // Get all data first - semua user bisa melihat semua data
         $query = PelaporanHasilAudit::with(['perencanaanAudit.auditee', 'temuan.kodeAoi', 'temuan.kodeRisk']);
-        
-        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
-        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-        if ($userAuditeeId !== null) {
-            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
-        }
         
         // Apply filters
         if ($request->filled('jenis_lha_lhk')) {
             $query->where('jenis_lha_lhk', $request->jenis_lha_lhk);
         }
         
-        if ($request->filled('po_audit_konsul')) {
-            $query->where('po_audit_konsul', $request->po_audit_konsul);
+        if ($request->filled('kode_spi')) {
+            $query->where('kode_spi', $request->kode_spi);
         }
         
         if ($request->filled('status_approval')) {
             $query->where('status_approval', $request->status_approval);
         }
         
-        $data = $query->get();
+        $data = $query->orderBy('created_at', 'desc')->get();
         
-        // Filter surat tugas juga berdasarkan divisi user
-        $suratTugasQuery = \App\Models\Audit\PerencanaanAudit::query();
-        if ($userAuditeeId !== null) {
-            $suratTugasQuery->where('auditee_id', $userAuditeeId);
-        }
-        $suratTugas = $suratTugasQuery->get();
+        // Semua surat tugas bisa dilihat semua user
+        $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
         
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
@@ -52,12 +40,6 @@ class PelaporanHasilAuditController extends Controller
         $temuanList = collect();
         if ($request->has('audit_id')) {
             $selectedAudit = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->find($request->audit_id);
-            // Check if user has access to this audit
-            if ($selectedAudit && $userAuditeeId !== null) {
-                if ($selectedAudit->perencanaanAudit && $selectedAudit->perencanaanAudit->auditee_id != $userAuditeeId) {
-                    $selectedAudit = null; // User tidak memiliki akses
-                }
-            }
             $temuanList = $selectedAudit ? $selectedAudit->temuan : collect();
         }
         return view('audit.pelaporan.index', compact('data', 'suratTugas', 'kodeAoi', 'kodeRisk', 'selectedAudit', 'temuanList'));
@@ -68,12 +50,13 @@ class PelaporanHasilAuditController extends Controller
         $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
+        $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
         
         // Tidak generate nomor LHA/LHK otomatis di awal
         // Nomor akan di-generate ketika semua field yang diperlukan sudah terisi
         $nomorLhaLhk = '';
         
-        return view('audit.pelaporan.create', compact('suratTugas', 'kodeAoi', 'kodeRisk', 'nomorLhaLhk'));
+        return view('audit.pelaporan.create', compact('suratTugas', 'kodeAoi', 'kodeRisk', 'nomorLhaLhk', 'jenisAudit'));
     }
 
     public function store(Request $request)
@@ -82,8 +65,7 @@ class PelaporanHasilAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'nomor_lha_lhk' => 'required|string',
             'jenis_lha_lhk' => 'required|in:LHA,LHK',
-            'po_audit_konsul' => 'required|in:PO AUDIT,KONSUL',
-            'kode_spi' => 'required|in:SPI.01.02,SPI.01.03,SPI.01.04',
+            'kode_spi' => 'required|string',
             'hasil_temuan' => 'required|array',
             'hasil_temuan.*' => 'required|string',
             'kode_aoi_id' => 'required|array',
@@ -117,8 +99,8 @@ class PelaporanHasilAuditController extends Controller
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'nomor_lha_lhk' => $request->nomor_lha_lhk,
             'jenis_lha_lhk' => $request->jenis_lha_lhk,
-            'po_audit_konsul' => $request->po_audit_konsul,
             'kode_spi' => $request->kode_spi,
+            'jenis_audit_id' => $request->jenis_audit_id,
             'nomor_urut' => $nomorUrut,
             'tahun' => date('Y'),
             'status_approval' => 'pending',
@@ -198,10 +180,14 @@ class PelaporanHasilAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'nomor_lha_lhk' => 'required|string',
             'jenis_lha_lhk' => 'required|in:LHA,LHK',
-            'po_audit_konsul' => 'required|in:PO AUDIT,KONSUL',
+            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
             'kode_spi' => 'required|in:SPI.01.02,SPI.01.03,SPI.01.04',
         ]);
-        $item->update($request->except('tahun'));
+        
+        $data = $request->except('tahun');
+        $data['jenis_audit_id'] = $request->jenis_audit_id;
+        
+        $item->update($data);
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data pelaporan hasil audit berhasil diupdate!');
     }
 
@@ -325,9 +311,17 @@ class PelaporanHasilAuditController extends Controller
     {
         $request->validate([
             'jenis_lha_lhk' => 'required|in:LHA,LHK',
-            'po_audit_konsul' => 'required|in:PO AUDIT,KONSUL',
-            'kode_spi' => 'required|in:SPI.01.02,SPI.01.03,SPI.01.04',
+            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
+            'kode_spi' => 'required|string',
         ]);
+
+        // Get jenis audit untuk menentukan PO/Konsul
+        $jenisAudit = \App\Models\MasterData\MasterJenisAudit::findOrFail($request->jenis_audit_id);
+        
+        // Tentukan PO/Konsul berdasarkan jenis audit
+        // Audit Operasional (SPI.01.02) dan Audit Khusus (SPI.01.03) = PO AUDIT
+        // Konsultasi (SPI.01.04) = KONSUL
+        $poKonsul = ($jenisAudit->kode == 'SPI.01.04') ? 'KONSUL' : 'POAUDIT';
 
         $currentYear = date('Y');
         $lastLhaLhk = PelaporanHasilAudit::where('tahun', $currentYear)
@@ -341,7 +335,6 @@ class PelaporanHasilAuditController extends Controller
         // BB = PO AUDIT atau KONSUL (tanpa spasi)
         // CC = SPI.01.02 atau SPI.01.03 atau SPI.01.04
         $jenis = $request->jenis_lha_lhk;
-        $poKonsul = str_replace(' ', '', $request->po_audit_konsul);
         $kodeSpi = $request->kode_spi;
         
         $nomorLhaLhk = sprintf('%03d', $nextNumber) . '/' . $jenis . '/' . $poKonsul . '/' . $kodeSpi . '/SPI.PCN.' . $currentYear;

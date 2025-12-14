@@ -82,15 +82,43 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($item->resiko)
-                                        <span title="{{ $item->resiko }}">{{ Str::limit($item->resiko, 50) }}</span>
+                                    @php
+                                        $resikoArray = [];
+                                        if ($item->resiko) {
+                                            if (is_string($item->resiko) && (strpos($item->resiko, '[') === 0 || strpos($item->resiko, '{') === 0)) {
+                                                $resikoArray = json_decode($item->resiko, true) ?? [];
+                                            } else {
+                                                $resikoArray = [$item->resiko];
+                                            }
+                                        }
+                                    @endphp
+                                    @if(count($resikoArray) > 0)
+                                        <ol class="mb-0" style="padding-left: 20px;">
+                                            @foreach($resikoArray as $resiko)
+                                                <li style="margin-bottom: 5px;">{{ Str::limit($resiko, 100) }}</li>
+                                            @endforeach
+                                        </ol>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($item->kontrol)
-                                        <span title="{{ $item->kontrol }}">{{ Str::limit($item->kontrol, 50) }}</span>
+                                    @php
+                                        $kontrolArray = [];
+                                        if ($item->kontrol) {
+                                            if (is_string($item->kontrol) && (strpos($item->kontrol, '[') === 0 || strpos($item->kontrol, '{') === 0)) {
+                                                $kontrolArray = json_decode($item->kontrol, true) ?? [];
+                                            } else {
+                                                $kontrolArray = [$item->kontrol];
+                                            }
+                                        }
+                                    @endphp
+                                    @if(count($kontrolArray) > 0)
+                                        <ol class="mb-0" style="padding-left: 20px;">
+                                            @foreach($kontrolArray as $kontrol)
+                                                <li style="margin-bottom: 5px;">{{ Str::limit($kontrol, 100) }}</li>
+                                            @endforeach
+                                        </ol>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
