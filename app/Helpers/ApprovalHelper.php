@@ -26,9 +26,9 @@ class ApprovalHelper
         }
 
         $user = Auth::user();
-        $isAsmanKspi = AuthHelper::isAsmanKspi();
+        $isAsmanSpi = AuthHelper::isAsmanSpi();
         $isKspi = AuthHelper::isKspi();
-        $hasAsmanKspiUsers = AuthHelper::hasAsmanKspiUsers(); // Check if ASMAN KSPI users exist
+        $hasAsmanSpiUsers = AuthHelper::hasAsmanSpiUsers(); // Check if ASMAN SPI users exist
         
         // Log untuk debugging
         Log::info('Processing approval', [
@@ -36,15 +36,15 @@ class ApprovalHelper
             'table' => $item->getTable(),
             'id' => $item->getKey(),
             'current_status' => $item->status_approval,
-            'isAsmanKspi' => $isAsmanKspi,
+            'isAsmanSpi' => $isAsmanSpi,
             'isKspi' => $isKspi,
-            'hasAsmanKspiUsers' => $hasAsmanKspiUsers,
+            'hasAsmanSpiUsers' => $hasAsmanSpiUsers,
             'user_id' => $user->id,
         ]);
 
         if ($action === 'approve') {
-            // Level 1 Approval (ASMAN KSPI)
-            if ($isAsmanKspi && $item->status_approval === 'pending') {
+            // Level 1 Approval (ASMAN SPI)
+            if ($isAsmanSpi && ($item->status_approval === 'pending' || !$item->status_approval)) {
                 try {
                     $tableName = $item->getTable();
                     $itemId = $item->getKey();
@@ -75,7 +75,7 @@ class ApprovalHelper
                     
                     return [
                         'success' => true,
-                        'message' => 'Data berhasil diapprove di Level 1 (ASMAN KSPI)!'
+                        'message' => 'Data berhasil diapprove di Level 1 (ASMAN SPI)!'
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error approving at level 1: ' . $e->getMessage());
@@ -87,8 +87,8 @@ class ApprovalHelper
             }
 
             // Level 2 Approval (KSPI)
-            // KSPI can approve directly if no ASMAN KSPI users exist AND status is pending
-            if ($isKspi && $item->status_approval === 'pending' && !$hasAsmanKspiUsers) {
+            // KSPI can approve directly if no ASMAN SPI users exist AND status is pending
+            if ($isKspi && ($item->status_approval === 'pending' || !$item->status_approval) && !$hasAsmanSpiUsers) {
                 try {
                     $tableName = $item->getTable();
                     $itemId = $item->getKey();
@@ -123,7 +123,7 @@ class ApprovalHelper
                     
                     return [
                         'success' => true,
-                        'message' => 'Data berhasil diapprove langsung oleh KSPI (Tidak ada ASMAN KSPI)!'
+                        'message' => 'Data berhasil diapprove langsung oleh KSPI (Tidak ada ASMAN SPI)!'
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error direct approving by KSPI: ' . $e->getMessage());
@@ -181,7 +181,7 @@ class ApprovalHelper
 
             return [
                 'success' => false,
-                'message' => 'Status tidak valid untuk approval! Status saat ini: ' . $item->status_approval . ', User: ' . ($isAsmanKspi ? 'ASMAN KSPI' : ($isKspi ? 'KSPI' : 'Unknown'))
+                'message' => 'Status tidak valid untuk approval! Status saat ini: ' . ($item->status_approval ?? 'null') . ', User: ' . ($isAsmanSpi ? 'ASMAN SPI' : ($isKspi ? 'KSPI' : 'Unknown'))
             ];
         }
 
@@ -193,8 +193,8 @@ class ApprovalHelper
                 ];
             }
 
-            // Level 1 Reject (ASMAN KSPI)
-            if ($isAsmanKspi && $item->status_approval === 'pending') {
+            // Level 1 Reject (ASMAN SPI)
+            if ($isAsmanSpi && ($item->status_approval === 'pending' || !$item->status_approval)) {
                 try {
                     $tableName = $item->getTable();
                     $itemId = $item->getKey();
@@ -257,7 +257,7 @@ class ApprovalHelper
                     
                     return [
                         'success' => true,
-                        'message' => 'Data berhasil ditolak di Level 1 (ASMAN KSPI) dengan alasan: ' . $rejectionReason
+                        'message' => 'Data berhasil ditolak di Level 1 (ASMAN SPI) dengan alasan: ' . $rejectionReason
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error rejecting at level 1: ' . $e->getMessage(), [
@@ -273,13 +273,14 @@ class ApprovalHelper
             }
 
             // Level 2 Reject (KSPI) - bisa reject dari pending, approved_level1, atau rejected_level1 (berjenjang)
-            if ($isKspi && in_array($item->status_approval, ['pending', 'approved_level1', 'rejected_level1'])) {
+            $currentStatus = $item->status_approval ?? 'pending';
+            if ($isKspi && in_array($currentStatus, ['pending', 'approved_level1', 'rejected_level1'])) {
                 try {
                     $tableName = $item->getTable();
                     $itemId = $item->getKey();
                     
                     // Simpan status sebelumnya untuk menentukan pesan
-                    $previousStatus = $item->status_approval;
+                    $previousStatus = $currentStatus;
                     $isRejectBerjenjang = ($previousStatus === 'rejected_level1');
                     
                     // Check if level fields exist in database
@@ -366,7 +367,7 @@ class ApprovalHelper
 
             return [
                 'success' => false,
-                'message' => 'Status tidak valid untuk reject! Status saat ini: ' . $item->status_approval . ', User: ' . ($isAsmanKspi ? 'ASMAN KSPI' : ($isKspi ? 'KSPI' : 'Unknown'))
+                'message' => 'Status tidak valid untuk reject! Status saat ini: ' . ($item->status_approval ?? 'null') . ', User: ' . ($isAsmanSpi ? 'ASMAN SPI' : ($isKspi ? 'KSPI' : 'Unknown'))
             ];
         }
 

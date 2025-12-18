@@ -232,6 +232,9 @@ class ExitMeetingController extends Controller
         );
 
         if ($result['success']) {
+            // Refresh model untuk mendapatkan status terbaru
+            $item->refresh();
+            
             // Jika approve final (level 2), update status menjadi 'selesai'
             if ($request->action == 'approve' && $item->status_approval === 'approved') {
                 $item->status = 'selesai';

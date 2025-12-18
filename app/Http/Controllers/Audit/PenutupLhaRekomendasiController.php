@@ -150,11 +150,8 @@ class PenutupLhaRekomendasiController extends Controller
                 ];
             });
         
-        // Ambil user dengan role PIC Auditee
+        // Ambil semua user dari master_user untuk dipilih sebagai PIC
         $picUsers = MasterUser::with(['akses', 'auditee'])
-            ->whereHas('akses', function($q) {
-                $q->where('nama_akses', 'PIC Auditee');
-            })
             ->orderBy('nama')
             ->get();
         
@@ -197,27 +194,44 @@ class PenutupLhaRekomendasiController extends Controller
             'rekomendasi' => 'required|string|max:5000',
             'rencana_aksi' => 'required|string|max:5000',
             'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_rekomendasi_id' => 'required|array|min:1',
-            'pic_rekomendasi_id.*' => 'required|exists:master_user,id',
+            'pic_business_contact' => 'required|exists:master_user,id',
+            'pic_approval_1_spi' => 'required|exists:master_user,id',
+            'pic_approval_2_spi' => 'required|exists:master_user,id',
             'target_waktu' => 'required|date',
         ]);
         
         // Ambil data user untuk format PIC Rekomendasi (gabungan)
-        $picUsers = MasterUser::with('auditee')->whereIn('id', $request->pic_rekomendasi_id)->get();
-        $picRekomendasiList = $picUsers->map(function($user) {
-            return $user->nama . ' - ' . ($user->auditee->divisi ?? '-');
-        })->toArray();
-        $picRekomendasi = implode(', ', $picRekomendasiList);
+        $picBusinessContact = MasterUser::with('auditee')->find($request->pic_business_contact);
+        $picApproval1 = MasterUser::with('auditee')->find($request->pic_approval_1_spi);
+        $picApproval2 = MasterUser::with('auditee')->find($request->pic_approval_2_spi);
+        
+        $picRekomendasiList = [];
+        if ($picBusinessContact) {
+            $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
+        }
+        if ($picApproval1) {
+            $picRekomendasiList[] = 'APPROVAL 1 SPI: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
+        }
+        if ($picApproval2) {
+            $picRekomendasiList[] = 'APPROVAL 2 SPI: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
+        }
+        $picRekomendasi = implode(' | ', $picRekomendasiList);
         
         // Create record with pelaporan_temuan_id stored in pelaporan_isi_lha_id field for compatibility
         $data = $request->all();
         $data['pic_rekomendasi'] = $picRekomendasi;
-        unset($data['pic_rekomendasi_id']); // Hapus pic_rekomendasi_id karena tidak ada di tabel
+        unset($data['pic_business_contact']);
+        unset($data['pic_approval_1_spi']);
+        unset($data['pic_approval_2_spi']);
         
         $rekomendasi = PenutupLhaRekomendasi::create($data);
         
-        // Attach PIC users to rekomendasi
-        $rekomendasi->picUsers()->attach($request->pic_rekomendasi_id);
+        // Attach PIC users to rekomendasi dengan pic_type
+        $rekomendasi->picUsers()->attach([
+            $request->pic_business_contact => ['pic_type' => 'business_contact'],
+            $request->pic_approval_1_spi => ['pic_type' => 'approval_1_spi'],
+            $request->pic_approval_2_spi => ['pic_type' => 'approval_2_spi'],
+        ]);
         
         // Reload dengan relasi untuk mendapatkan nomor surat tugas
         $rekomendasi->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
@@ -236,17 +250,19 @@ class PenutupLhaRekomendasiController extends Controller
     {
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'picUsers.auditee'])->findOrFail($id);
         
-        // Ambil user dengan role PIC Auditee
+        // Ambil semua user dari master_user untuk dipilih sebagai PIC
         $picUsers = MasterUser::with(['akses', 'auditee'])
-            ->whereHas('akses', function($q) {
-                $q->where('nama_akses', 'PIC Auditee');
-            })
             ->orderBy('nama')
             ->get();
         
-        // Ambil ID PIC yang sudah terpilih dari relasi
-        $selectedPicUserIds = $item->picUsers->pluck('id')->toArray();
-        $item->selected_pic_user_ids = $selectedPicUserIds;
+        // Ambil PIC berdasarkan pic_type dari pivot table
+        $picBusinessContact = $item->picUsers()->wherePivot('pic_type', 'business_contact')->first();
+        $picApproval1 = $item->picUsers()->wherePivot('pic_type', 'approval_1_spi')->first();
+        $picApproval2 = $item->picUsers()->wherePivot('pic_type', 'approval_2_spi')->first();
+        
+        $item->pic_business_contact_id = $picBusinessContact ? $picBusinessContact->id : null;
+        $item->pic_approval_1_spi_id = $picApproval1 ? $picApproval1->id : null;
+        $item->pic_approval_2_spi_id = $picApproval2 ? $picApproval2->id : null;
         
         return view('audit.pelaporan.penutup-lha.edit', compact('item', 'picUsers'));
     }
@@ -259,26 +275,43 @@ class PenutupLhaRekomendasiController extends Controller
             'rekomendasi' => 'required|string|max:5000',
             'rencana_aksi' => 'required|string|max:5000',
             'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_rekomendasi_id' => 'required|array|min:1',
-            'pic_rekomendasi_id.*' => 'required|exists:master_user,id',
+            'pic_business_contact' => 'required|exists:master_user,id',
+            'pic_approval_1_spi' => 'required|exists:master_user,id',
+            'pic_approval_2_spi' => 'required|exists:master_user,id',
             'target_waktu' => 'required|date',
         ]);
         
         // Ambil data user untuk format PIC Rekomendasi (gabungan)
-        $picUsers = MasterUser::with('auditee')->whereIn('id', $request->pic_rekomendasi_id)->get();
-        $picRekomendasiList = $picUsers->map(function($user) {
-            return $user->nama . ' - ' . ($user->auditee->divisi ?? '-');
-        })->toArray();
-        $picRekomendasi = implode(', ', $picRekomendasiList);
+        $picBusinessContact = MasterUser::with('auditee')->find($request->pic_business_contact);
+        $picApproval1 = MasterUser::with('auditee')->find($request->pic_approval_1_spi);
+        $picApproval2 = MasterUser::with('auditee')->find($request->pic_approval_2_spi);
+        
+        $picRekomendasiList = [];
+        if ($picBusinessContact) {
+            $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
+        }
+        if ($picApproval1) {
+            $picRekomendasiList[] = 'APPROVAL 1 SPI: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
+        }
+        if ($picApproval2) {
+            $picRekomendasiList[] = 'APPROVAL 2 SPI: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
+        }
+        $picRekomendasi = implode(' | ', $picRekomendasiList);
         
         $data = $request->all();
         $data['pic_rekomendasi'] = $picRekomendasi;
-        unset($data['pic_rekomendasi_id']); // Hapus pic_rekomendasi_id karena tidak ada di tabel
+        unset($data['pic_business_contact']);
+        unset($data['pic_approval_1_spi']);
+        unset($data['pic_approval_2_spi']);
         
         $item->update($data);
         
-        // Sync PIC users to rekomendasi
-        $item->picUsers()->sync($request->pic_rekomendasi_id);
+        // Sync PIC users to rekomendasi dengan pic_type
+        $item->picUsers()->sync([
+            $request->pic_business_contact => ['pic_type' => 'business_contact'],
+            $request->pic_approval_1_spi => ['pic_type' => 'approval_1_spi'],
+            $request->pic_approval_2_spi => ['pic_type' => 'approval_2_spi'],
+        ]);
         
         // Ambil nomor surat tugas dari temuan
         $nomorSuratTugas = null;

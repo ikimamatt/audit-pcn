@@ -148,8 +148,8 @@
                                         
                                         @canApproveReject
                                             @if($item->status_approval == 'pending')
-                                                {{-- Level 1: ASMAN KSPI can approve/reject --}}
-                                                @isAsmanKspi
+                                                {{-- Level 1: ASMAN SPI can approve/reject --}}
+                                                @isAsmanSpi
                                                     <form id="approval-form-{{ $item->id }}" action="{{ route('audit.entry-meeting.approval', $item->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
                                                         <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $item->id }})">
@@ -160,20 +160,20 @@
                                                         </button>
                                                         <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                     </form>
-                                                @endisAsmanKspi
-                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
+                                                @endisAsmanSpi
+                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN SPI user exists) --}}
                                                 @isKspi
                                                     @php
-                                                        $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
+                                                        $hasAsmanSpi = \App\Helpers\AuthHelper::hasAsmanSpiUsers();
                                                     @endphp
                                                     <form id="approval-form-{{ $item->id }}" action="{{ route('audit.entry-meeting.approval', $item->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
-                                                        @if($hasAsmanKspi)
-                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
+                                                        @if($hasAsmanSpi)
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN SPI terlebih dahulu">
                                                                 <i class="mdi mdi-check"></i> Approve Level 2
                                                             </button>
                                                         @else
-                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN SPI)">
                                                                 <i class="mdi mdi-check"></i> Approve
                                                             </button>
                                                         @endif
@@ -198,7 +198,7 @@
                                                     </form>
                                                 @endisKspi
                                             @elseif($item->status_approval == 'rejected_level1')
-                                                {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
+                                                {{-- Level 2: KSPI can reject after ASMAN SPI reject (berjenjang) --}}
                                                 @isKspi
                                                     <form id="approval-form-{{ $item->id }}" action="{{ route('audit.entry-meeting.approval', $item->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
@@ -267,8 +267,8 @@
         Swal.fire({
             title: 'Tidak Dapat Approve',
             html: '<div class="text-start">' +
-                  '<p><strong>Data belum diapprove oleh ASMAN KSPI!</strong></p>' +
-                  '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN KSPI terlebih dahulu (Level 1).</p>' +
+                  '<p><strong>Data belum diapprove oleh ASMAN SPI!</strong></p>' +
+                  '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN SPI terlebih dahulu (Level 1).</p>' +
                   '<p class="text-muted">Status saat ini: <strong>Pending</strong></p>' +
                   '</div>',
             icon: 'warning',

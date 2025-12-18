@@ -25,7 +25,12 @@ class AppServiceProvider extends ServiceProvider
             return \App\Helpers\AuthHelper::canApproveReject();
         });
 
-        // Register Blade directive for checking if user is ASMAN KSPI
+        // Register Blade directive for checking if user is ASMAN SPI
+        Blade::if('isAsmanSpi', function () {
+            return \App\Helpers\AuthHelper::isAsmanSpi();
+        });
+
+        // Register Blade directive for checking if user is ASMAN KSPI (backward compatibility)
         Blade::if('isAsmanKspi', function () {
             return \App\Helpers\AuthHelper::isAsmanKspi();
         });
@@ -33,6 +38,11 @@ class AppServiceProvider extends ServiceProvider
         // Register Blade directive for checking if user is KSPI
         Blade::if('isKspi', function () {
             return \App\Helpers\AuthHelper::isKspi();
+        });
+
+        // Register Blade directive for checking if user is AUDITOR
+        Blade::if('isAuditor', function () {
+            return \App\Helpers\AuthHelper::isAuditor();
         });
 
         // Register Blade directive for checking if user is BOD

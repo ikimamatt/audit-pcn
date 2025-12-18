@@ -21,6 +21,18 @@ class RealisasiAudit extends Model
         'approved_by',
         'approved_at',
         'rejection_reason',
+        // Level 1 approval fields
+        'approved_by_level1',
+        'approved_at_level1',
+        'rejected_by_level1',
+        'rejected_at_level1',
+        'rejection_reason_level1',
+        // Level 2 approval fields
+        'approved_by_level2',
+        'approved_at_level2',
+        'rejected_by_level2',
+        'rejected_at_level2',
+        'rejection_reason_level2',
     ];
 
     protected $casts = [

@@ -17,8 +17,8 @@ class PelaporanHasilAuditSeeder extends Seeder
                 'perencanaan_audit_id' => 1,
                 'nomor_lha_lhk' => '001.LHA/PO/SPI.01.02/SPI.PCN/2024',
                 'jenis_lha_lhk' => 'LHA',
-                'po_audit_konsul' => 'PO AUDIT',
                 'kode_spi' => 'SPI.01.02',
+                'jenis_audit_id' => null, // Bisa diisi dengan ID dari master_jenis_audit jika ada
                 'status_approval' => 'approved',
                 'approved_by' => 1,
                 'approved_at' => Carbon::now(),
@@ -31,8 +31,8 @@ class PelaporanHasilAuditSeeder extends Seeder
                 'perencanaan_audit_id' => 1,
                 'nomor_lha_lhk' => '002.LHK/KONSUL/SPI.01.03/SPI.PCN/2024',
                 'jenis_lha_lhk' => 'LHK',
-                'po_audit_konsul' => 'KONSUL',
                 'kode_spi' => 'SPI.01.03',
+                'jenis_audit_id' => null, // Bisa diisi dengan ID dari master_jenis_audit jika ada
                 'status_approval' => 'pending',
                 'approved_by' => null,
                 'approved_at' => null,
@@ -45,8 +45,8 @@ class PelaporanHasilAuditSeeder extends Seeder
                 'perencanaan_audit_id' => 1,
                 'nomor_lha_lhk' => '003.LHA/PO/SPI.01.04/SPI.PCN/2024',
                 'jenis_lha_lhk' => 'LHA',
-                'po_audit_konsul' => 'PO AUDIT',
                 'kode_spi' => 'SPI.01.04',
+                'jenis_audit_id' => null, // Bisa diisi dengan ID dari master_jenis_audit jika ada
                 'status_approval' => 'approved',
                 'approved_by' => 1,
                 'approved_at' => Carbon::now(),

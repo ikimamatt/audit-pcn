@@ -20,7 +20,15 @@ class MasterUserController extends Controller
     public function create()
     {
         $auditees = MasterAuditee::all();
-        $aksesUsers = MasterAksesUser::all();
+        // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
+        $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
+        // Ambil akses dan urutkan sesuai urutan yang diinginkan
+        $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
+            ->get()
+            ->sortBy(function($item) use ($allowedAkses) {
+                return array_search($item->nama_akses, $allowedAkses);
+            })
+            ->values();
         return view('master-data.user.create', compact('auditees', 'aksesUsers'));
     }
 
@@ -56,7 +64,25 @@ class MasterUserController extends Controller
     public function edit(MasterUser $masterUser)
     {
         $auditees = MasterAuditee::all();
-        $aksesUsers = MasterAksesUser::all();
+        // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
+        $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
+        
+        // Jika user saat ini memiliki akses yang tidak ada dalam daftar, tambahkan juga
+        if ($masterUser->master_akses_user_id) {
+            $currentAksesUser = MasterAksesUser::find($masterUser->master_akses_user_id);
+            if ($currentAksesUser && !in_array($currentAksesUser->nama_akses, $allowedAkses)) {
+                $allowedAkses[] = $currentAksesUser->nama_akses;
+            }
+        }
+        
+        // Ambil akses dan urutkan sesuai urutan yang diinginkan
+        $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
+            ->get()
+            ->sortBy(function($item) use ($allowedAkses) {
+                return array_search($item->nama_akses, $allowedAkses);
+            })
+            ->values();
+            
         return view('master-data.user.edit', compact('masterUser', 'auditees', 'aksesUsers'));
     }
 

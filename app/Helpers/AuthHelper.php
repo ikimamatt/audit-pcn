@@ -9,7 +9,7 @@ class AuthHelper
 {
     /**
      * Check if current user has access to approve/reject
-     * Only ASMAN KSPI and KSPI can approve/reject
+     * Only ASMAN SPI and KSPI can approve/reject
      */
     public static function canApproveReject(): bool
     {
@@ -30,13 +30,13 @@ class AuthHelper
 
         $namaAkses = $user->akses->nama_akses;
         
-        return in_array($namaAkses, ['ASMAN KSPI', 'KSPI']);
+        return in_array($namaAkses, ['ASMAN SPI', 'KSPI']);
     }
 
     /**
-     * Check if current user is ASMAN KSPI
+     * Check if current user is ASMAN SPI
      */
-    public static function isAsmanKspi(): bool
+    public static function isAsmanSpi(): bool
     {
         if (!Auth::check()) {
             return false;
@@ -52,7 +52,16 @@ class AuthHelper
             return false;
         }
 
-        return $user->akses->nama_akses === 'ASMAN KSPI';
+        return $user->akses->nama_akses === 'ASMAN SPI';
+    }
+
+    /**
+     * Check if current user is ASMAN KSPI (backward compatibility)
+     * @deprecated Use isAsmanSpi() instead
+     */
+    public static function isAsmanKspi(): bool
+    {
+        return self::isAsmanSpi();
     }
 
     /**
@@ -78,12 +87,36 @@ class AuthHelper
     }
 
     /**
-     * Check if current user can approve at level 1 (ASMAN KSPI)
+     * Check if current user is AUDITOR
+     */
+    public static function isAuditor(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return false;
+        }
+
+        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
+        $namaAkses = $user->akses->nama_akses;
+        return in_array($namaAkses, ['Auditor', 'AUDITOR']);
+    }
+
+    /**
+     * Check if current user can approve at level 1 (ASMAN SPI)
      * Can approve if status is 'pending'
      */
     public static function canApproveLevel1($item): bool
     {
-        if (!self::isAsmanKspi()) {
+        if (!self::isAsmanSpi()) {
             return false;
         }
 
@@ -92,7 +125,7 @@ class AuthHelper
 
     /**
      * Check if current user can approve at level 2 (KSPI)
-     * Can approve if status is 'approved_level1' or 'pending' (if no ASMAN KSPI user exists)
+     * Can approve if status is 'approved_level1' or 'pending' (if no ASMAN SPI user exists)
      */
     public static function canApproveLevel2($item): bool
     {
@@ -100,22 +133,22 @@ class AuthHelper
             return false;
         }
 
-        // Jika tidak ada user ASMAN KSPI, KSPI bisa langsung approve dari pending
-        if (!self::hasAsmanKspiUsers()) {
+        // Jika tidak ada user ASMAN SPI, KSPI bisa langsung approve dari pending
+        if (!self::hasAsmanSpiUsers()) {
             return $item->status_approval === 'pending';
         }
 
-        // Jika ada user ASMAN KSPI, harus menunggu approval level 1
+        // Jika ada user ASMAN SPI, harus menunggu approval level 1
         return $item->status_approval === 'approved_level1';
     }
 
     /**
-     * Check if current user can reject at level 1 (ASMAN KSPI)
+     * Check if current user can reject at level 1 (ASMAN SPI)
      * Can reject if status is 'pending'
      */
     public static function canRejectLevel1($item): bool
     {
-        if (!self::isAsmanKspi()) {
+        if (!self::isAsmanSpi()) {
             return false;
         }
 
@@ -136,52 +169,51 @@ class AuthHelper
     }
 
     /**
-     * Check if there are any users with ASMAN KSPI access in the database
+     * Check if there are any users with ASMAN SPI access in the database
+     * 
+     * @return bool
+     */
+    public static function hasAsmanSpiUsers(): bool
+    {
+        // Cache the result to avoid multiple database queries in a single request
+        static $hasAsmanSpi = null;
+
+        if ($hasAsmanSpi === null) {
+            $asmanSpiAksesId = DB::table('master_akses_user')
+                                ->where('nama_akses', 'ASMAN SPI')
+                                ->value('id');
+
+            if ($asmanSpiAksesId) {
+                $hasAsmanSpi = DB::table('master_user')
+                                ->where('master_akses_user_id', $asmanSpiAksesId)
+                                ->exists();
+            } else {
+                $hasAsmanSpi = false;
+            }
+        }
+        return $hasAsmanSpi;
+    }
+
+    /**
+     * Check if there are any users with ASMAN KSPI access in the database (backward compatibility)
+     * @deprecated Use hasAsmanSpiUsers() instead
      * 
      * @return bool
      */
     public static function hasAsmanKspiUser(): bool
     {
-        $asmanKspiAkses = DB::table('master_akses_user')
-            ->where('nama_akses', 'ASMAN KSPI')
-            ->first();
-
-        if (!$asmanKspiAkses) {
-            return false;
-        }
-
-        $asmanKspiCount = DB::table('master_user')
-            ->where('master_akses_user_id', $asmanKspiAkses->id)
-            ->count();
-
-        return $asmanKspiCount > 0;
+        return self::hasAsmanSpiUsers();
     }
 
     /**
-     * Check if there are any users with ASMAN KSPI access in the database
-     * Alias for hasAsmanKspiUser() for consistency
+     * Check if there are any users with ASMAN KSPI access in the database (backward compatibility)
+     * @deprecated Use hasAsmanSpiUsers() instead
      * 
      * @return bool
      */
     public static function hasAsmanKspiUsers(): bool
     {
-        // Cache the result to avoid multiple database queries in a single request
-        static $hasAsmanKspi = null;
-
-        if ($hasAsmanKspi === null) {
-            $asmanKspiAksesId = DB::table('master_akses_user')
-                                ->where('nama_akses', 'ASMAN KSPI')
-                                ->value('id');
-
-            if ($asmanKspiAksesId) {
-                $hasAsmanKspi = DB::table('master_user')
-                                ->where('master_akses_user_id', $asmanKspiAksesId)
-                                ->exists();
-            } else {
-                $hasAsmanKspi = false;
-            }
-        }
-        return $hasAsmanKspi;
+        return self::hasAsmanSpiUsers();
     }
 
     /**
@@ -209,8 +241,9 @@ class AuthHelper
 
         $namaAkses = $user->akses->nama_akses;
         
-        // User dengan akses KSPI, ASMAN KSPI, atau Auditor bisa melihat semua data
-        if (in_array($namaAkses, ['KSPI', 'ASMAN KSPI', 'Auditor'])) {
+        // User dengan akses KSPI, ASMAN SPI, atau Auditor bisa melihat semua data
+        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
+        if (in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR'])) {
             return null; // null berarti bisa melihat semua
         }
 
@@ -245,7 +278,49 @@ class AuthHelper
 
         $namaAkses = $user->akses->nama_akses;
         
-        return in_array($namaAkses, ['KSPI', 'ASMAN KSPI', 'Auditor']);
+        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
+        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR']);
+    }
+
+    /**
+     * Check if current user is PIC (has role PIC Auditee or is assigned as PIC in any rekomendasi)
+     * 
+     * @return bool
+     */
+    public static function isPic(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return false;
+        }
+
+        $namaAkses = $user->akses->nama_akses;
+        
+        // Check if user has PIC Auditee role
+        return in_array($namaAkses, ['PIC Auditee', 'PIC Auditor']);
+    }
+
+    /**
+     * Get current user ID
+     * 
+     * @return int|null
+     */
+    public static function getCurrentUserId(): ?int
+    {
+        if (!Auth::check()) {
+            return null;
+        }
+
+        return Auth::id();
     }
 
     /**

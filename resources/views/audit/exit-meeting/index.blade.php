@@ -173,7 +173,8 @@
                                         @php
                                             $statusApprovalClass = '';
                                             $statusApprovalText = '';
-                                            switch($realisasiAudit->status_approval) {
+                                            $currentStatusApproval = $realisasiAudit->status_approval ?? 'pending';
+                                            switch($currentStatusApproval) {
                                                 case 'approved':
                                                     $statusApprovalClass = 'bg-success';
                                                     $statusApprovalText = 'Approved (Final)';
@@ -202,11 +203,14 @@
                                         <span class="badge {{ $statusApprovalClass }}">{{ $statusApprovalText }}</span>
                                     </td>
                                     <td>
-                                        @if($realisasiAudit->status_approval == 'rejected' && $realisasiAudit->rejection_reason_level2)
+                                        @php
+                                            $currentStatusApproval = $realisasiAudit->status_approval ?? 'pending';
+                                        @endphp
+                                        @if($currentStatusApproval == 'rejected' && $realisasiAudit->rejection_reason_level2)
                                             <span class="text-danger" title="{{ $realisasiAudit->rejection_reason_level2 }}">
                                                 Level 2: {{ Str::limit($realisasiAudit->rejection_reason_level2, 30) }}
                                             </span>
-                                        @elseif($realisasiAudit->status_approval == 'rejected_level1' && $realisasiAudit->rejection_reason_level1)
+                                        @elseif($currentStatusApproval == 'rejected_level1' && $realisasiAudit->rejection_reason_level1)
                                             <span class="text-danger" title="{{ $realisasiAudit->rejection_reason_level1 }}">
                                                 Level 1: {{ Str::limit($realisasiAudit->rejection_reason_level1, 30) }}
                                             </span>
@@ -255,9 +259,12 @@
                                         </form>
                                         @endcanModifyData
                                         @canApproveReject
-                                            @if($realisasiAudit->status_approval == 'pending' || !$realisasiAudit->status_approval)
-                                                {{-- Level 1: ASMAN KSPI can approve/reject --}}
-                                                @isAsmanKspi
+                                            @php
+                                                $statusApproval = $realisasiAudit->status_approval ?? 'pending';
+                                            @endphp
+                                            @if($statusApproval == 'pending')
+                                                {{-- Level 1: ASMAN SPI can approve/reject --}}
+                                                @isAsmanSpi
                                                     <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
                                                         <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})">
@@ -268,20 +275,20 @@
                                                         </button>
                                                         <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
                                                     </form>
-                                                @endisAsmanKspi
-                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
+                                                @endisAsmanSpi
+                                                {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN SPI user exists) --}}
                                                 @isKspi
                                                     @php
-                                                        $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
+                                                        $hasAsmanSpi = \App\Helpers\AuthHelper::hasAsmanSpiUsers();
                                                     @endphp
                                                     <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
-                                                        @if($hasAsmanKspi)
-                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveDataPending({{ $realisasiAudit->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
+                                                        @if($hasAsmanSpi)
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveDataPending({{ $realisasiAudit->id }})" title="Data harus diapprove oleh ASMAN SPI terlebih dahulu">
                                                                 <i class="mdi mdi-check"></i> Approve Level 2
                                                             </button>
                                                         @else
-                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
+                                                            <button type="button" class="btn btn-sm btn-success" onclick="approveData({{ $realisasiAudit->id }})" title="Approve langsung (tidak ada ASMAN SPI)">
                                                                 <i class="mdi mdi-check"></i> Approve
                                                             </button>
                                                         @endif
@@ -291,7 +298,7 @@
                                                         <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
                                                     </form>
                                                 @endisKspi
-                                            @elseif($realisasiAudit->status_approval == 'approved_level1')
+                                            @elseif($statusApproval == 'approved_level1')
                                                 {{-- Level 2: KSPI can approve/reject after level 1 --}}
                                                 @isKspi
                                                     <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
@@ -305,8 +312,8 @@
                                                         <input type="hidden" name="action" id="action-{{ $realisasiAudit->id }}" value="">
                                                     </form>
                                                 @endisKspi
-                                            @elseif($realisasiAudit->status_approval == 'rejected_level1')
-                                                {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
+                                            @elseif($statusApproval == 'rejected_level1')
+                                                {{-- Level 2: KSPI can reject after ASMAN SPI reject (berjenjang) --}}
                                                 @isKspi
                                                     <form id="approval-form-{{ $realisasiAudit->id }}" action="{{ route('audit.exit-meeting.approval', $realisasiAudit->id) }}" method="POST" style="display:inline-block">
                                                         @csrf
@@ -334,7 +341,7 @@
 
 @section('script')
     @vite([ 'resources/js/pages/datatable.init.js'])
-    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Delete confirmation
         document.querySelectorAll('.btn-delete-swal').forEach(function(btn) {
@@ -383,8 +390,8 @@
             Swal.fire({
                 title: 'Tidak Dapat Approve',
                 html: '<div class="text-start">' +
-                      '<p><strong>Data belum diapprove oleh ASMAN KSPI!</strong></p>' +
-                      '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN KSPI terlebih dahulu (Level 1).</p>' +
+                      '<p><strong>Data belum diapprove oleh ASMAN SPI!</strong></p>' +
+                      '<p>Untuk melakukan approval Level 2, data harus diapprove oleh ASMAN SPI terlebih dahulu (Level 1).</p>' +
                       '<p class="text-muted">Status saat ini: <strong>Pending</strong></p>' +
                       '</div>',
                 icon: 'warning',
