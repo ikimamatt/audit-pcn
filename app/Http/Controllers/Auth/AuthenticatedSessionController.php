@@ -35,6 +35,13 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user(); // Get the authenticated MasterUser instance
+        
+        // Set login success message with user info
+        $request->session()->flash('login_success', [
+            'name' => $user->nama ?? 'User',
+            'role' => $user->akses->nama_akses ?? 'User',
+            'time' => now()->format('H:i:s')
+        ]);
 
         if ($user && $user->akses) {
             switch ($user->akses->nama_akses) {

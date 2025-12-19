@@ -29,6 +29,57 @@
                         });
                     </script>
                 @endif
+                
+                @if(session('login_success'))
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            let timerInterval;
+                            Swal.fire({
+                                icon: 'success',
+                                title: '🎉 Selamat Datang!',
+                                html: `
+                                    <div style="text-align: center;">
+                                        <p style="font-size: 1.1rem; margin: 10px 0;">
+                                            <strong>{{ session('login_success')['name'] }}</strong>
+                                        </p>
+                                        <p style="color: #666; margin: 5px 0;">
+                                            <i class="mdi mdi-shield-account"></i> 
+                                            Role: <strong>{{ session('login_success')['role'] }}</strong>
+                                        </p>
+                                        <p style="color: #666; margin: 5px 0;">
+                                            <i class="mdi mdi-clock-outline"></i> 
+                                            Login pada: <strong>{{ session('login_success')['time'] }}</strong>
+                                        </p>
+                                        <hr style="margin: 15px 0; border-color: #e0e0e0;">
+                                        <p style="color: #999; font-size: 0.9rem;">
+                                            <i class="mdi mdi-information-outline"></i> 
+                                            Popup akan tertutup otomatis dalam <strong><span id="timer"></span></strong> detik
+                                        </p>
+                                    </div>
+                                `,
+                                showConfirmButton: true,
+                                confirmButtonText: '<i class="mdi mdi-check"></i> OK',
+                                confirmButtonColor: '#3085d6',
+                                allowOutsideClick: true,
+                                allowEscapeKey: true,
+                                timer: 5000,
+                                timerProgressBar: true,
+                                didOpen: () => {
+                                    const timer = Swal.getHtmlContainer().querySelector('#timer');
+                                    timerInterval = setInterval(() => {
+                                        const timeLeft = Math.ceil(Swal.getTimerLeft() / 1000);
+                                        timer.textContent = timeLeft;
+                                    }, 100);
+                                },
+                                willClose: () => {
+                                    clearInterval(timerInterval);
+                                }
+                            });
+                        });
+                    </script>
+                @endif
+                
                 @yield('content')
             </div>
         </div>
