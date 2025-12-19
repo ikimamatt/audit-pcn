@@ -31,9 +31,19 @@
                 @endif
                 
                 @if(session('login_success'))
-                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" 
+                            onerror="this.onerror=null; this.src='https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.1/sweetalert2.all.min.js'">
+                    </script>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
+                            // Check if Swal is loaded
+                            if (typeof Swal === 'undefined') {
+                                console.error('SweetAlert2 is not loaded!');
+                                // Fallback: show simple alert
+                                alert('Selamat Datang!\n\n{{ session('login_success')['name'] }}\nRole: {{ session('login_success')['role'] }}\nLogin pada: {{ session('login_success')['time'] }}');
+                                return;
+                            }
+                            
                             let timerInterval;
                             Swal.fire({
                                 icon: 'success',
