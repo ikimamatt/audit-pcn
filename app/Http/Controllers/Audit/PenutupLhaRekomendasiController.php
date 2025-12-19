@@ -386,7 +386,6 @@ class PenutupLhaRekomendasiController extends Controller
             'komentar' => 'required|array|min:1',
             'komentar.*' => 'required|string|min:3',
             'file_eviden' => 'nullable|file|max:2048',
-            'status_tindak_lanjut' => 'nullable|in:open,on_progress,closed',
         ]);
         
         $rekomendasi = PenutupLhaRekomendasi::findOrFail($rekomendasiId);
@@ -399,7 +398,9 @@ class PenutupLhaRekomendasiController extends Controller
         // Gabungkan semua komentar menjadi satu string dengan separator
         $combinedKomentar = implode("\n\n---\n\n", $validKomentar);
         
-        $statusTindakLanjut = $request->status_tindak_lanjut ?? 'open';
+        // Ambil status yang sudah ada, jangan ubah dari form (status hanya bisa diubah dari halaman pemantauan)
+        $latestTindakLanjut = $rekomendasi->tindakLanjut()->orderBy('created_at', 'desc')->first();
+        $statusTindakLanjut = $latestTindakLanjut ? $latestTindakLanjut->status_tindak_lanjut : ($rekomendasi->status_tindak_lanjut ?? 'open');
         
         // Buat satu record tindak lanjut dengan komentar yang digabungkan
         $data = [
@@ -416,15 +417,19 @@ class PenutupLhaRekomendasiController extends Controller
         
         \App\Models\PenutupLhaTindakLanjut::create($data);
         
-        // Update status tindak lanjut di tabel rekomendasi utama berdasarkan tindak lanjut terbaru
-        $rekomendasi->update([
-            'status_tindak_lanjut' => $statusTindakLanjut
-        ]);
+        // Tidak perlu update status di rekomendasi utama karena status tidak berubah
+        // Status hanya bisa diubah melalui halaman pemantauan oleh user yang berwenang
         
         $komentarCount = count($validKomentar);
         
-        return redirect()->route('audit.pemantauan.index')
-            ->with('success', "Berhasil menambahkan tindak lanjut dengan {$komentarCount} komentar! Status: " . ucfirst(str_replace('_', ' ', $statusTindakLanjut)));
+        // Ambil nomor surat tugas untuk redirect
+        $nomorSuratTugas = null;
+        if ($rekomendasi->temuan && $rekomendasi->temuan->pelaporanHasilAudit && $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit) {
+            $nomorSuratTugas = $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
+        }
+        
+        return redirect()->route('audit.pemantauan.index', ['nomor_surat_tugas' => $nomorSuratTugas])
+            ->with('success', "Berhasil menambahkan tindak lanjut dengan {$komentarCount} komentar!");
     }
 
     public function editTindakLanjut($id)

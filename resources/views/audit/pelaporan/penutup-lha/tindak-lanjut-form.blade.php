@@ -126,27 +126,17 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label">Tanggal Penyelesaian (Real Waktu)</label>
                                         <input type="date" name="real_waktu" class="form-control" value="{{ old('real_waktu') }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Status Tindak Lanjut</label>
-                                        <select name="status_tindak_lanjut" class="form-control">
-                                            @php
-                                                // Ambil status terbaru dari tindak lanjut atau default dari rekomendasi
-                                                $currentStatus = $rekomendasi->tindakLanjut->sortByDesc('created_at')->first()?->status_tindak_lanjut ?? $rekomendasi->status_tindak_lanjut ?? 'open';
-                                            @endphp
-                                            <option value="open" {{ (old('status_tindak_lanjut', $currentStatus) == 'open') ? 'selected' : '' }}>Open</option>
-                                            <option value="on_progress" {{ (old('status_tindak_lanjut', $currentStatus) == 'on_progress') ? 'selected' : '' }}>On Progress</option>
-                                            <option value="closed" {{ (old('status_tindak_lanjut', $currentStatus) == 'closed') ? 'selected' : '' }}>Closed</option>
-                                        </select>
+                                        <small class="form-text text-muted">Isi tanggal penyelesaian jika tindak lanjut sudah selesai</small>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Hidden field to preserve current status - status changes can only be done from pemantauan page -->
+                            <input type="hidden" name="status_tindak_lanjut" value="{{ $rekomendasi->tindakLanjut->sortByDesc('created_at')->first()?->status_tindak_lanjut ?? $rekomendasi->status_tindak_lanjut ?? 'open' }}">
                             
                             <!-- Dynamic Komentar Fields -->
                             <div class="mb-3">

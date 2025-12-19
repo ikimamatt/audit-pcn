@@ -15,13 +15,12 @@ class PemantauanAuditController extends Controller
     {
         $currentUserId = AuthHelper::getCurrentUserId();
         $canSeeAllData = AuthHelper::canSeeAllData();
-        $isPic = AuthHelper::isPic();
         
         // Ambil semua perencanaan audit yang memiliki rekomendasi
         $query = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
-        // Jika user adalah PIC (bukan admin), filter hanya rekomendasi dimana user tersebut adalah PIC
-        if ($isPic && !$canSeeAllData && $currentUserId) {
+        // Jika user tidak bisa melihat semua data, filter hanya rekomendasi dimana user tersebut adalah PIC
+        if (!$canSeeAllData && $currentUserId) {
             $query->whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi.picUsers', function($q) use ($currentUserId) {
                 $q->where('master_user_id', $currentUserId);
             });
@@ -45,15 +44,15 @@ class PemantauanAuditController extends Controller
         
         $nomorSuratTugasList = $query->with(['pelaporanHasilAudit.temuan.penutupLhaRekomendasi'])
             ->get()
-            ->map(function($perencanaan) use ($currentUserId, $canSeeAllData, $isPic) {
+            ->map(function($perencanaan) use ($currentUserId, $canSeeAllData) {
                 $totalRekomendasi = 0;
                 $nomorLhaLhkList = [];
                 
                 foreach ($perencanaan->pelaporanHasilAudit as $lha) {
                     foreach ($lha->temuan as $temuan) {
                         if ($temuan->penutupLhaRekomendasi) {
-                            // Jika user adalah PIC, hanya hitung rekomendasi dimana user tersebut adalah PIC
-                            if ($isPic && !$canSeeAllData && $currentUserId) {
+                            // Jika user tidak bisa melihat semua data, hanya hitung rekomendasi dimana user tersebut adalah PIC
+                            if (!$canSeeAllData && $currentUserId) {
                                 $isUserPic = $temuan->penutupLhaRekomendasi->picUsers()
                                     ->where('master_user_id', $currentUserId)
                                     ->exists();
@@ -85,7 +84,7 @@ class PemantauanAuditController extends Controller
         // Ambil daftar jenis audit untuk filter dropdown (dengan filter PIC jika perlu)
         $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
-        if ($isPic && !$canSeeAllData && $currentUserId) {
+        if (!$canSeeAllData && $currentUserId) {
             $jenisAuditQuery->whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi.picUsers', function($q) use ($currentUserId) {
                 $q->where('master_user_id', $currentUserId);
             });
@@ -110,7 +109,6 @@ class PemantauanAuditController extends Controller
         $nomorSuratTugas = $request->get('nomor_surat_tugas');
         $currentUserId = AuthHelper::getCurrentUserId();
         $canSeeAllData = AuthHelper::canSeeAllData();
-        $isPic = AuthHelper::isPic();
         
         // Load data with all necessary relationships
         $query = PenutupLhaRekomendasi::with([
@@ -126,8 +124,8 @@ class PemantauanAuditController extends Controller
             });
         }
         
-        // Jika user adalah PIC (bukan admin), filter hanya rekomendasi dimana user tersebut adalah PIC
-        if ($isPic && !$canSeeAllData && $currentUserId) {
+        // Jika user tidak bisa melihat semua data, filter hanya rekomendasi dimana user tersebut adalah PIC
+        if (!$canSeeAllData && $currentUserId) {
             $query->whereHas('picUsers', function($q) use ($currentUserId) {
                 $q->where('master_user_id', $currentUserId);
             });
@@ -154,15 +152,14 @@ class PemantauanAuditController extends Controller
     {
         $currentUserId = AuthHelper::getCurrentUserId();
         $canSeeAllData = AuthHelper::canSeeAllData();
-        $isPic = AuthHelper::isPic();
         
         $item = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
             'picUsers'
         ])->findOrFail($id);
         
-        // Jika user adalah PIC (bukan admin), pastikan user tersebut adalah PIC dari rekomendasi ini
-        if ($isPic && !$canSeeAllData && $currentUserId) {
+        // Jika user tidak bisa melihat semua data, pastikan user tersebut adalah PIC dari rekomendasi ini
+        if (!$canSeeAllData && $currentUserId) {
             $isUserPic = $item->picUsers()->where('master_user_id', $currentUserId)->exists();
             if (!$isUserPic) {
                 abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi ini.');
@@ -174,23 +171,17 @@ class PemantauanAuditController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-        $isPic = false;
-        
-        // Cek apakah user adalah PIC (bukan KSPI, ASMAN SPI, atau AUDITOR)
-        if ($user && $user->akses) {
-            $namaAkses = $user->akses->nama_akses;
-            $isPic = !in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR']);
-        }
+        $currentUserId = AuthHelper::getCurrentUserId();
+        $canSeeAllData = AuthHelper::canSeeAllData();
         
         $item = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
             'picUsers'
         ])->findOrFail($id);
         
-        // Jika user adalah PIC, pastikan user tersebut adalah PIC dari rekomendasi ini
-        if ($isPic && $user) {
-            $isRelated = $item->picUsers()->where('master_user_id', $user->id)->exists();
+        // Jika user tidak bisa melihat semua data, pastikan user tersebut adalah PIC dari rekomendasi ini
+        if (!$canSeeAllData && $currentUserId) {
+            $isRelated = $item->picUsers()->where('master_user_id', $currentUserId)->exists();
             if (!$isRelated) {
                 abort(403, 'Anda tidak memiliki akses untuk mengupdate rekomendasi ini.');
             }
@@ -221,5 +212,68 @@ class PemantauanAuditController extends Controller
         ])->findOrFail($id);
         $tindakLanjut = $rekomendasi->tindakLanjut()->orderBy('created_at', 'desc')->first();
         return view('audit.pemantauan.tindak-lanjut-index', compact('rekomendasi', 'tindakLanjut'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $currentUserId = AuthHelper::getCurrentUserId();
+        $user = Auth::user();
+        
+        // Check if user can update status: AUDITOR, ASMAN SPI, KSPI, atau PIC APPROVAL 2
+        $canUpdateStatus = false;
+        
+        if ($user && $user->akses) {
+            $namaAkses = $user->akses->nama_akses;
+            
+            // AUDITOR, ASMAN SPI, KSPI bisa update status
+            if (in_array($namaAkses, ['AUDITOR', 'Auditor', 'ASMAN SPI', 'KSPI'])) {
+                $canUpdateStatus = true;
+            }
+        }
+        
+        // Check if user is PIC APPROVAL 2 untuk rekomendasi ini
+        if (!$canUpdateStatus && $currentUserId) {
+            $rekomendasi = PenutupLhaRekomendasi::findOrFail($id);
+            $isPicApproval2 = $rekomendasi->picUsers()
+                ->where('master_user_id', $currentUserId)
+                ->wherePivot('pic_type', 'approval_2_spi')
+                ->exists();
+            
+            if ($isPicApproval2) {
+                $canUpdateStatus = true;
+            }
+        }
+        
+        if (!$canUpdateStatus) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk mengubah status tindak lanjut.'
+            ], 403);
+        }
+        
+        $request->validate([
+            'status_tindak_lanjut' => 'required|in:open,on_progress,closed',
+        ]);
+        
+        $item = PenutupLhaRekomendasi::findOrFail($id);
+        
+        // Update status di tabel rekomendasi utama
+        $item->update([
+            'status_tindak_lanjut' => $request->status_tindak_lanjut
+        ]);
+        
+        // Juga update status di tindak lanjut terbaru jika ada
+        $latestTindakLanjut = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
+        if ($latestTindakLanjut) {
+            $latestTindakLanjut->update([
+                'status_tindak_lanjut' => $request->status_tindak_lanjut
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Status tindak lanjut berhasil diupdate!',
+            'new_status' => $request->status_tindak_lanjut
+        ]);
     }
 } 
