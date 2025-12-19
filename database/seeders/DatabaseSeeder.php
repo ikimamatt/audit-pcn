@@ -13,6 +13,13 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * 
+     * This seeds ALL data (master data + transactional data).
+     * 
+     * If you only want to seed master data, use:
+     * php artisan db:seed --class=MasterDataSeeder
+     * 
+     * @see MasterDataSeeder for seeding master data only
      */
     public function run(): void
     {
@@ -26,7 +33,12 @@ class DatabaseSeeder extends Seeder
             'remember_token' => Str::random(10),
         ]);
 
-        // Master data seeders (tidak bergantung pada tabel lain)
+        // ========================================
+        // MASTER DATA SEEDERS
+        // ========================================
+        // Tip: You can run only these seeders using:
+        // php artisan db:seed --class=MasterDataSeeder
+        // ========================================
         $this->call(MasterKodeAoiSeeder::class);
         $this->call(MasterKodeRiskSeeder::class);
         $this->call(MasterAuditeeSeeder::class);
@@ -34,6 +46,13 @@ class DatabaseSeeder extends Seeder
         $this->call(MasterUserSeeder::class);
         $this->call(MasterJenisAuditSeeder::class);
 
+        // ========================================
+        // TRANSACTIONAL DATA SEEDERS
+        // ========================================
+        // Note: These seeders are for development/testing only
+        // DO NOT run these in production!
+        // ========================================
+        
         // Pastikan MasterAuditeeSeeder dijalankan sebelum PerencanaanAuditSeeder
         $this->call(PerencanaanAuditSeeder::class);
         $this->call(RealisasiAuditSeeder::class);
