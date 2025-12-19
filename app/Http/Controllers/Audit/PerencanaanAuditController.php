@@ -96,6 +96,7 @@ class PerencanaanAuditController extends Controller
         }
         
         $auditees = MasterAuditee::all();
+        $jenisAudits = MasterJenisAudit::all();
         // Ambil user dengan role "Auditor" dan "PIC Auditor" (atau "PIC Auditee" jika "PIC Auditor" tidak ada)
         $auditors = MasterUser::with('akses')->whereHas('akses', function($q) {
             $q->whereIn('nama_akses', ['Auditor', 'PIC Auditor', 'PIC Auditee']);
@@ -117,7 +118,7 @@ class PerencanaanAuditController extends Controller
         }
         $item->matched_auditor_ids = $matchedAuditorIds;
         
-        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors'));
+        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits'));
     }
 
     public function update(Request $request, $id)
