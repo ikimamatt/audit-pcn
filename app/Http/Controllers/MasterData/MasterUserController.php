@@ -13,7 +13,12 @@ class MasterUserController extends Controller
 {
     public function index()
     {
-        $data = MasterUser::with(['akses', 'auditee'])->get();
+        // Hide users with Superadmin access from the view
+        $data = MasterUser::with(['akses', 'auditee'])
+            ->whereHas('akses', function($query) {
+                $query->where('nama_akses', '!=', 'Superadmin');
+            })
+            ->get();
         return view('master-data.user.index', compact('data'));
     }
 
@@ -21,9 +26,11 @@ class MasterUserController extends Controller
     {
         $auditees = MasterAuditee::all();
         // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
+        // Note: Superadmin is hidden and cannot be assigned through UI
         $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
-        // Ambil akses dan urutkan sesuai urutan yang diinginkan
+        // Ambil akses dan urutkan sesuai urutan yang diinginkan (exclude Superadmin)
         $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
+            ->where('nama_akses', '!=', 'Superadmin') // Hide Superadmin role from selection
             ->get()
             ->sortBy(function($item) use ($allowedAkses) {
                 return array_search($item->nama_akses, $allowedAkses);
@@ -63,6 +70,12 @@ class MasterUserController extends Controller
 
     public function edit(MasterUser $masterUser)
     {
+        // Prevent editing Superadmin users
+        if ($masterUser->akses && $masterUser->akses->nama_akses === 'Superadmin') {
+            return redirect()->route('master.user.index')
+                ->with('error', 'Superadmin user cannot be edited through this interface.');
+        }
+        
         $auditees = MasterAuditee::all();
         // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
         $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
@@ -75,8 +88,9 @@ class MasterUserController extends Controller
             }
         }
         
-        // Ambil akses dan urutkan sesuai urutan yang diinginkan
+        // Ambil akses dan urutkan sesuai urutan yang diinginkan (exclude Superadmin)
         $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
+            ->where('nama_akses', '!=', 'Superadmin') // Hide Superadmin role from selection
             ->get()
             ->sortBy(function($item) use ($allowedAkses) {
                 return array_search($item->nama_akses, $allowedAkses);
@@ -124,6 +138,12 @@ class MasterUserController extends Controller
 
     public function destroy(MasterUser $masterUser)
     {
+        // Prevent deleting Superadmin users
+        if ($masterUser->akses && $masterUser->akses->nama_akses === 'Superadmin') {
+            return redirect()->route('master.user.index')
+                ->with('error', 'Superadmin user cannot be deleted through this interface.');
+        }
+        
         try {
             $masterUser->delete();
             return redirect()->route('master.user.index')->with('success', 'User berhasil dihapus!');

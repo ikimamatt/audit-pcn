@@ -92,7 +92,12 @@ class RoutingController extends BaseController
 
     public function masterUser()
     {
-        $data = \App\Models\MasterData\MasterUser::with('akses')->get();
+        // Hide users with Superadmin access from the view
+        $data = \App\Models\MasterData\MasterUser::with(['akses', 'auditee'])
+            ->whereHas('akses', function($query) {
+                $query->where('nama_akses', '!=', 'Superadmin');
+            })
+            ->get();
         return view('master-data.user.index', compact('data'));
     }
 
