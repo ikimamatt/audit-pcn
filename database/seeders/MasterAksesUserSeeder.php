@@ -10,6 +10,7 @@ class MasterAksesUserSeeder extends Seeder
     public function run(): void
     {
         $aksesList = [
+            'Superadmin', // Hidden role - not visible in master user view
             'KSPI',
             'Auditor',
             'PIC Auditee',

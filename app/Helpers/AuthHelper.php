@@ -256,7 +256,7 @@ class AuthHelper
     }
 
     /**
-     * Check if current user can see all data (KSPI, ASMAN SPI, Auditor, BOD)
+     * Check if current user can see all data (KSPI, ASMAN SPI, Auditor, BOD, Superadmin)
      * 
      * @return bool
      */
@@ -280,7 +280,8 @@ class AuthHelper
         
         // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
         // BOD can also see all data
-        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD']);
+        // Superadmin has full access
+        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD', 'Superadmin']);
     }
 
     /**
@@ -349,13 +350,44 @@ class AuthHelper
     }
 
     /**
+     * Check if current user is Superadmin
+     * Superadmin has full access to everything
+     * 
+     * @return bool
+     */
+    public static function isSuperadmin(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->relationLoaded('akses')) {
+            $user->load('akses');
+        }
+
+        if (!$user->akses) {
+            return false;
+        }
+
+        return $user->akses->nama_akses === 'Superadmin';
+    }
+
+    /**
      * Check if current user can create, edit, or delete data
      * BOD cannot create, edit, or delete
+     * Superadmin can do everything
      * 
      * @return bool
      */
     public static function canModifyData(): bool
     {
+        // Superadmin can always modify data
+        if (self::isSuperadmin()) {
+            return true;
+        }
+        
         return !self::isBod();
     }
 }

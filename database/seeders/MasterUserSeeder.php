@@ -20,6 +20,32 @@ class MasterUserSeeder extends Seeder
             return [strtoupper(trim($item->nama_akses)) => $item->id];
         });
 
+        // ========================================
+        // SUPERADMIN USER (HIDDEN - NOT VISIBLE IN MASTER USER VIEW)
+        // ========================================
+        $superadminAksesId = $aksesMap['SUPERADMIN'] ?? null;
+        $spiDivisiId = $divisiMap['spi'] ?? null;
+        
+        if ($superadminAksesId && $spiDivisiId) {
+            DB::table('master_user')->updateOrInsert(
+                ['username' => 'superadmin'],
+                [
+                    'nama' => 'System Administrator',
+                    'username' => 'superadmin',
+                    'nip' => 'SUPERADMIN001',
+                    'password' => Hash::make('adminpcnjaya321'), // Change this in production!
+                    'email' => 'superadmin@pcn.co.id',
+                    'no_telpon' => '000000000000',
+                    'jabatan' => 'System Administrator',
+                    'master_auditee_id' => $spiDivisiId,
+                    'master_akses_user_id' => $superadminAksesId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            echo "✅ Superadmin user created (hidden from master user view)" . PHP_EOL;
+        }
+        
         // Data dari gambar - User yang terlihat di tabel
         $usersFromImage = [
             // ========== SPI Users ==========
