@@ -108,6 +108,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::get('pemantauan', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'index'])->name('pemantauan.index');
     Route::get('pemantauan/{id}/edit', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'edit'])->name('pemantauan.edit');
     Route::put('pemantauan/{id}', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'update'])->name('pemantauan.update');
+    Route::post('pemantauan/{id}/update-status', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
     Route::get('pemantauan/{id}/tindak-lanjut', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'tindakLanjutIndex'])->name('pemantauan.tindak-lanjut.index');
     Route::get('exit-meeting/pie', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'pie'])->name('exit-meeting.pie');
     Route::get('exit-meeting/chart', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'chart'])->name('exit-meeting.chart');

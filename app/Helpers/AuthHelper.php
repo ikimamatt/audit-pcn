@@ -256,7 +256,7 @@ class AuthHelper
     }
 
     /**
-     * Check if current user can see all data (KSPI, ASMAN KSPI, Auditor)
+     * Check if current user can see all data (KSPI, ASMAN SPI, Auditor, BOD)
      * 
      * @return bool
      */
@@ -279,7 +279,8 @@ class AuthHelper
         $namaAkses = $user->akses->nama_akses;
         
         // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
-        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR']);
+        // BOD can also see all data
+        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD']);
     }
 
     /**
