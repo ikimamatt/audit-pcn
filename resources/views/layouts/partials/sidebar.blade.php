@@ -47,12 +47,24 @@
                             <li>
                                 <a href="{{ route('audit.dashboard-pkpt.index') }}" class="tp-link">Dashboard PKPT</a>
                             </li>
+                            <li>
+                                <a href="{{ route('audit.dashboard-rencana-pkpt.index') }}" class="tp-link">Monitoring Rencana PKPT</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('audit.rekapitulasi-aktivitas.index') }}" class="tp-link">Rekapitulasi Aktivitas Audit</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress Tindak Lanjut </a>
+                            </li>
                             {{--
                             <li>
                                 <a href="{{ route('audit.dashboard-pelaksanaan-audit.index') }}" class="tp-link">Dashboard Pelaksanaan Audit</a>
                             </li>
                             <li>
                                 <a href="{{ route('audit.realisasi-audit.index') }}" class="tp-link">Realisasi Audit</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress Tindak Lanjut </a>
                             </li>
                             --}}
                         </ul>

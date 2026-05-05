@@ -4,6 +4,29 @@
 @endphp
 @extends('layouts.vertical', ['title' => 'Edit Perencanaan Audit'])
 
+@section('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.25rem !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+        }
+        .input-group > .select2-container--default {
+            flex: 1 1 auto;
+            width: 1% !important; /* Fix for input-group */
+        }
+    </style>
+@endsection
+
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -130,7 +153,16 @@
 @endsection
 
 @section('script')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $(document).ready(function() {
+        // Inisialisasi Select2 pada elemen yang sudah ada
+        $('.auditor-select').select2({
+            placeholder: "Pilih Auditor",
+            allowClear: true
+        });
+    });
+
     // Ruang lingkup dinamis
     document.getElementById('btn-add-rl').onclick = function() {
         var list = document.getElementById('ruang-lingkup-list');
@@ -160,8 +192,16 @@
         item.innerHTML = selectHtml + ' <button type="button" class="btn btn-danger btn-remove-auditor">-</button>';
         list.appendChild(item);
         
+        // Inisialisasi Select2 untuk elemen yang baru ditambahkan
+        $(item).find('.auditor-select').select2({
+            placeholder: "Pilih Auditor",
+            allowClear: true
+        });
+        
         // Event handler untuk remove button
         item.querySelector('.btn-remove-auditor').onclick = function() { 
+            // Destroy Select2 sebelum menghapus elemen
+            $(item).find('.auditor-select').select2('destroy');
             item.remove(); 
             // Update visibility tombol remove untuk item pertama
             updateRemoveButtons();

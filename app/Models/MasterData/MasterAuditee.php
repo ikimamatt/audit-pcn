@@ -10,6 +10,7 @@ class MasterAuditee extends Model
     use HasFactory;
     protected $table = 'master_auditee';
     protected $guarded = [];
+    public $timestamps = false;
     
     public function perencanaanAudit()
     {

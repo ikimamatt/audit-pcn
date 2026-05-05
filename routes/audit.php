@@ -93,6 +93,12 @@ Route::prefix('audit')->name('audit.')->group(function () {
     // Dashboard PKPT
     Route::get('dashboard-pkpt', [\App\Http\Controllers\Audit\DashboardPkptController::class, 'index'])->name('dashboard-pkpt.index');
     
+    // Dashboard Monitoring Rencana PKPT
+    Route::get('dashboard-rencana-pkpt', [\App\Http\Controllers\Audit\DashboardRencanaPkptController::class, 'index'])->name('dashboard-rencana-pkpt.index');
+    
+    // Rekapitulasi Aktivitas Audit
+    Route::get('rekapitulasi-aktivitas', [\App\Http\Controllers\Audit\RekapitulasiAktivitasAuditController::class, 'index'])->name('rekapitulasi-aktivitas.index');
+    
     // Dashboard Pelaksanaan Audit (disabled)
     // Route::get('dashboard-pelaksanaan-audit', [\App\Http\Controllers\Audit\DashboardPelaksanaanAuditController::class, 'index'])->name('dashboard-pelaksanaan-audit.index');
     
@@ -102,6 +108,9 @@ Route::prefix('audit')->name('audit.')->group(function () {
     
     // Dashboard Monitoring Tindak Lanjut
     Route::get('monitoring-tindak-lanjut', [\App\Http\Controllers\Audit\MonitoringTindakLanjutController::class, 'index'])->name('monitoring-tindak-lanjut.index');
+    
+    // Progress Tindak Lanjut Rekomendasi Audit
+    Route::get('progress-tindak-lanjut', [\App\Http\Controllers\Audit\ProgressTindakLanjutController::class, 'index'])->name('progress-tindak-lanjut.index');
     
     // Pemantauan Hasil Audit
     Route::get('pemantauan/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');

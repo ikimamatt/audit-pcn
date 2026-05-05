@@ -104,9 +104,9 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="pic_approval_1_spi" class="form-label fw-bold">APPROVAL 1 SPI</label>
+                                <label for="pic_approval_1_spi" class="form-label fw-bold">BUSINESS REVIEWER 1</label>
                                 <select name="pic_approval_1_spi" id="pic_approval_1_spi" class="form-select" required>
-                                    <option value="">Pilih PIC Approval 1 SPI</option>
+                                    <option value="">Pilih PIC Business Reviewer 1</option>
                                     @foreach($picUsers as $picUser)
                                         <option value="{{ $picUser->id }}" 
                                             {{ old('pic_approval_1_spi') == $picUser->id ? 'selected' : '' }}>
@@ -118,9 +118,9 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="pic_approval_2_spi" class="form-label fw-bold">APPROVAL 2 SPI</label>
+                                <label for="pic_approval_2_spi" class="form-label fw-bold">BUSINESS REVIEWER 2</label>
                                 <select name="pic_approval_2_spi" id="pic_approval_2_spi" class="form-select" required>
-                                    <option value="">Pilih PIC Approval 2 SPI</option>
+                                    <option value="">Pilih PIC Business Reviewer 2</option>
                                     @foreach($picUsers as $picUser)
                                         <option value="{{ $picUser->id }}" 
                                             {{ old('pic_approval_2_spi') == $picUser->id ? 'selected' : '' }}>
