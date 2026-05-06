@@ -48,29 +48,34 @@
                                 <a href="{{ route('audit.dashboard-pkpt.index') }}" class="tp-link">Dashboard PKPT</a>
                             </li>
                             <li>
-                                <a href="{{ route('audit.dashboard-rencana-pkpt.index') }}" class="tp-link">Monitoring Rencana PKPT</a>
+                                <a href="{{ route('audit.dashboard-rencana-pkpt.index') }}" class="tp-link">Monitoring
+                                    Rencana PKPT</a>
                             </li>
                             <li>
-                                <a href="{{ route('audit.rekapitulasi-aktivitas.index') }}" class="tp-link">Rekapitulasi Aktivitas Audit</a>
+                                <a href="{{ route('audit.rekapitulasi-aktivitas.index') }}" class="tp-link">Rekapitulasi
+                                    Aktivitas Audit</a>
                             </li>
                             <li>
-                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress Tindak Lanjut </a>
+                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress
+                                    Tindak Lanjut </a>
                             </li>
                             {{--
                             <li>
-                                <a href="{{ route('audit.dashboard-pelaksanaan-audit.index') }}" class="tp-link">Dashboard Pelaksanaan Audit</a>
+                                <a href="{{ route('audit.dashboard-pelaksanaan-audit.index') }}"
+                                    class="tp-link">Dashboard Pelaksanaan Audit</a>
                             </li>
                             <li>
                                 <a href="{{ route('audit.realisasi-audit.index') }}" class="tp-link">Realisasi Audit</a>
                             </li>
                             <li>
-                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress Tindak Lanjut </a>
+                                <a href="{{ route('audit.progress-tindak-lanjut.index') }}" class="tp-link">Progress
+                                    Tindak Lanjut </a>
                             </li>
                             --}}
                         </ul>
                     </div>
                 </li>
-{{--
+                {{--
                 <li class="menu-title">Pages</li> --}}
 
                 {{-- <li>
@@ -88,16 +93,19 @@
                                 <a class="tp-link" href="{{ route('second', ['auth', 'register'])}}">Register</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['auth', 'recoverpw'])}}">Recover Password</a>
+                                <a class="tp-link" href="{{ route('second', ['auth', 'recoverpw'])}}">Recover
+                                    Password</a>
                             </li>
                             <li>
                                 <a class="tp-link" href="{{ route('second', ['auth', 'lockscreen'])}}">Lock Screen</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['auth', 'confirm-mail'])}}">Confirm Mail</a>
+                                <a class="tp-link" href="{{ route('second', ['auth', 'confirm-mail'])}}">Confirm
+                                    Mail</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['auth', 'email-verification'])}}">Email Verification</a>
+                                <a class="tp-link" href="{{ route('second', ['auth', 'email-verification'])}}">Email
+                                    Verification</a>
                             </li>
                             <li>
                                 <a class="tp-link" href="{{ route('second', ['auth', 'logout'])}}">Logout</a>
@@ -162,10 +170,12 @@
                                 <a class="tp-link" href="{{ route('second', ['utility', 'gallery'])}}">Gallery</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['utility', 'maintenance'])}}">Maintenance</a>
+                                <a class="tp-link"
+                                    href="{{ route('second', ['utility', 'maintenance'])}}">Maintenance</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['utility', 'coming-soon'])}}">Coming Soon</a>
+                                <a class="tp-link" href="{{ route('second', ['utility', 'coming-soon'])}}">Coming
+                                    Soon</a>
                             </li>
                         </ul>
                     </div>
@@ -179,230 +189,252 @@
                 </li> --}}
 
                 @if(!$isAuditee)
-                <li class="menu-title mt-2">General</li>
+                    <li class="menu-title mt-2">General</li>
 
-                {{-- <li>
-                    <a href="#sidebarBaseui" data-bs-toggle="collapse">
-                        <i data-feather="package"></i>
-                        <span> Components </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarBaseui">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'accordions'])}}">Accordions</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'alerts'])}}">Alerts</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'badges'])}}">Badges</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'breadcrumb'])}}">Breadcrumb</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'buttons'])}}">Buttons</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'cards'])}}">Cards</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'collapse'])}}">Collapse</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'dropdowns'])}}">Dropdowns</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'embed-video'])}}">Embed Video</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'grid'])}}">Grid</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'images'])}}">Images</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'list-group'])}}">List Group</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'models'])}}">Modals</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'placeholders'])}}">Placeholders</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'pagination'])}}">Pagination</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'popovers'])}}">Popovers</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'progress'])}}">Progress</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'scrollspy'])}}">Scrollspy</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'spinners'])}}">Spinners</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'tabs'])}}">Tabs</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'tooltips'])}}">Tooltips</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['components', 'typography'])}}">Typography</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li> --}}
+                    {{-- <li>
+                        <a href="#sidebarBaseui" data-bs-toggle="collapse">
+                            <i data-feather="package"></i>
+                            <span> Components </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarBaseui">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'accordions'])}}">Accordions</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'alerts'])}}">Alerts</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'badges'])}}">Badges</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'breadcrumb'])}}">Breadcrumb</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'buttons'])}}">Buttons</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'cards'])}}">Cards</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'collapse'])}}">Collapse</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'dropdowns'])}}">Dropdowns</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'embed-video'])}}">Embed
+                                        Video</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'grid'])}}">Grid</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'images'])}}">Images</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'list-group'])}}">List
+                                        Group</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'models'])}}">Modals</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'placeholders'])}}">Placeholders</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'pagination'])}}">Pagination</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'popovers'])}}">Popovers</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'progress'])}}">Progress</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'scrollspy'])}}">Scrollspy</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'spinners'])}}">Spinners</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'tabs'])}}">Tabs</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['components', 'tooltips'])}}">Tooltips</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['components', 'typography'])}}">Typography</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li> --}}
 
-                {{-- <li>
-                    <a href="{{ route('any', 'widgets') }}" class="tp-link">
-                        <i data-feather="aperture"></i>
-                        <span> Widgets </span>
-                    </a>
-                </li> --}}
+                    {{-- <li>
+                        <a href="{{ route('any', 'widgets') }}" class="tp-link">
+                            <i data-feather="aperture"></i>
+                            <span> Widgets </span>
+                        </a>
+                    </li> --}}
 
-                {{-- <li>
-                    <a href="#sidebarAdvancedUI" data-bs-toggle="collapse">
-                        <i data-feather="cpu"></i>
-                        <span> Extended UI </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarAdvancedUI">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['extended', 'carousel'])}}">Carousel</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['extended', 'notifications'])}}">Notifications</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['extended', 'offcanvas'])}}">Offcanvas</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['extended', 'range-slider'])}}">Range Slider</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li> --}}
+                    {{-- <li>
+                        <a href="#sidebarAdvancedUI" data-bs-toggle="collapse">
+                            <i data-feather="cpu"></i>
+                            <span> Extended UI </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarAdvancedUI">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['extended', 'carousel'])}}">Carousel</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['extended', 'notifications'])}}">Notifications</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['extended', 'offcanvas'])}}">Offcanvas</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['extended', 'range-slider'])}}">Range
+                                        Slider</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li> --}}
 
-                {{-- <li>
-                    <a href="#sidebarIcons" data-bs-toggle="collapse">
-                        <i data-feather="award"></i>
-                        <span> Icons </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarIcons">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['icons', 'feather'])}}">Feather Icons</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['icons', 'mdi'])}}">Material Design Icons</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li> --}}
+                    {{-- <li>
+                        <a href="#sidebarIcons" data-bs-toggle="collapse">
+                            <i data-feather="award"></i>
+                            <span> Icons </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarIcons">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['icons', 'feather'])}}">Feather Icons</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('second', ['icons', 'mdi'])}}">Material Design
+                                        Icons</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li> --}}
 
-                <li>
-                    <a href="#sidebarMasterData" data-bs-toggle="collapse">
-                        <i data-feather="database"></i>
-                        <span> Master Data </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarMasterData">
-                        <ul class="nav-second-level">
-                            <li><a class="tp-link" href="{{ route('second', ['tables', 'master_kode_aoi']) }}">Master Kode AOI</a></li>
-                            <li><a class="tp-link" href="{{ route('second', ['tables', 'master_kode_risk']) }}">Master Kode Risk</a></li>
-                            <li><a class="tp-link" href="{{ route('second', ['tables', 'master_auditee']) }}">Master Auditee</a></li>
-                            <li><a class="tp-link" href="{{ route('second', ['tables', 'master_user']) }}">Master User</a></li>
-                            <li><a class="tp-link" href="{{ route('master.jenis-audit.index') }}">Master Jenis Audit</a></li>
-                            <!-- <li><a class="tp-link" href="{{ route('second', ['tables', 'master_akses_user']) }}">Master Akses User</a></li> -->
-                        </ul>
-                    </div>
-                </li>
+                    <li>
+                        <a href="#sidebarMasterData" data-bs-toggle="collapse">
+                            <i data-feather="database"></i>
+                            <span> Master Data </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarMasterData">
+                            <ul class="nav-second-level">
+                                <li><a class="tp-link" href="{{ route('second', ['tables', 'master_kode_aoi']) }}">Master
+                                        Kode AOI</a></li>
+                                <li><a class="tp-link" href="{{ route('second', ['tables', 'master_kode_risk']) }}">Master
+                                        Kode Risk</a></li>
+                                <li><a class="tp-link" href="{{ route('second', ['tables', 'master_auditee']) }}">Master
+                                        Auditee</a></li>
+                                <li><a class="tp-link" href="{{ route('second', ['tables', 'master_user']) }}">Master
+                                        User</a></li>
+                                <li><a class="tp-link" href="{{ route('master.jenis-audit.index') }}">Master Jenis Audit</a>
+                                </li>
+                                <!-- <li><a class="tp-link" href="{{ route('second', ['tables', 'master_akses_user']) }}">Master Akses User</a></li> -->
+                            </ul>
+                        </div>
+                    </li>
 
-                <li>
-                    <a href="#sidebarForms" data-bs-toggle="collapse">
-                        <i data-feather="briefcase"></i>
-                        <span> Perencanaan Audit </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarForms">
-                        <ul class="nav-second-level"> 
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.pkpt.index') }}">Jadwal PKPT Audit</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.dashboard-pkpt.index') }}">Dashboard PKPT</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('second', ['forms', 'tabel_perencanaan_audit']) }}">Surat Tugas Audit</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.pka.index') }}">Program Kerja Audit</a>
-                            </li>
-                           
-                        </ul>
-                    </div>
-                </li>
+                    <li>
+                        <a href="#sidebarForms" data-bs-toggle="collapse">
+                            <i data-feather="briefcase"></i>
+                            <span> Perencanaan Audit </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarForms">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.pkpt.index') }}">Jadwal PKPT Audit</a>
+                                </li>
+                                <!-- <li>
+                                    <a class="tp-link" href="{{ route('audit.dashboard-pkpt.index') }}">Dashboard PKPT</a>
+                                </li> -->
+                                <li>
+                                    <a class="tp-link"
+                                        href="{{ route('second', ['forms', 'tabel_perencanaan_audit']) }}">Surat Tugas
+                                        Audit</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.pka.index') }}">Program Kerja Audit</a>
+                                </li>
 
-                <li>
-                    <a href="#sidebarPelaksanaanAudit" data-bs-toggle="collapse">
-                        <i data-feather="check-square"></i>
-                        <span> Pelaksanaan Audit </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarPelaksanaanAudit">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.entry-meeting.index') }}">Entry Meeting</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.walkthrough.index') }}">Hasil Walkthrough Audit</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.tod-bpm.index') }}">Hasil TOD Audit</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.toe.index') }}">Hasil TOE Audit</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.exit-meeting.index') }}">Exit Meeting</a>
-                            </li>
-                         
-                        </ul>
-                    </div>
-                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <li>
-                    <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse">
-                        <i data-feather="file-text"></i>
-                        <span> Pelaporan Hasil Audit </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarPelaporanHasilAudit">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}"> Judul LHA/LHK </a>
-                            </li>
-                            <!-- <li>
-                                <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}">Tabel Temuan Audit</a>
-                            </li> -->
+                    <li>
+                        <a href="#sidebarPelaksanaanAudit" data-bs-toggle="collapse">
+                            <i data-feather="check-square"></i>
+                            <span> Pelaksanaan Audit </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarPelaksanaanAudit">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.entry-meeting.index') }}">Entry Meeting</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.walkthrough.index') }}">Hasil Walkthrough
+                                        Audit</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.tod-bpm.index') }}">Hasil TOD Audit</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.toe.index') }}">Hasil TOE Audit</a>
+                                </li>
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.exit-meeting.index') }}">Exit Meeting</a>
+                                </li>
 
-                            <li>
-                                <a class="tp-link" href="{{ route('audit.penutup-lha-rekomendasi.index') }}">Penutup LHA/LHK</a>
-                            </li>
-                            <li>
-                                <!-- <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a> -->
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <li>
+                        <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse">
+                            <i data-feather="file-text"></i>
+                            <span> Pelaporan Hasil Audit </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarPelaporanHasilAudit">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}"> Judul
+                                        LHA/LHK </a>
+                                </li>
+                                <!-- <li>
+                                    <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}">Tabel Temuan Audit</a>
+                                </li> -->
+
+                                <li>
+                                    <a class="tp-link" href="{{ route('audit.penutup-lha-rekomendasi.index') }}">Penutup
+                                        LHA/LHK</a>
+                                </li>
+                                <li>
+                                    <!-- <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a> -->
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 @endif
 
                 <!--  -->
@@ -483,10 +515,12 @@
                     <div class="collapse" id="sidebarMaps">
                         <ul class="nav-second-level">
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['maps', 'googlemap'])}}" class="tp-link">Google Maps</a>
+                                <a class="tp-link" href="{{ route('second', ['maps', 'googlemap'])}}"
+                                    class="tp-link">Google Maps</a>
                             </li>
                             <li>
-                                <a class="tp-link" href="{{ route('second', ['maps', 'vectormap'])}}" class="tp-link">Vector Maps</a>
+                                <a class="tp-link" href="{{ route('second', ['maps', 'vectormap'])}}"
+                                    class="tp-link">Vector Maps</a>
                             </li>
                         </ul>
                     </div>
@@ -500,12 +534,12 @@
                 </li>
 
                 @if(!$isAuditee)
-                <li>
-                    <a href="{{ route('audit.monitoring-tindak-lanjut.index') }}">
-                        <i data-feather="trending-up"></i>
-                        <span> Monitoring Tindak Lanjut </span>
-                    </a>
-                </li>
+                    <li>
+                        <a href="{{ route('audit.monitoring-tindak-lanjut.index') }}">
+                            <i data-feather="trending-up"></i>
+                            <span> Monitoring Tindak Lanjut </span>
+                        </a>
+                    </li>
                 @endif
 
 
