@@ -158,11 +158,12 @@ class PelaporanHasilAuditController extends Controller
 
     public function edit($id)
     {
-        $item = PelaporanHasilAudit::findOrFail($id);
+        $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
         $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
-        return view('audit.pelaporan.edit', compact('item', 'suratTugas', 'kodeAoi', 'kodeRisk'));
+        $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
+        return view('audit.pelaporan.edit', compact('item', 'suratTugas', 'kodeAoi', 'kodeRisk', 'jenisAudit'));
     }
 
     public function editTemuan($id)
@@ -178,17 +179,72 @@ class PelaporanHasilAuditController extends Controller
         $item = PelaporanHasilAudit::findOrFail($id);
         $request->validate([
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'nomor_lha_lhk' => 'required|string',
-            'jenis_lha_lhk' => 'required|in:LHA,LHK',
-            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
-            'kode_spi' => 'required|in:SPI.01.02,SPI.01.03,SPI.01.04',
+            'nomor_lha_lhk'        => 'required|string',
+            'jenis_lha_lhk'        => 'required|in:LHA,LHK',
+            'jenis_audit_id'       => 'required|exists:master_jenis_audit,id',
+            'kode_spi'             => 'required|in:SPI.01.02,SPI.01.03,SPI.01.04',
+            'hasil_temuan'         => 'required|array|min:1',
+            'hasil_temuan.*'       => 'required|string',
+            'kode_aoi_id.*'        => 'required|exists:master_kode_aoi,id',
+            'kode_risk_id.*'       => 'required|exists:master_kode_risk,id',
+            'nomor_iss.*'          => 'required|string',
+            'permasalahan.*'       => 'required|string',
+            'penyebab.*'           => 'required|string',
+            'kriteria.*'           => 'required|string',
+            'signifikan.*'         => 'required|in:Tinggi,Medium,Rendah',
         ]);
-        
-        $data = $request->except('tahun');
-        $data['jenis_audit_id'] = $request->jenis_audit_id;
-        
-        $item->update($data);
-        return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data pelaporan hasil audit berhasil diupdate!');
+
+        // Update header LHA/LHK
+        $item->update([
+            'perencanaan_audit_id' => $request->perencanaan_audit_id,
+            'nomor_lha_lhk'        => $request->nomor_lha_lhk,
+            'jenis_lha_lhk'        => $request->jenis_lha_lhk,
+            'jenis_audit_id'       => $request->jenis_audit_id,
+            'kode_spi'             => $request->kode_spi,
+        ]);
+
+        // ID temuan yang masih ada di form (existing)
+        $submittedIds = array_filter($request->temuan_id ?? []);
+
+        // Hapus temuan yang dihilangkan user
+        if (!empty($submittedIds)) {
+            PelaporanTemuan::where('pelaporan_hasil_audit_id', $item->id)
+                ->whereNotIn('id', $submittedIds)
+                ->delete();
+        } else {
+            // Semua temuan lama dihapus (user menghapus semua lalu tambah baru)
+            PelaporanTemuan::where('pelaporan_hasil_audit_id', $item->id)->delete();
+        }
+
+        // Update temuan yang ada / buat temuan baru
+        foreach ($request->hasil_temuan as $i => $hasilTemuan) {
+            $temuanId = $request->temuan_id[$i] ?? null;
+            $data = [
+                'pelaporan_hasil_audit_id' => $item->id,
+                'hasil_temuan'   => $hasilTemuan,
+                'kode_aoi_id'    => $request->kode_aoi_id[$i],
+                'kode_risk_id'   => $request->kode_risk_id[$i],
+                'nomor_iss'      => $request->nomor_iss[$i],
+                'nomor_urut_iss' => $request->nomor_urut_iss[$i] ?? 0,
+                'tahun'          => date('Y'),
+                'permasalahan'   => $request->permasalahan[$i],
+                'penyebab'       => $request->penyebab[$i],
+                'kriteria'       => $request->kriteria[$i],
+                'dampak_terjadi' => $request->dampak_terjadi[$i] ?? null,
+                'dampak_potensi' => $request->dampak_potensi[$i] ?? null,
+                'signifikan'     => $request->signifikan[$i],
+            ];
+
+            if ($temuanId) {
+                PelaporanTemuan::where('id', $temuanId)->update($data);
+            } else {
+                $data['status_approval'] = 'pending';
+                PelaporanTemuan::create($data);
+            }
+        }
+
+        return redirect()->route('audit.pelaporan-hasil-audit.index')
+            ->with('success', 'Data pelaporan hasil audit berhasil diupdate!');
     }
 
     public function updateTemuan(Request $request, $id)

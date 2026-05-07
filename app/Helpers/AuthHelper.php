@@ -241,9 +241,9 @@ class AuthHelper
 
         $namaAkses = $user->akses->nama_akses;
         
-        // User dengan akses KSPI, ASMAN SPI, atau Auditor bisa melihat semua data
+        // User dengan akses KSPI, ASMAN SPI, Auditor, BOD, atau Superadmin bisa melihat semua data
         // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
-        if (in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR'])) {
+        if (in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD', 'Superadmin'])) {
             return null; // null berarti bisa melihat semua
         }
 

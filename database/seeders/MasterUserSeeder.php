@@ -11,12 +11,12 @@ class MasterUserSeeder extends Seeder
     public function run(): void
     {
         // Ambil mapping divisi ke id dari master_auditee (case-insensitive, trim)
-        $divisiMap = DB::table('master_auditee')->get()->mapWithKeys(function($item) {
+        $divisiMap = DB::table('master_auditee')->get()->mapWithKeys(function ($item) {
             return [strtolower(trim($item->divisi)) => $item->id];
         });
 
         // Ambil mapping akses user ke id
-        $aksesMap = DB::table('master_akses_user')->get()->mapWithKeys(function($item) {
+        $aksesMap = DB::table('master_akses_user')->get()->mapWithKeys(function ($item) {
             return [strtoupper(trim($item->nama_akses)) => $item->id];
         });
 
@@ -25,7 +25,7 @@ class MasterUserSeeder extends Seeder
         // ========================================
         $superadminAksesId = $aksesMap['SUPERADMIN'] ?? null;
         $spiDivisiId = $divisiMap['spi'] ?? null;
-        
+
         if ($superadminAksesId && $spiDivisiId) {
             DB::table('master_user')->updateOrInsert(
                 ['username' => 'superadmin'],
@@ -33,7 +33,7 @@ class MasterUserSeeder extends Seeder
                     'nama' => 'System Administrator',
                     'username' => 'superadmin',
                     'nip' => 'SUPERADMIN001',
-                    'password' => Hash::make('adminpcnjaya321'), // Change this in production!
+                    'password' => Hash::make('pln@nusadaya'), // Change this in production!
                     'email' => 'superadmin@pcn.co.id',
                     'no_telpon' => '000000000000',
                     'jabatan' => 'System Administrator',
@@ -45,7 +45,7 @@ class MasterUserSeeder extends Seeder
             );
             echo "✅ Superadmin user created (hidden from master user view)" . PHP_EOL;
         }
-        
+
         // Data dari gambar - User yang terlihat di tabel
         $usersFromImage = [
             // ========== SPI Users ==========
@@ -79,7 +79,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'agil.frassetyo@pcn.co.id',
                 'no_telpon' => '081234567003',
             ],
-            
+
             // ========== KEUANGAN Users ==========
             [
                 'nama' => 'DEWI SATYA NINGSIH',
@@ -111,7 +111,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'yusuf.saefudin@pcn.co.id',
                 'no_telpon' => '081234567006',
             ],
-            
+
             // ========== RENUS IT Users ==========
             [
                 'nama' => 'BUDI MULYONO',
@@ -143,7 +143,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'fatahuddin.yogi.renus@pcn.co.id',
                 'no_telpon' => '081234567009',
             ],
-            
+
             // ========== OPERASI Users ==========
             [
                 'nama' => 'WAHYU KURNIAWAN',
@@ -175,7 +175,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'fatahuddin.yogi.ops@pcn.co.id',
                 'no_telpon' => '081234567012',
             ],
-            
+
             // ========== HUMAN CAPITAL Users ==========
             [
                 'nama' => 'PRASETIO NINGSIH',
@@ -207,7 +207,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'yainus.sholeh@pcn.co.id',
                 'no_telpon' => '081234567015',
             ],
-            
+
             // ========== SEKPER Users ==========
             [
                 'nama' => 'NURUL AZISAH',
@@ -239,7 +239,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'irawan.hernanda.sekper@pcn.co.id',
                 'no_telpon' => '081234567018',
             ],
-            
+
             // ========== BOD Users ==========
             [
                 'nama' => 'IRAWAN HERNANDA',
@@ -271,7 +271,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'fatahuddin.yogi@pcn.co.id',
                 'no_telpon' => '081234567021',
             ],
-            
+
             // ========== SUPER ADMIN ==========
             [
                 'nama' => 'IRVAN SANJAYA',
@@ -283,7 +283,7 @@ class MasterUserSeeder extends Seeder
                 'email' => 'irvan.sanjaya@pcn.co.id',
                 'no_telpon' => '081234567022',
             ],
-            
+
             // ========== CABANG KALTIMRA Users ==========
             [
                 'nama' => 'OKTO INDRA LESMANA',
@@ -330,29 +330,29 @@ class MasterUserSeeder extends Seeder
         foreach ($allUsers as $user) {
             $divisiKey = strtolower(trim($user['divisi']));
             $aksesKey = strtoupper(trim($user['akses']));
-            
+
             if (!isset($divisiMap[$divisiKey])) {
                 echo "Divisi tidak ditemukan: " . $user['divisi'] . PHP_EOL;
                 continue;
             }
-            
+
             if (!isset($aksesMap[$aksesKey])) {
                 echo "Akses tidak ditemukan: " . $user['akses'] . PHP_EOL;
                 continue;
             }
-            
+
             // Check if user already exists
             $existingUser = DB::table('master_user')->where('username', $user['username'])->first();
             if ($existingUser) {
                 echo "User sudah ada: " . $user['username'] . PHP_EOL;
                 continue;
             }
-            
+
             DB::table('master_user')->insert([
                 'nama' => $user['nama'],
                 'username' => $user['username'],
                 'nip' => $user['nip'],
-                'password' => Hash::make('PCNJAYA123'),
+                'password' => Hash::make('pln@nusadaya'),
                 'email' => $user['email'] ?? null,
                 'no_telpon' => $user['no_telpon'] ?? null,
                 'jabatan' => $user['jabatan'] ?? null,

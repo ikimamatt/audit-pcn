@@ -177,10 +177,6 @@
                     </div>
                     <div class="col-md-6 text-end">
                         <div class="d-flex align-items-center justify-content-end gap-2">
-                            <button id="testEditIssBtn" class="btn btn-warning" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <i class="mdi mdi-pencil me-2"></i>
-                                Test Edit ISS
-                            </button>
                             @canModifyData
                             <a href="{{ route('audit.pelaporan-hasil-audit.create') }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <i class="mdi mdi-plus-circle me-2"></i>
@@ -595,16 +591,6 @@ $(document).ready(function() {
         $('.alert').fadeOut('slow');
     }, 5000);
 
-    // Test modal functionality
-    console.log('Modal element exists:', $('#issModal').length > 0);
-    console.log('Bootstrap modal available:', typeof bootstrap !== 'undefined');
-    
-    // Test button click handler (button is now in card header)
-    $('#testEditIssBtn').click(function() {
-        console.log('Test button clicked');
-        editIss(1); // Test with ID 1
-    });
-    
     // Logout handler for profile menu in card header
     $('#logout-link-card').click(function(e) {
         e.preventDefault();
