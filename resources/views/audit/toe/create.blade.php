@@ -26,11 +26,9 @@
                     <div class="mb-3">
                         <label for="judul_bpm" class="form-label">Judul BPM</label>
                         <select name="judul_bpm" id="judul_bpm" class="form-control" required>
-                            <option value="">Pilih Judul BPM</option>
-                            @foreach($bpmList as $bpm)
-                                <option value="{{ $bpm->judul_bpm }}">{{ $bpm->judul_bpm }}</option>
-                            @endforeach
+                            <option value="">-- Pilih Surat Tugas terlebih dahulu --</option>
                         </select>
+                        <small class="text-muted">Judul BPM akan muncul setelah Surat Tugas dipilih</small>
                     </div>
                     <div class="mb-3">
                         <label for="pengendalian_eksisting" class="form-label">Pengendalian Eksisting</label>
@@ -90,14 +88,56 @@
 </div>
 @endsection
 
+@php
+    $bpmJson = $bpmList->map(fn($b) => [
+        'id'                   => $b->id,
+        'judul_bpm'            => $b->judul_bpm,
+        'perencanaan_audit_id' => $b->perencanaan_audit_id,
+    ])->values();
+@endphp
+
 @section('script')
 <script>
+// Data semua TOD BPM dari server, dikelompokkan per perencanaan_audit_id
+const allBpmData = @json($bpmJson);
+
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('evaluasi-container');
     const perencanaanSelect = document.getElementById('perencanaan_audit_id');
-    
+    const judulBpmSelect    = document.getElementById('judul_bpm');
+
+    // Filter dropdown Judul BPM sesuai surat tugas yang dipilih
+    function filterBpmByPerencanaan(perencanaanId) {
+        judulBpmSelect.innerHTML = '';
+
+        if (!perencanaanId) {
+            judulBpmSelect.innerHTML = '<option value="">-- Pilih Surat Tugas terlebih dahulu --</option>';
+            return;
+        }
+
+        const filtered = allBpmData.filter(b => b.perencanaan_audit_id == perencanaanId);
+
+        if (filtered.length === 0) {
+            judulBpmSelect.innerHTML = '<option value="">Tidak ada TOD BPM untuk surat tugas ini</option>';
+            return;
+        }
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Pilih Judul BPM';
+        judulBpmSelect.appendChild(placeholder);
+
+        filtered.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.judul_bpm;
+            opt.textContent = b.judul_bpm;
+            judulBpmSelect.appendChild(opt);
+        });
+    }
+
     // Handle perubahan surat tugas
     perencanaanSelect.addEventListener('change', function() {
+        filterBpmByPerencanaan(this.value);
         loadRisksFromPKA();
     });
     
