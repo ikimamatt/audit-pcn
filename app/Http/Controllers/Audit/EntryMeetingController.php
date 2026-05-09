@@ -55,7 +55,7 @@ class EntryMeetingController extends Controller
             })->whereDoesntHave('entryMeeting', function($query) {
                 // Exclude PKA yang sudah memiliki Entry Meeting dengan status approved atau pending
                 $query->whereIn('status_approval', ['approved', 'pending']);
-            })->with(['perencanaanAudit', 'milestones' => function($query) {
+            })->with(['perencanaanAudit.auditee', 'milestones' => function($query) {
                 $query->where('nama_milestone', 'Entry Meeting');
             }, 'entryMeeting' => function($query) {
                 // Include rejected Entry Meeting untuk ditampilkan sebagai "Reject - Ajukan Ulang"
@@ -65,7 +65,7 @@ class EntryMeetingController extends Controller
             // Fallback jika ada error dengan query yang kompleks
             $programKerjaAudit = ProgramKerjaAudit::whereHas('milestones', function($query) {
                 $query->where('nama_milestone', 'Entry Meeting');
-            })->with(['perencanaanAudit', 'milestones' => function($query) {
+            })->with(['perencanaanAudit.auditee', 'milestones' => function($query) {
                 $query->where('nama_milestone', 'Entry Meeting');
             }])->get();
         }

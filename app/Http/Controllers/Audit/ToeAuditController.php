@@ -47,7 +47,7 @@ class ToeAuditController extends Controller
 
     public function create()
     {
-        $suratTugas = PerencanaanAudit::all();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $bpmList = TodBpmAudit::all();
         return view('audit.toe.create', compact('suratTugas', 'bpmList'));
     }
@@ -109,7 +109,7 @@ class ToeAuditController extends Controller
     public function edit($id)
     {
         $item = ToeAudit::with('perencanaanAudit')->findOrFail($id);
-        $suratTugas = PerencanaanAudit::all();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $bpmList = TodBpmAudit::all();
         return view('audit.toe.edit', compact('item', 'suratTugas', 'bpmList'));
     }

@@ -24,10 +24,14 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Surat Tugas Audit <span class="text-danger">*</span></label>
-                            <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select" required>
+                            <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select select2-search" required>
                                 <option value="">Pilih Surat Tugas</option>
                                 @foreach($suratTugas as $s)
-                                    <option value="{{ $s->id }}">{{ $s->nomor_surat_tugas }}</option>
+                                    <option value="{{ $s->id }}">
+                                        {{ $s->nomor_surat_tugas }}
+                                        @if($s->jenis_audit) · {{ $s->jenis_audit }}@endif
+                                        @if($s->auditee) · {{ $s->auditee->divisi }}@endif
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -41,7 +45,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Jenis Audit <span class="text-danger">*</span></label>
-                            <select name="jenis_audit_id" id="jenis_audit_id" class="form-select" required>
+                            <select name="jenis_audit_id" id="jenis_audit_id" class="form-select select2-search" required>
                                 <option value="">Pilih Jenis Audit</option>
                                 @foreach($jenisAudit as $ja)
                                     <option value="{{ $ja->id }}" data-kode="{{ $ja->kode }}">{{ $ja->nama_jenis_audit }}</option>
@@ -111,7 +115,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Kode AOI <span class="text-danger">*</span></label>
-                <select name="kode_aoi_id[]" class="form-select kode-aoi-select" required>
+                <select name="kode_aoi_id[]" class="form-select kode-aoi-select select2-search" required>
                     <option value="">Pilih Kode AOI</option>
                     @foreach($kodeAoi as $aoi)
                         <option value="{{ $aoi->id }}">{{ $aoi->kode_area_of_improvement }} - {{ $aoi->deskripsi_area_of_improvement }}</option>
@@ -120,7 +124,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Kode Risiko <span class="text-danger">*</span></label>
-                <select name="kode_risk_id[]" class="form-select kode-risk-select" required>
+                <select name="kode_risk_id[]" class="form-select kode-risk-select select2-search" required>
                     <option value="">Pilih Kode Risiko</option>
                     @foreach($kodeRisk as $risk)
                         <option value="{{ $risk->id }}">{{ $risk->kode_risiko }} - {{ $risk->deskripsi_risiko }}</option>
@@ -304,6 +308,11 @@ $(document).ready(function() {
         
         // Add to container
         $('#iss-container').append(clone);
+        
+        // Initialize select2 for newly added elements
+        $('#iss-container').find(`[data-iss-index="${issIndex}"] .select2-search`).select2({
+            width: '100%'
+        });
         
         // Bind events for new item
         bindIssEvents(issIndex);

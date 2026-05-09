@@ -16,16 +16,20 @@
                     @csrf
                     <div class="mb-3">
                         <label for="perencanaan_audit_id" class="form-label">Surat Tugas Audit</label>
-                        <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-control" required>
+                        <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-control select2-search" required>
                             <option value="">Pilih Surat Tugas</option>
                             @foreach($suratTugas as $st)
-                                <option value="{{ $st->id }}">{{ $st->nomor_surat_tugas }}</option>
+                                <option value="{{ $st->id }}">
+                                    {{ $st->nomor_surat_tugas }}
+                                    @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
+                                    @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                </option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="judul_bpm" class="form-label">Judul BPM</label>
-                        <select name="judul_bpm" id="judul_bpm" class="form-control" required>
+                        <select name="judul_bpm" id="judul_bpm" class="form-control select2-search" required>
                             <option value="">-- Pilih Surat Tugas terlebih dahulu --</option>
                         </select>
                         <small class="text-muted">Judul BPM akan muncul setelah Surat Tugas dipilih</small>

@@ -42,38 +42,37 @@ class PemantauanAuditController extends Controller
             $query->where('jenis_audit', $request->jenis_audit);
         }
         
-        $nomorSuratTugasList = $query->with(['pelaporanHasilAudit.temuan.penutupLhaRekomendasi'])
-            ->get()
+        $perencanaanList = $query->with(['pelaporanHasilAudit'])->get();
+        
+        $nomorSuratTugasList = $perencanaanList
             ->map(function($perencanaan) use ($currentUserId, $canSeeAllData) {
-                $totalRekomendasi = 0;
-                $nomorLhaLhkList = [];
+                // Hitung rekomendasi secara langsung dari tabel PenutupLhaRekomendasi
+                // agar akurat meskipun satu temuan punya >1 rekomendasi
+                $rekomendasiQuery = PenutupLhaRekomendasi::whereHas('temuan.pelaporanHasilAudit', function($q) use ($perencanaan) {
+                    $q->where('perencanaan_audit_id', $perencanaan->id);
+                });
                 
-                foreach ($perencanaan->pelaporanHasilAudit as $lha) {
-                    foreach ($lha->temuan as $temuan) {
-                        if ($temuan->penutupLhaRekomendasi) {
-                            // Jika user tidak bisa melihat semua data, hanya hitung rekomendasi dimana user tersebut adalah PIC
-                            if (!$canSeeAllData && $currentUserId) {
-                                $isUserPic = $temuan->penutupLhaRekomendasi->picUsers()
-                                    ->where('master_user_id', $currentUserId)
-                                    ->exists();
-                                if ($isUserPic) {
-                                    $totalRekomendasi++;
-                                }
-                            } else {
-                                $totalRekomendasi++;
-                            }
-                        }
-                    }
-                    if ($lha->nomor_lha_lhk) {
-                        $nomorLhaLhkList[] = $lha->nomor_lha_lhk;
-                    }
+                if (!$canSeeAllData && $currentUserId) {
+                    $rekomendasiQuery->whereHas('picUsers', function($q) use ($currentUserId) {
+                        $q->where('master_user_id', $currentUserId);
+                    });
                 }
+                
+                $totalRekomendasi = $rekomendasiQuery->count();
+                
+                // Kumpulkan nomor LHA/LHK
+                $nomorLhaLhkList = $perencanaan->pelaporanHasilAudit
+                    ->pluck('nomor_lha_lhk')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->toArray();
                 
                 return [
                     'nomor_surat_tugas' => $perencanaan->nomor_surat_tugas,
                     'perencanaan_audit_id' => $perencanaan->id,
                     'jenis_audit' => $perencanaan->jenis_audit,
-                    'nomor_lha_lhk' => implode(', ', array_unique($nomorLhaLhkList)),
+                    'nomor_lha_lhk' => implode(', ', $nomorLhaLhkList),
                     'count_rekomendasi' => $totalRekomendasi,
                 ];
             })

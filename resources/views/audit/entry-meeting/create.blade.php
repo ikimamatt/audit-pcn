@@ -17,18 +17,20 @@
                     <div class="mb-3">
                         <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
                         @if($programKerjaAudit->count() > 0)
-                            <select name="program_kerja_audit_id" id="program_kerja_audit_id" class="form-control" required>
+                            <select name="program_kerja_audit_id" id="program_kerja_audit_id" class="form-control select2-search" required>
                                 <option value="">Pilih Program Kerja Audit</option>
                                 @foreach($programKerjaAudit as $pka)
                                 @php
                                     $entryMeetingMilestone = $pka->milestones ? $pka->milestones->where('nama_milestone', 'Entry Meeting')->first() : null;
                                     $rejectedEntryMeeting = $pka->entryMeeting ? $pka->entryMeeting->where('status_approval', 'rejected')->first() : null;
+                                    $perencanaan = $pka->perencanaanAudit;
                                 @endphp
                                 <option value="{{ $pka->id }}" data-planned-date="{{ $entryMeetingMilestone ? $entryMeetingMilestone->tanggal_mulai : '' }}">
-                                    {{ $pka->no_pka }} - {{ $pka->perencanaanAudit ? $pka->perencanaanAudit->nomor_surat_tugas : 'N/A' }}
-                                    @if($rejectedEntryMeeting)
-                                        <span class="text-danger">(Reject - Ajukan Ulang)</span>
-                                    @endif
+                                    {{ $pka->no_pka }}
+                                    @if($perencanaan) · {{ $perencanaan->nomor_surat_tugas }}@endif
+                                    @if($perencanaan && $perencanaan->jenis_audit) · {{ $perencanaan->jenis_audit }}@endif
+                                    @if($perencanaan && $perencanaan->auditee) · {{ $perencanaan->auditee->divisi }}@endif
+                                    @if($rejectedEntryMeeting) (Reject - Ajukan Ulang)@endif
                                 </option>
                                 @endforeach
                             </select>
@@ -57,7 +59,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="auditee_id" class="form-label">Nama Auditee</label>
-                        <select name="auditee_id" id="auditee_id" class="form-control" required>
+                        <select name="auditee_id" id="auditee_id" class="form-control select2-search" required>
                             <option value="">Pilih Auditee</option>
                             @foreach($auditees as $auditee)
                                 <option value="{{ $auditee->id }}">{{ $auditee->divisi }}</option>

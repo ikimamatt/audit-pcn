@@ -12,10 +12,14 @@
                     @csrf @method('PUT')
                     <div class="mb-3">
                         <label class="form-label">Surat Tugas</label>
-                        <select name="perencanaan_audit_id" class="form-select" required>
+                        <select name="perencanaan_audit_id" class="form-select select2-search" required>
                             <option value="">Pilih Surat Tugas</option>
                             @foreach($suratTugas as $st)
-                                <option value="{{ $st->id }}" {{ $item->perencanaan_audit_id == $st->id ? 'selected' : '' }}>{{ $st->nomor_surat_tugas }}</option>
+                                <option value="{{ $st->id }}" {{ $item->perencanaan_audit_id == $st->id ? 'selected' : '' }}>
+                                    {{ $st->nomor_surat_tugas }}
+                                    @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
+                                    @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                </option>
                             @endforeach
                         </select>
                     </div>

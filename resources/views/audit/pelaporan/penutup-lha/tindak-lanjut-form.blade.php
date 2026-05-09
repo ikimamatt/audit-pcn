@@ -160,9 +160,12 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Upload Eviden</label>
-                                <input type="file" name="file_eviden" class="form-control">
-                                <small class="form-text text-muted">Upload file bukti tindak lanjut (opsional)</small>
+                                <label class="form-label fw-semibold">Upload Eviden <span class="text-danger">*</span></label>
+                                <input type="file" name="file_eviden" id="file_eviden" class="form-control @error('file_eviden') is-invalid @enderror" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                @error('file_eviden')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">Wajib upload file bukti tindak lanjut (PDF, JPG, PNG, DOC, DOCX — maks. 5MB)</small>
                             </div>
                         </div>
                     </div>
@@ -245,7 +248,34 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Minimal harus ada satu komentar yang diisi!');
             return false;
         }
+
+        // Validasi file eviden wajib
+        const fileEviden = document.getElementById('file_eviden');
+        if (!fileEviden || !fileEviden.files || fileEviden.files.length === 0) {
+            e.preventDefault();
+            fileEviden.classList.add('is-invalid');
+            // Tampilkan pesan jika belum ada invalid-feedback dari server
+            let feedback = fileEviden.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                const msg = document.createElement('div');
+                msg.className = 'invalid-feedback d-block';
+                msg.textContent = 'File eviden wajib diupload.';
+                fileEviden.parentNode.insertBefore(msg, fileEviden.nextSibling);
+            }
+            fileEviden.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
     });
+
+    // Reset invalid state saat file dipilih
+    const fileEvidenInput = document.getElementById('file_eviden');
+    if (fileEvidenInput) {
+        fileEvidenInput.addEventListener('change', function() {
+            this.classList.remove('is-invalid');
+            const feedback = this.parentNode.querySelector('.invalid-feedback.d-block');
+            if (feedback) feedback.remove();
+        });
+    }
 });
 </script>
 

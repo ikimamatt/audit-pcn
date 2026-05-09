@@ -53,7 +53,7 @@ class TodBpmAuditController extends Controller
      */
     public function create()
     {
-        $suratTugas = PerencanaanAudit::all();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         // Ambil walkthrough yang sudah memiliki file BPM
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')
@@ -140,7 +140,7 @@ class TodBpmAuditController extends Controller
     public function edit($id)
     {
         $item = TodBpmAudit::with('perencanaanAudit')->findOrFail($id);
-        $suratTugas = PerencanaanAudit::all();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         // Ambil walkthrough yang sudah memiliki file BPM
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')

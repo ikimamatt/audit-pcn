@@ -28,22 +28,23 @@
                         @csrf
                         <div class="mb-3">
                             <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
-                            <select name="program_kerja_audit_id" id="program_kerja_audit_id" class="form-select" required>
+                            <select name="program_kerja_audit_id" id="program_kerja_audit_id" class="form-select select2-search" required>
                                 <option value="">Pilih Program Kerja Audit</option>
                                 @foreach($programKerjaAudit as $pka)
                                     @php
                                         $isRejected = $pka->walkthroughAudit && $pka->walkthroughAudit->status_approval === 'rejected';
                                         $plannedDate = $pka->milestones ? $pka->milestones->first()->tanggal_mulai ?? '' : '';
-                                        $suratTugas = $pka->perencanaanAudit ? $pka->perencanaanAudit->nomor_surat_tugas ?? '' : '';
-                                        $displayText = $pka->no_pka . ' - ' . ($suratTugas ?: 'N/A');
-                                        if ($isRejected) {
-                                            $displayText .= ' (Reject - Ajukan Ulang)';
-                                        }
+                                        $perencanaan = $pka->perencanaanAudit;
+                                        $suratTugasText = $perencanaan ? $perencanaan->nomor_surat_tugas : 'N/A';
                                     @endphp
                                     <option value="{{ $pka->id }}" 
                                             data-planned-date="{{ $plannedDate }}"
-                                            data-surat-tugas="{{ $suratTugas }}">
-                                        {{ $displayText }}
+                                            data-surat-tugas="{{ $suratTugasText }}">
+                                        {{ $pka->no_pka }}
+                                        @if($perencanaan) · {{ $perencanaan->nomor_surat_tugas }}@endif
+                                        @if($perencanaan && $perencanaan->jenis_audit) · {{ $perencanaan->jenis_audit }}@endif
+                                        @if($perencanaan && $perencanaan->auditee) · {{ $perencanaan->auditee->divisi }}@endif
+                                        @if($isRejected) (Reject - Ajukan Ulang)@endif
                                     </option>
                                 @endforeach
                             </select>
@@ -64,7 +65,7 @@
 
                         <div class="mb-3">
                             <label for="auditee_id" class="form-label">Nama Auditee</label>
-                            <select name="auditee_id" id="auditee_id" class="form-select" required>
+                            <select name="auditee_id" id="auditee_id" class="form-select select2-search" required>
                                 <option value="">Pilih Auditee</option>
                                 @foreach($auditees as $auditee)
                                     <option value="{{ $auditee->id }}" {{ old('auditee_id') == $auditee->id ? 'selected' : '' }}>

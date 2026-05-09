@@ -5,6 +5,34 @@
     @yield('css')
     @include('layouts.partials/head-css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 5px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #495057;
+            padding-left: 12px;
+            line-height: 36px;
+        }
+        .input-group > .select2-container--default {
+            width: auto !important;
+            flex: 1 1 auto;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #3e63d2;
+            color: white;
+        }
+    </style>
 </head>
 
 <body data-menu-color="light" data-sidebar="default" @yield('body') >
@@ -102,8 +130,11 @@
 
 @vite(['resources/js/app.js'])
 @include("layouts.partials/vendor")
-@yield('script')
 
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+@yield('script')
 <!-- Session Timeout Handler -->
 <script src="{{ asset('js/session-timeout.js') }}"></script>
 
@@ -146,6 +177,15 @@
 </script>
 
 @stack('scripts')
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on any select with class 'select2-search'
+        $('.select2-search').select2({
+            width: '100%'
+        });
+    });
+</script>
 
 </body>
 </html>

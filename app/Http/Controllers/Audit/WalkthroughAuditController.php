@@ -55,7 +55,7 @@ class WalkthroughAuditController extends Controller
             ->whereDoesntHave('walkthroughAudit', function($query) {
                 $query->whereIn('status_approval', ['approved', 'pending']);
             })
-            ->with(['perencanaanAudit', 'milestones' => function($query) {
+            ->with(['perencanaanAudit.auditee', 'milestones' => function($query) {
                 $query->where('nama_milestone', 'Walkthrough');
             }, 'walkthroughAudit' => function($query) {
                 $query->where('status_approval', 'rejected');
@@ -66,7 +66,7 @@ class WalkthroughAuditController extends Controller
             $programKerjaAudit = ProgramKerjaAudit::whereHas('milestones', function($query) {
                 $query->where('nama_milestone', 'Walkthrough');
             })
-            ->with(['perencanaanAudit', 'milestones' => function($query) {
+            ->with(['perencanaanAudit.auditee', 'milestones' => function($query) {
                 $query->where('nama_milestone', 'Walkthrough');
             }])
             ->get();

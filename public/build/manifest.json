@@ -105,7 +105,7 @@
     "src": "resources/fonts/materialdesignicons-webfont.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-BkJsrJbp.js",
+    "file": "assets/app-DLpbH6EF.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -319,7 +319,7 @@
     "isEntry": true
   },
   "resources/js/pages/datatable.init.js": {
-    "file": "assets/datatable.init-CXArTy0U.js",
+    "file": "assets/datatable.init-BV6Svav0.js",
     "name": "datatable.init",
     "src": "resources/js/pages/datatable.init.js",
     "isEntry": true,

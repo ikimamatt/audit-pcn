@@ -32,7 +32,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="auditee_id" class="form-label">Nama Auditee</label>
-                        <select name="auditee_id" id="auditee_id" class="form-control" required>
+                        <select name="auditee_id" id="auditee_id" class="form-control select2-search" required>
                             <option value="">Pilih Auditee</option>
                             @foreach($auditees as $auditee)
                                 <option value="{{ $auditee->id }}" {{ $item->auditee_id == $auditee->id ? 'selected' : '' }}>{{ $auditee->divisi }}</option>
