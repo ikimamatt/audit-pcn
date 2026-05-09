@@ -32,7 +32,7 @@ class PelaporanHasilAuditController extends Controller
         $data = $query->orderBy('created_at', 'desc')->get();
         
         // Semua surat tugas bisa dilihat semua user
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
+        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
@@ -47,7 +47,7 @@ class PelaporanHasilAuditController extends Controller
 
     public function create()
     {
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
+        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
@@ -159,7 +159,7 @@ class PelaporanHasilAuditController extends Controller
     public function edit($id)
     {
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::all();
+        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();

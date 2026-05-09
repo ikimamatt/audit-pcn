@@ -5,26 +5,7 @@
 @extends('layouts.vertical', ['title' => 'Tambah Perencanaan Audit'])
 
 @section('css')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
-        .select2-container .select2-selection--single {
-            height: 38px !important;
-            border: 1px solid #dee2e6 !important;
-            border-radius: 0.25rem !important;
-            display: flex;
-            align-items: center;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px !important;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: normal !important;
-        }
-        .input-group > .select2-container--default {
-            flex: 1 1 auto;
-            width: 1% !important; /* Fix for input-group */
-        }
-    </style>
+    <!-- Select2 di-load secara global dari layout -->
 @endsection
 
 @section('content')
@@ -68,7 +49,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Jenis Audit</label>
-                        <select name="jenis_audit_id" id="jenis_audit_id" class="form-select" required>
+                        <select name="jenis_audit_id" id="jenis_audit_id" class="form-select select2-search" required>
                             <option value="">Pilih Jenis Audit</option>
                             @foreach($jenisAudits as $jenisAudit)
                                 <option value="{{ $jenisAudit->id }}" {{ old('jenis_audit_id') == $jenisAudit->id ? 'selected' : '' }}>
@@ -108,7 +89,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nama Auditee</label>
-                        <select name="auditee" class="form-select" required>
+                        <select name="auditee" class="form-select select2-search" required>
                             <option value="">Pilih Auditee</option>
                             @foreach($auditees as $auditee)
                                 <option value="{{ $auditee->id }}" {{ old('auditee') == $auditee->id ? 'selected' : '' }}>{{ $auditee->divisi }}</option>
@@ -160,7 +141,6 @@
 @endsection
 
 @section('script')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
         // Inisialisasi Select2 pada elemen yang sudah ada

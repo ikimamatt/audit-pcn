@@ -57,7 +57,7 @@ class PelaporanTemuan extends Model
 
     public function penutupLhaRekomendasi()
     {
-        return $this->hasOne(\App\Models\PenutupLhaRekomendasi::class, 'pelaporan_isi_lha_id');
+        return $this->hasMany(\App\Models\PenutupLhaRekomendasi::class, 'pelaporan_isi_lha_id');
     }
 }
 

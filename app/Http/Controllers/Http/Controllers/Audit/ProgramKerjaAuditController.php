@@ -8,6 +8,8 @@ use App\Models\Models\Audit\PkaRiskBasedAudit;
 use App\Models\Models\Audit\PkaMilestone;
 use App\Models\Models\Audit\PkaDokumen;
 use App\Models\Audit\PerencanaanAudit;
+use App\Models\EntryMeeting;
+use App\Models\WalkthroughAudit;
 use Illuminate\Http\Request;
 
 class ProgramKerjaAuditController extends Controller
@@ -27,7 +29,7 @@ class ProgramKerjaAuditController extends Controller
     public function create()
     {
         // Ambil semua surat tugas yang belum memiliki PKA
-        $suratTugas = PerencanaanAudit::whereDoesntHave('programKerjaAudit')->get();
+        $suratTugas = PerencanaanAudit::whereDoesntHave('programKerjaAudit')->with('auditee')->orderBy('nomor_surat_tugas')->get();
         
         return view('perencanaan-audit.create', compact('suratTugas'));
     }
@@ -109,7 +111,7 @@ class ProgramKerjaAuditController extends Controller
     public function edit($id)
     {
         $item = ProgramKerjaAudit::with(['perencanaanAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
-        $suratTugas = PerencanaanAudit::all();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         return view('perencanaan-audit.edit', compact('item', 'suratTugas'));
     }
 
@@ -194,12 +196,67 @@ class ProgramKerjaAuditController extends Controller
     }
 
     /**
+     * Cek relasi data sebelum hapus (untuk AJAX warning).
+     */
+    public function checkRelations($id)
+    {
+        $item = ProgramKerjaAudit::with(['entryMeeting', 'walkthroughAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+
+        $relations = [];
+
+        if ($item->entryMeeting) {
+            $relations[] = '1 data Entry Meeting';
+        }
+        if ($item->walkthroughAudit) {
+            $relations[] = '1 data Walkthrough Audit';
+        }
+        $riskCount = $item->risks->count();
+        if ($riskCount > 0) {
+            $relations[] = "{$riskCount} Risk Based Audit";
+        }
+        $milestoneCount = $item->milestones->count();
+        if ($milestoneCount > 0) {
+            $relations[] = "{$milestoneCount} Milestone";
+        }
+        $dokumenCount = $item->dokumen->count();
+        if ($dokumenCount > 0) {
+            $relations[] = "{$dokumenCount} Dokumen";
+        }
+
+        return response()->json([
+            'has_relations' => count($relations) > 0,
+            'relations' => $relations,
+            'no_pka' => $item->no_pka,
+            'surat_tugas' => $item->perencanaanAudit->nomor_surat_tugas ?? '-',
+        ]);
+    }
+
+    /**
      * Remove the specified resource from storage.
+     * Manual cascade delete untuk menghindari FK RESTRICT violation.
      */
     public function destroy($id)
     {
-        $item = ProgramKerjaAudit::findOrFail($id);
+        $item = ProgramKerjaAudit::with(['entryMeeting', 'walkthroughAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+
+        // Hapus entry_meeting terkait (FK RESTRICT, harus dihapus manual)
+        if ($item->entryMeeting) {
+            $item->entryMeeting->delete();
+        }
+
+        // Hapus walkthrough_audit terkait (sudah CASCADE di DB tapi eksplisit lebih aman)
+        if ($item->walkthroughAudit) {
+            $item->walkthroughAudit->delete();
+        }
+
+        // Hapus child records lainnya
+        $item->risks()->delete();
+        $item->milestones()->delete();
+        $item->dokumen()->delete();
+
+        // Hapus parent
         $item->delete();
-        return redirect()->route('audit.pka.index')->with('success', 'Data PKA berhasil dihapus!');
+
+        return redirect()->route('audit.pka.index')->with('success', 'Data PKA dan seluruh proses audit terkait berhasil dihapus!');
     }
 }

@@ -64,9 +64,14 @@
                                 <td>
                                     <a href="{{ route('audit.pka.show', $item->id) }}" class="btn btn-info btn-sm">Detail</a>
                                     <a href="{{ route('audit.pka.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{ route('audit.pka.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form">
+                                    <form action="{{ route('audit.pka.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form" id="delete-form-{{ $item->id }}">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm btn-delete-swal">Hapus</button>
+                                        <button type="button"
+                                            class="btn btn-danger btn-sm btn-delete-swal"
+                                            data-id="{{ $item->id }}"
+                                            data-check-url="{{ route('audit.pka.check-relations', $item->id) }}">
+                                            Hapus
+                                        </button>
                                     </form>
                                 </td>
                             </tr>
@@ -88,21 +93,68 @@
         document.querySelectorAll('.btn-delete-swal').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const form = btn.closest('form');
+                const id = btn.dataset.id;
+                const checkUrl = btn.dataset.checkUrl;
+                const form = document.getElementById('delete-form-' + id);
 
-                Swal.fire({
-                    title: 'Hapus Data?',
-                    text: 'Yakin ingin menghapus data ini?',
-                    icon: 'warning',
-                    confirmButtonText: 'Ya, Hapus',
-                    cancelButtonText: 'Batal',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
+                // Tampilkan loading sementara fetch data relasi
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch(checkUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Hapus';
+
+                    let htmlContent = '';
+                    if (data.has_relations) {
+                        const relList = data.relations.map(r => `<li>${r}</li>`).join('');
+                        htmlContent = `
+                            <p class="mb-2">PKA <strong>${data.no_pka}</strong> (Surat Tugas: <strong>${data.surat_tugas}</strong>) memiliki data terkait yang akan <strong class="text-danger">ikut terhapus permanen</strong>:</p>
+                            <ul class="text-start text-danger mb-2">${relList}</ul>
+                            <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+                        `;
+                    } else {
+                        htmlContent = `<p>Yakin ingin menghapus PKA <strong>${data.no_pka}</strong>? Tindakan ini tidak dapat dibatalkan.</p>`;
                     }
+
+                    Swal.fire({
+                        title: data.has_relations ? '⚠️ Peringatan! Data Terkait Akan Terhapus' : 'Hapus Data PKA?',
+                        html: htmlContent,
+                        icon: data.has_relations ? 'warning' : 'question',
+                        confirmButtonText: 'Ya, Hapus Semua',
+                        cancelButtonText: 'Batal',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        reverseButtons: true,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                })
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Hapus';
+                    // Fallback: tampilkan konfirmasi sederhana jika AJAX gagal
+                    Swal.fire({
+                        title: 'Hapus Data?',
+                        text: 'Yakin ingin menghapus data PKA ini beserta seluruh proses audit terkait?',
+                        icon: 'warning',
+                        confirmButtonText: 'Ya, Hapus',
+                        cancelButtonText: 'Batal',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 });
             });
         });

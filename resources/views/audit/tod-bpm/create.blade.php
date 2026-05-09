@@ -16,10 +16,14 @@
                     @csrf
                     <div class="mb-3">
                         <label for="perencanaan_audit_id" class="form-label">Surat Tugas Audit</label>
-                        <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-control" required>
+                        <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-control select2-search" required>
                             <option value="">Pilih Surat Tugas</option>
                             @foreach($suratTugas as $st)
-                                <option value="{{ $st->id }}">{{ $st->nomor_surat_tugas }}</option>
+                                <option value="{{ $st->id }}">
+                                    {{ $st->nomor_surat_tugas }}
+                                    @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
+                                    @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -59,7 +63,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="walkthrough_id" class="form-label">Pilih File BPM dari Walkthrough <span class="text-danger">*</span></label>
-                        <select name="walkthrough_id" id="walkthrough_id" class="form-control" required>
+                        <select name="walkthrough_id" id="walkthrough_id" class="form-control select2-search" required>
                             <option value="">Pilih Walkthrough</option>
                         </select>
                         <small class="text-muted">Hanya menampilkan walkthrough yang sudah approved dan memiliki file BPM untuk surat tugas yang dipilih</small>
@@ -129,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             option.disabled = true;
             walkthroughSelect.appendChild(option);
         }
+        $(walkthroughSelect).trigger('change');
     }
     
     // Handle perubahan surat tugas
