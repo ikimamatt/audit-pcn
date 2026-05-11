@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('perencanaan_audit_id'); // relasi ke surat tugas
             $table->date('tanggal_pka');
             $table->string('no_pka');
+            $table->string('judul_pka')->nullable();
+            $table->json('proses_bisnis')->nullable();
             $table->text('informasi_umum')->nullable();
             $table->text('kpi_tidak_tercapai')->nullable();
             $table->text('data_awal_dokumen')->nullable();

@@ -30,7 +30,7 @@ class ProgramKerjaAuditController extends Controller
     {
         // Ambil semua surat tugas yang belum memiliki PKA
         $suratTugas = PerencanaanAudit::whereDoesntHave('programKerjaAudit')->with('auditee')->orderBy('nomor_surat_tugas')->get();
-        
+
         return view('perencanaan-audit.create', compact('suratTugas'));
     }
 
@@ -43,6 +43,8 @@ class ProgramKerjaAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'tanggal_pka' => 'required|date',
             'no_pka' => 'required',
+            'judul_pka' => 'required|string',
+            'proses_bisnis' => 'required|array',
             // validasi lain sesuai kebutuhan
         ]);
 
@@ -51,6 +53,8 @@ class ProgramKerjaAuditController extends Controller
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'tanggal_pka' => $request->tanggal_pka,
             'no_pka' => $request->no_pka,
+            'judul_pka' => $request->judul_pka,
+            'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
             'informasi_umum' => $request->informasi_umum,
             'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
             'data_awal_dokumen' => $request->data_awal_dokumen,
@@ -124,6 +128,8 @@ class ProgramKerjaAuditController extends Controller
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'tanggal_pka' => 'required|date',
             'no_pka' => 'required',
+            'judul_pka' => 'required|string',
+            'proses_bisnis' => 'required|array',
         ]);
 
         $pka = ProgramKerjaAudit::findOrFail($id);
@@ -131,6 +137,8 @@ class ProgramKerjaAuditController extends Controller
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
             'tanggal_pka' => $request->tanggal_pka,
             'no_pka' => $request->no_pka,
+            'judul_pka' => $request->judul_pka,
+            'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
             'informasi_umum' => $request->informasi_umum,
             'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
             'data_awal_dokumen' => $request->data_awal_dokumen,
@@ -258,5 +266,302 @@ class ProgramKerjaAuditController extends Controller
         $item->delete();
 
         return redirect()->route('audit.pka.index')->with('success', 'Data PKA dan seluruh proses audit terkait berhasil dihapus!');
+    }
+
+    /**
+     * Download dokumen PKA berdasarkan template.
+     */
+    public function download($id)
+    {
+        $item = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+
+        $templatePath = base_path('Template Program Kerja Audit.docx');
+
+        if (file_exists($templatePath)) {
+            // Format data
+            $tanggalPka = $item->tanggal_pka ? \Carbon\Carbon::parse($item->tanggal_pka)->locale('id')->translatedFormat('d F Y') : '-';
+
+            $tglMulai = $item->perencanaanAudit->tanggal_audit_mulai;
+            $tglSampai = $item->perencanaanAudit->tanggal_audit_sampai;
+            $waktuAudit = '-';
+            if ($tglMulai && $tglSampai) {
+                $mulai = \Carbon\Carbon::parse($tglMulai)->locale('id')->translatedFormat('d F Y');
+                $sampai = \Carbon\Carbon::parse($tglSampai)->locale('id')->translatedFormat('d F Y');
+                $waktuAudit = $mulai . ' s/d ' . $sampai;
+            }
+
+            $periode = $item->perencanaanAudit->periode_audit ?? '-';
+            $nomorPka = $item->no_pka ?? '-';
+
+            $nomorTugas = $item->perencanaanAudit->nomor_surat_tugas ?? '-';
+            $tanggalTugas = $item->perencanaanAudit->tanggal_surat_tugas ? \Carbon\Carbon::parse($item->perencanaanAudit->tanggal_surat_tugas)->locale('id')->translatedFormat('d F Y') : '-';
+            $judulPka = $item->judul_pka ?? '-';
+
+            // Ruang Lingkup Audit (JSON array dari perencanaan_audit)
+            $ruangLingkup = $item->perencanaanAudit->ruang_lingkup ?? [];
+            if (is_string($ruangLingkup)) {
+                $ruangLingkup = json_decode($ruangLingkup, true) ?? [];
+            }
+
+            // Proses template menggunakan PhpWord
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+
+            // Replace placeholders
+            $templateProcessor->setValue('PERIODE_AUDIT', $periode);
+            $templateProcessor->setValue('WAKTU_AUDIT', $waktuAudit);
+            $templateProcessor->setValue('NOMOR_PKA', $nomorPka);
+            $templateProcessor->setValue('TANGGAL_PKA', $tanggalPka);
+            $templateProcessor->setValue('NOMOR_TUGAS', $nomorTugas);
+            $templateProcessor->setValue('TANGGAL_TUGAS', $tanggalTugas);
+            $templateProcessor->setValue('JUDUL_PKA', $judulPka);
+            $templateProcessor->setValue('RUANG_LINGKUP_AUDIT', '##RUANG_LINGKUP##');
+
+            // Menyiapkan data untuk tabel dinamis (Proses Bisnis & Risk)
+            $prosesBisnis = is_array($item->proses_bisnis) ? $item->proses_bisnis : json_decode($item->proses_bisnis ?? '[]', true) ?? [];
+            $risks = $item->risks;
+
+            $pbCount = max(count($prosesBisnis), 1);
+            $mergeStartMarker = '##VMERGE_START##';
+            $mergeContinueMarker = '##VMERGE_CONT##';
+
+            $tableData = [];
+            for ($i = 0; $i < $pbCount; $i++) {
+                $tableData[] = [
+                    'NO' => $i + 1,
+                    'PROSES_BISNIS' => isset($prosesBisnis[$i]) ? $prosesBisnis[$i] : '-',
+                    'DESKRIPSI_RISIKO' => ($i == 0) ? $mergeStartMarker : $mergeContinueMarker,
+                ];
+            }
+
+            try {
+                $templateProcessor->cloneRowAndSetValues('NO', $tableData);
+            } catch (\Exception $e) {
+            }
+
+            // Post-process XML: merge Risk cells + bangun paragraf risk dgn font yg benar
+            $refClass = new \ReflectionClass(get_class($templateProcessor));
+            $mainPart = $refClass->getProperty('tempDocumentMainPart');
+            $mainPart->setAccessible(true);
+            $xml = $mainPart->getValue($templateProcessor);
+
+            $risksForCallback = $risks;
+            $xml = preg_replace_callback(
+                '/<w:tc[^>]*>.*?<\/w:tc>/s',
+                function ($match) use ($mergeStartMarker, $mergeContinueMarker, $risksForCallback) {
+                    $cellXml = $match[0];
+
+                    if (strpos($cellXml, $mergeStartMarker) !== false) {
+                        // Ambil run properties (font) dari template, paksa size 11pt
+                        $rPr = '';
+                        if (preg_match('/<w:rPr>.*?<\/w:rPr>/s', $cellXml, $m)) {
+                            $rPr = $m[0];
+                            // Hapus size lama jika ada, ganti dengan size 11 (22 half-points)
+                            $rPr = preg_replace('/<w:sz[^\/]*\/?>/', '', $rPr);
+                            $rPr = preg_replace('/<w:szCs[^\/]*\/?>/', '', $rPr);
+                            $rPr = str_replace('</w:rPr>', '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>', $rPr);
+                        } else {
+                            $rPr = '<w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>';
+                        }
+
+                        // Tambahkan vMerge restart ke tcPr
+                        if (strpos($cellXml, '<w:tcPr') !== false) {
+                            $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge w:val="restart"/>', $cellXml, 1);
+                        }
+
+                        // Bangun paragraf risk dgn Word native auto-numbering (numId=99)
+                        $riskParagraphs = '';
+                        if ($risksForCallback->count() > 0) {
+                            foreach ($risksForCallback as $idx => $risk) {
+                                $text = htmlspecialchars($risk->deskripsi_resiko);
+                                $riskParagraphs .= '<w:p>'
+                                    . '<w:pPr>'
+                                    . '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="99"/></w:numPr>'
+                                    . '<w:jc w:val="both"/>'
+                                    . '</w:pPr>'
+                                    . '<w:r>' . $rPr . '<w:t>' . $text . '</w:t></w:r>'
+                                    . '</w:p>';
+                            }
+                        } else {
+                            $riskParagraphs = '<w:p><w:r>' . $rPr . '<w:t>-</w:t></w:r></w:p>';
+                        }
+
+                        // Ganti isi sel: ambil dari awal sampai </w:tcPr>, lalu paragraf baru
+                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
+                        if ($tcPrEnd !== false) {
+                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
+                                . $riskParagraphs . '</w:tc>';
+                        }
+
+                    } elseif (strpos($cellXml, $mergeContinueMarker) !== false) {
+                        // Sel lanjutan: tambah vMerge continue dan kosongkan
+                        if (strpos($cellXml, '<w:tcPr') !== false) {
+                            $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge/>', $cellXml, 1);
+                        }
+                        $cellXml = preg_replace('/<w:p[^\/].*?<\/w:p>/s', '<w:p/>', $cellXml);
+                    }
+
+                    return $cellXml;
+                },
+                $xml
+            );
+
+            // Post-process: Ruang Lingkup Audit auto-numbering (numId=98)
+            $rlMarker = '##RUANG_LINGKUP##';
+            if (strpos($xml, $rlMarker) !== false) {
+                // Cari seluruh blok paragraf yang mengandung marker
+                if (preg_match('/<w:p\b(?:(?!<w:p\b).)*?' . preg_quote($rlMarker, '/') . '.*?<\/w:p>/s', $xml, $pMatch)) {
+                    $origPara = $pMatch[0];
+                    
+                    // Ekstrak rPr (font style) dari template, paksa Tahoma size 11
+                    $rlRPr = '';
+                    if (preg_match('/<w:rPr>.*?<\/w:rPr>/s', $origPara, $rlMatch)) {
+                        $rlRPr = $rlMatch[0];
+                        $rlRPr = preg_replace('/<w:sz[^\/]*\/?>/', '', $rlRPr);
+                        $rlRPr = preg_replace('/<w:szCs[^\/]*\/?>/', '', $rlRPr);
+                        $rlRPr = preg_replace('/<w:rFonts[^\/]*\/?>/', '', $rlRPr);
+                        $rlRPr = str_replace('</w:rPr>', '<w:rFonts w:ascii="Tahoma" w:hAnsi="Tahoma" w:cs="Tahoma" w:eastAsia="Tahoma"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>', $rlRPr);
+                    } else {
+                        $rlRPr = '<w:rPr><w:rFonts w:ascii="Tahoma" w:hAnsi="Tahoma" w:cs="Tahoma" w:eastAsia="Tahoma"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>';
+                    }
+                    
+                    // Ekstrak pPr (jarak spasi, dll) dari paragraf asli
+                    $origPPr = '';
+                    if (preg_match('/<w:pPr>.*?<\/w:pPr>/s', $origPara, $pPrMatch)) {
+                        $origPPr = $pPrMatch[0];
+                    }
+                    
+                    // Buat versi pPr dengan numbering untuk daftar ruang lingkup
+                    $numberedPPr = $origPPr;
+                    if ($numberedPPr !== '') {
+                        $numberedPPr = preg_replace('/<w:jc[^\/]*\/?>/', '', $numberedPPr);
+                        $numberedPPr = preg_replace('/<w:numPr>.*?<\/w:numPr>/s', '', $numberedPPr);
+                        $numberedPPr = preg_replace('/<w:ind[^\/]*\/?>/', '', $numberedPPr);
+                        $numberedPPr = str_replace('</w:pPr>', '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="98"/></w:numPr><w:jc w:val="both"/><w:ind w:left="1000" w:hanging="360"/></w:pPr>', $numberedPPr);
+                    } else {
+                        $numberedPPr = '<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="98"/></w:numPr><w:jc w:val="both"/><w:ind w:left="1000" w:hanging="360"/></w:pPr>';
+                    }
+                    
+                    // Ganti teks markernya SAJA dengan menyisipkan penutup paragraf lama, 
+                    // menambahkan daftar paragraf baru, dan pembuka paragraf sisanya
+                    $injectedXml = '</w:t></w:r></w:p>'; // Tutup paragraf asli
+                    
+                    if (!empty($ruangLingkup)) {
+                        foreach ($ruangLingkup as $rl) {
+                            $injectedXml .= '<w:p>'
+                                . $numberedPPr
+                                . '<w:r>' . $rlRPr . '<w:t>' . htmlspecialchars($rl) . '</w:t></w:r>'
+                                . '</w:p>';
+                        }
+                    } else {
+                        $injectedXml .= '<w:p>' . $numberedPPr . '<w:r>' . $rlRPr . '<w:t>-</w:t></w:r></w:p>';
+                    }
+                    
+                    // Buka paragraf lagi dengan pPr ASLI untuk mempertahankan elemen seperti Page Break dll
+                    $injectedXml .= '<w:p>' . $origPPr . '<w:r><w:t>';
+                    
+                    // Terapkan ke $origPara, lalu terapkan ke seluruh $xml
+                    $newPara = str_replace($rlMarker, $injectedXml, $origPara);
+                    $xml = str_replace($origPara, $newPara, $xml);
+                }
+            }
+
+            $mainPart->setValue($templateProcessor, $xml);
+
+            $filename = 'PKA_' . str_replace(['/', '\\'], '_', $item->no_pka) . '.docx';
+            $tempPath = storage_path('app/public/temp_' . uniqid() . '.docx');
+
+            $templateProcessor->saveAs($tempPath);
+
+            // Inject Word native numbering definition (1. 2. 3.) ke dalam file docx
+            $zip = new \ZipArchive();
+            if ($zip->open($tempPath) === true) {
+                $numberingXml = $zip->getFromName('word/numbering.xml');
+
+                $ns = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+                $abstractNum = '<w:abstractNum w:abstractNumId="99" ' . $ns . '>'
+                    . '<w:lvl w:ilvl="0">'
+                    . '<w:start w:val="1"/>'
+                    . '<w:numFmt w:val="decimal"/>'
+                    . '<w:lvlText w:val="%1."/>'
+                    . '<w:lvlJc w:val="left"/>'
+                    . '<w:pPr><w:ind w:left="360" w:hanging="360"/></w:pPr>'
+                    . '<w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>'
+                    . '</w:lvl>'
+                    . '</w:abstractNum>';
+                $numRef = '<w:num w:numId="99" ' . $ns . '><w:abstractNumId w:val="99"/></w:num>';
+
+                if ($numberingXml !== false) {
+                    // Tambahkan ke numbering.xml yang sudah ada (tanpa namespace duplikat)
+                    $abstractNumClean = '<w:abstractNum w:abstractNumId="99">'
+                        . '<w:lvl w:ilvl="0">'
+                        . '<w:start w:val="1"/>'
+                        . '<w:numFmt w:val="decimal"/>'
+                        . '<w:lvlText w:val="%1."/>'
+                        . '<w:lvlJc w:val="left"/>'
+                        . '<w:pPr><w:ind w:left="360" w:hanging="360"/></w:pPr>'
+                        . '<w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>'
+                        . '</w:lvl>'
+                        . '</w:abstractNum>';
+                    $numRefClean = '<w:num w:numId="99"><w:abstractNumId w:val="99"/></w:num>';
+
+                    // Definisi untuk Ruang Lingkup (numId=98)
+                    $abstractNumRL = '<w:abstractNum w:abstractNumId="98">'
+                        . '<w:lvl w:ilvl="0">'
+                        . '<w:start w:val="1"/>'
+                        . '<w:numFmt w:val="decimal"/>'
+                        . '<w:lvlText w:val="%1."/>'
+                        . '<w:lvlJc w:val="left"/>'
+                        . '<w:pPr><w:ind w:left="1000" w:hanging="360"/></w:pPr>'
+                        . '<w:rPr><w:rFonts w:ascii="Tahoma" w:hAnsi="Tahoma" w:cs="Tahoma" w:eastAsia="Tahoma"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>'
+                        . '</w:lvl>'
+                        . '</w:abstractNum>';
+                    $numRefRL = '<w:num w:numId="98"><w:abstractNumId w:val="98"/></w:num>';
+
+                    // abstractNum HARUS sebelum w:num pertama (aturan Word XML)
+                    if (preg_match('/<w:num\s/', $numberingXml)) {
+                        $numberingXml = preg_replace('/<w:num\s/', $abstractNumClean . $abstractNumRL . '<w:num ', $numberingXml, 1);
+                    } else {
+                        $numberingXml = str_replace('</w:numbering>', $abstractNumClean . $abstractNumRL . '</w:numbering>', $numberingXml);
+                    }
+                    // numRef di akhir sebelum penutup
+                    $numberingXml = str_replace('</w:numbering>', $numRefClean . $numRefRL . '</w:numbering>', $numberingXml);
+                } else {
+                    // Buat numbering.xml baru
+                    $numberingXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                        . '<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                        . $abstractNum . $numRef
+                        . '</w:numbering>';
+
+                    // Tambahkan relationship
+                    $relsXml = $zip->getFromName('word/_rels/document.xml.rels');
+                    if ($relsXml !== false && strpos($relsXml, 'numbering.xml') === false) {
+                        $relsXml = str_replace(
+                            '</Relationships>',
+                            '<Relationship Id="rIdNum99" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/></Relationships>',
+                            $relsXml
+                        );
+                        $zip->addFromString('word/_rels/document.xml.rels', $relsXml);
+                    }
+
+                    // Tambahkan content type
+                    $contentTypes = $zip->getFromName('[Content_Types].xml');
+                    if ($contentTypes !== false && strpos($contentTypes, 'numbering.xml') === false) {
+                        $contentTypes = str_replace(
+                            '</Types>',
+                            '<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/></Types>',
+                            $contentTypes
+                        );
+                        $zip->addFromString('[Content_Types].xml', $contentTypes);
+                    }
+                }
+
+                $zip->addFromString('word/numbering.xml', $numberingXml);
+                $zip->close();
+            }
+
+            return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
+        }
+
+        return redirect()->back()->with('error', 'Template dokumen .docx tidak ditemukan. Pastikan file "Template Program Kerja Audit.docx" ada di root folder.');
     }
 }

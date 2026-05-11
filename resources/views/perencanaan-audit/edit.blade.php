@@ -32,6 +32,26 @@
                         <input type="text" name="no_pka" class="form-control" value="{{ $item->no_pka }}" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Judul PKA</label>
+                        <input type="text" name="judul_pka" class="form-control" value="{{ $item->judul_pka }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Proses Bisnis</label>
+                        @php
+                            $selectedPb = is_array($item->proses_bisnis) ? $item->proses_bisnis : json_decode($item->proses_bisnis ?? '[]', true) ?? [];
+                            if (empty($selectedPb)) $selectedPb = ['']; // Minimal 1 input kosong
+                        @endphp
+                        <div id="pb-list">
+                            @foreach($selectedPb as $pb)
+                            <div class="input-group mb-2 pb-item">
+                                <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" value="{{ $pb }}" required>
+                                <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
+                            </div>
+                            @endforeach
+                        </div>
+                        <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-pb"><i class="mdi mdi-plus"></i> Tambah Proses Bisnis</button>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Informasi Umum</label>
                         <textarea name="informasi_umum" class="form-control">{{ $item->informasi_umum }}</textarea>
                     </div>
@@ -127,6 +147,25 @@ $(document).on('click', '#btn-add-risk', function() {
 });
 $(document).on('click', '.btn-remove-risk', function() {
     $(this).closest('.risk-item').remove();
+});
+
+// Dynamic Proses Bisnis
+$('#btn-add-pb').on('click', function() {
+    const pbHtml = `
+        <div class="input-group mb-2 pb-item">
+            <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" required>
+            <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
+        </div>
+    `;
+    $('#pb-list').append(pbHtml);
+});
+
+$(document).on('click', '.btn-remove-pb', function() {
+    if ($('.pb-item').length > 1) {
+        $(this).closest('.pb-item').remove();
+    } else {
+        alert('Minimal harus ada 1 Proses Bisnis');
+    }
 });
 </script>
 @endsection 

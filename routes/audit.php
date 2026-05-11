@@ -13,6 +13,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::resource('perencanaan', PerencanaanAuditController::class);
     Route::get('perencanaan/get-nomor-surat-tugas', [PerencanaanAuditController::class, 'getNomorSuratTugas'])->name('perencanaan.get-nomor-surat-tugas');
     Route::resource('pka', \App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class);
+    Route::get('pka/{pka}/download', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'download'])->name('pka.download');
     Route::get('pka/{pka}/check-relations', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'checkRelations'])->name('pka.check-relations');
     Route::post('pka/{pka}/dokumen/{dok}/approval', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'approval'])->name('pka.approval');
     Route::resource('pkpt', \App\Http\Controllers\Http\Controllers\Audit\JadwalPkptAuditController::class);
