@@ -16,7 +16,7 @@ class ProgramKerjaAuditSeeder extends Seeder
     {
         // Ambil semua ID dari perencanaan audit yang sudah ada
         $perencanaanAuditList = PerencanaanAudit::all();
-        
+
         if ($perencanaanAuditList->isEmpty()) {
             $this->command->warn('Tidak ada data perencanaan audit. Skipping ProgramKerjaAuditSeeder.');
             return;
@@ -25,13 +25,15 @@ class ProgramKerjaAuditSeeder extends Seeder
         $pkaData = [];
         $riskData = [];
         $dokumenData = [];
-        
+
         foreach ($perencanaanAuditList as $index => $perencanaanAudit) {
             // Create PKA entry
             $pkaId = DB::table('program_kerja_audit')->insertGetId([
                 'perencanaan_audit_id' => $perencanaanAudit->id,
                 'tanggal_pka' => '2024-07-01',
                 'no_pka' => 'PKA-00' . ($index + 1) . '/2024',
+                'judul_pka' => 'Audit Kepatuhan dan Operasional ' . ($index + 1),
+                'proses_bisnis' => json_encode(['Proses Perencanaan Kontrak Project Transmisi dan Pelayanan Pelanggan', 'Proses Pelaksanakan Kontrak Project Transmisi dan Pelayanan Pelanggan', 'Proses Penagihan Kontrak Project Transmisi dan Pelayanan Pelanggan']),
                 'informasi_umum' => 'Program Kerja Audit untuk ' . $perencanaanAudit->jenis_audit . ' pada ' . $perencanaanAudit->auditee->direktorat ?? 'Direktorat',
                 'kpi_tidak_tercapai' => 'KPI yang tidak tercapai dalam audit ' . ($index + 1) . ': Efisiensi operasional, Kepatuhan regulasi, dan Pengelolaan risiko',
                 'data_awal_dokumen' => 'Data awal dokumen untuk audit ' . ($index + 1) . ': Laporan keuangan, SOP, dan Dokumen pendukung lainnya',
@@ -124,4 +126,4 @@ class ProgramKerjaAuditSeeder extends Seeder
 
         $this->command->info('Program Kerja Audit seeder berhasil dijalankan dengan risks dan dokumen.');
     }
-} 
+}

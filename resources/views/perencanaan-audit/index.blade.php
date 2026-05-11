@@ -22,14 +22,18 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <a href="{{ route('audit.pka.create') }}" class="btn btn-primary mb-3">Tambah PKA</a>
+                <a href="{{ route('audit.pka.create') }}" class="btn btn-primary shadow-sm mb-3">
+                    <i class="mdi mdi-plus me-1"></i> Tambah PKA
+                </a>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-bordered dt-responsive nowrap" id="responsive-datatable">
+                    <table class="table table-bordered dt-responsive" id="responsive-datatable" style="width: 100%;">
                         <thead>
                             <tr>
                                 <th>No</th>
                                 <th>Surat Tugas</th>
                                 <th>No PKA</th>
+                                <th>Judul PKA</th>
+                                <th>Proses Bisnis</th>
                                 <th>Tanggal PKA</th>
                                 <th>Resiko</th>
                                 <th>Milestone</th>
@@ -42,37 +46,70 @@
                                 <td>{{ $i+1 }}</td>
                                 <td>{{ $item->perencanaanAudit->nomor_surat_tugas ?? '-' }}</td>
                                 <td>{{ $item->no_pka }}</td>
+                                <td>{{ $item->judul_pka ?? '-' }}</td>
+                                <td>
+                                    <div class="text-wrap" style="min-width: 200px;">
+                                        @if($item->proses_bisnis && is_array($item->proses_bisnis))
+                                            <div class="d-flex flex-column gap-1">
+                                                @foreach($item->proses_bisnis as $pb)
+                                                    <span class="badge bg-soft-primary text-primary text-start" style="white-space: normal; line-height: 1.4;">
+                                                        <i class="mdi mdi-check-circle-outline me-1"></i>{{ $pb }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td>{{ $item->tanggal_pka }}</td>
                                 <td>
-                                    @if($item->risks && $item->risks->count() > 0)
-                                        <ul class="mb-0 ps-3">
-                                        @foreach($item->risks as $risk)
-                                            <li>{{ $risk->deskripsi_resiko }}</li>
+                                    <div class="text-wrap" style="min-width: 200px;">
+                                        @if($item->risks && $item->risks->count() > 0)
+                                            <ul class="list-unstyled mb-0">
+                                            @foreach($item->risks as $risk)
+                                                <li class="mb-1"><i class="mdi mdi-alert-circle-outline text-danger me-1"></i> {{ $risk->deskripsi_resiko }}</li>
+                                            @endforeach
+                                            </ul>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-wrap" style="min-width: 220px;">
+                                        <ul class="list-unstyled mb-0">
+                                        @foreach($item->milestones as $m)
+                                            <li class="mb-1">
+                                                <span class="fw-semibold">{{ $m->nama_milestone }}:</span><br>
+                                                <small class="text-muted"><i class="mdi mdi-calendar-clock me-1"></i> {{ $m->tanggal_mulai }} s/d {{ $m->tanggal_selesai }}</small>
+                                            </li>
                                         @endforeach
                                         </ul>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
+                                    </div>
                                 </td>
                                 <td>
-                                    <ul class="mb-0 ps-3">
-                                    @foreach($item->milestones as $m)
-                                        <li>{{ $m->nama_milestone }}: {{ $m->tanggal_mulai }} s/d {{ $m->tanggal_selesai }}</li>
-                                    @endforeach
-                                    </ul>
-                                </td>
-                                <td>
-                                    <a href="{{ route('audit.pka.show', $item->id) }}" class="btn btn-info btn-sm">Detail</a>
-                                    <a href="{{ route('audit.pka.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{ route('audit.pka.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form" id="delete-form-{{ $item->id }}">
-                                        @csrf @method('DELETE')
-                                        <button type="button"
-                                            class="btn btn-danger btn-sm btn-delete-swal"
-                                            data-id="{{ $item->id }}"
-                                            data-check-url="{{ route('audit.pka.check-relations', $item->id) }}">
-                                            Hapus
-                                        </button>
-                                    </form>
+                                    <div class="d-flex gap-1 justify-content-start">
+                                        <a href="{{ route('audit.pka.show', $item->id) }}" class="btn btn-info btn-sm text-white shadow-sm" title="Detail">
+                                            <i class="mdi mdi-eye"></i>
+                                        </a>
+                                        <a href="{{ route('audit.pka.edit', $item->id) }}" class="btn btn-warning btn-sm text-white shadow-sm" title="Edit">
+                                            <i class="mdi mdi-pencil"></i>
+                                        </a>
+                                        <a href="{{ route('audit.pka.download', $item->id) }}" class="btn btn-success btn-sm text-white shadow-sm" title="Download PKA">
+                                            <i class="mdi mdi-download"></i>
+                                        </a>
+                                        <form action="{{ route('audit.pka.destroy', $item->id) }}" method="POST" class="delete-form m-0" id="delete-form-{{ $item->id }}">
+                                            @csrf @method('DELETE')
+                                            <button type="button"
+                                                class="btn btn-danger btn-sm shadow-sm btn-delete-swal"
+                                                data-id="{{ $item->id }}"
+                                                data-check-url="{{ route('audit.pka.check-relations', $item->id) }}"
+                                                title="Hapus">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach

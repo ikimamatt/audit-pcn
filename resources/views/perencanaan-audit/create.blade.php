@@ -41,6 +41,20 @@
                         <input type="text" name="no_pka" class="form-control" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Judul PKA</label>
+                        <input type="text" name="judul_pka" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Proses Bisnis</label>
+                        <div id="pb-list">
+                            <div class="input-group mb-2 pb-item">
+                                <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" required>
+                                <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-pb"><i class="mdi mdi-plus"></i> Tambah Proses Bisnis</button>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Informasi Umum</label>
                         <textarea name="informasi_umum" class="form-control"></textarea>
                     </div>
@@ -308,6 +322,24 @@ $(document).ready(function() {
     // Real-time file validation
     $('#dokumenUpload').on('change', function() {
         validateFileUpload();
+    });
+    // Dynamic Proses Bisnis
+    $('#btn-add-pb').on('click', function() {
+        const pbHtml = `
+            <div class="input-group mb-2 pb-item">
+                <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" required>
+                <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
+            </div>
+        `;
+        $('#pb-list').append(pbHtml);
+    });
+
+    $(document).on('click', '.btn-remove-pb', function() {
+        if ($('.pb-item').length > 1) {
+            $(this).closest('.pb-item').remove();
+        } else {
+            alert('Minimal harus ada 1 Proses Bisnis');
+        }
     });
 });
 </script>
