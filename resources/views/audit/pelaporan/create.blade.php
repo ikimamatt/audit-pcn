@@ -31,6 +31,9 @@
                                         {{ $s->nomor_surat_tugas }}
                                         @if($s->jenis_audit) · {{ $s->jenis_audit }}@endif
                                         @if($s->auditee) · {{ $s->auditee->divisi }}@endif
+                                        @if($s->tanggal_audit_mulai && $s->tanggal_audit_sampai)
+                                            · [{{ \Carbon\Carbon::parse($s->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($s->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>

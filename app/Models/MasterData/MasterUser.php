@@ -50,4 +50,9 @@ class MasterUser extends Authenticatable
     {
         return $this->belongsTo(MasterAuditee::class, 'master_auditee_id');
     }
+
+    public function unit()
+    {
+        return $this->belongsTo(MasterUnit::class, 'master_unit_id');
+    }
 }

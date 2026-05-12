@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterUser;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterAksesUser;
+use App\Models\MasterData\MasterUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,7 +15,7 @@ class MasterUserController extends Controller
     public function index()
     {
         // Hide users with Superadmin access from the view
-        $data = MasterUser::with(['akses', 'auditee'])
+        $data = MasterUser::with(['akses', 'auditee', 'unit'])
             ->whereHas('akses', function($query) {
                 $query->where('nama_akses', '!=', 'Superadmin');
             })
@@ -25,43 +26,43 @@ class MasterUserController extends Controller
     public function create()
     {
         $auditees = MasterAuditee::all();
-        // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
-        // Note: Superadmin is hidden and cannot be assigned through UI
+        $units    = MasterUnit::orderBy('kode_unit')->get();
         $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
-        // Ambil akses dan urutkan sesuai urutan yang diinginkan (exclude Superadmin)
         $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
-            ->where('nama_akses', '!=', 'Superadmin') // Hide Superadmin role from selection
+            ->where('nama_akses', '!=', 'Superadmin')
             ->get()
             ->sortBy(function($item) use ($allowedAkses) {
                 return array_search($item->nama_akses, $allowedAkses);
             })
             ->values();
-        return view('master-data.user.create', compact('auditees', 'aksesUsers'));
+        return view('master-data.user.create', compact('auditees', 'aksesUsers', 'units'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:master_user,username',
-            'nip' => 'required|string|max:255',
-            'password' => 'required|string|min:6',
-            'email' => 'nullable|email|max:255',
-            'no_telpon' => 'nullable|string|max:20',
-            'jabatan' => 'nullable|string|max:255',
-            'master_auditee_id' => 'required|exists:master_auditee,id',
+            'nama'                 => 'required|string|max:255',
+            'username'             => 'required|string|max:255|unique:master_user,username',
+            'nip'                  => 'required|string|max:255',
+            'password'             => 'required|string|min:6',
+            'email'                => 'nullable|email|max:255',
+            'no_telpon'            => 'nullable|string|max:20',
+            'jabatan'              => 'nullable|string|max:255',
+            'master_auditee_id'    => 'required|exists:master_auditee,id',
+            'master_unit_id'       => 'required|exists:master_unit,id',
             'master_akses_user_id' => 'required|exists:master_akses_user,id',
         ]);
 
         MasterUser::create([
-            'nama' => $request->nama,
-            'username' => $request->username,
-            'nip' => $request->nip,
-            'password' => Hash::make($request->password),
-            'email' => $request->email,
-            'no_telpon' => $request->no_telpon,
-            'jabatan' => $request->jabatan,
-            'master_auditee_id' => $request->master_auditee_id,
+            'nama'                 => $request->nama,
+            'username'             => $request->username,
+            'nip'                  => $request->nip,
+            'password'             => Hash::make($request->password),
+            'email'                => $request->email,
+            'no_telpon'            => $request->no_telpon,
+            'jabatan'              => $request->jabatan,
+            'master_auditee_id'    => $request->master_auditee_id,
+            'master_unit_id'       => $request->master_unit_id,
             'master_akses_user_id' => $request->master_akses_user_id,
         ]);
 
@@ -77,10 +78,9 @@ class MasterUserController extends Controller
         }
         
         $auditees = MasterAuditee::all();
-        // Filter akses user sesuai dengan gambar: AUDITEE, ASMAN SPI, KSPI, AUDITOR, SUPER ADMIN, VIEW BOD
+        $units    = MasterUnit::orderBy('kode_unit')->get();
         $allowedAkses = ['AUDITEE', 'ASMAN SPI', 'KSPI', 'AUDITOR', 'SUPER ADMIN', 'VIEW BOD'];
         
-        // Jika user saat ini memiliki akses yang tidak ada dalam daftar, tambahkan juga
         if ($masterUser->master_akses_user_id) {
             $currentAksesUser = MasterAksesUser::find($masterUser->master_akses_user_id);
             if ($currentAksesUser && !in_array($currentAksesUser->nama_akses, $allowedAkses)) {
@@ -88,39 +88,40 @@ class MasterUserController extends Controller
             }
         }
         
-        // Ambil akses dan urutkan sesuai urutan yang diinginkan (exclude Superadmin)
         $aksesUsers = MasterAksesUser::whereIn('nama_akses', $allowedAkses)
-            ->where('nama_akses', '!=', 'Superadmin') // Hide Superadmin role from selection
+            ->where('nama_akses', '!=', 'Superadmin')
             ->get()
             ->sortBy(function($item) use ($allowedAkses) {
                 return array_search($item->nama_akses, $allowedAkses);
             })
             ->values();
             
-        return view('master-data.user.edit', compact('masterUser', 'auditees', 'aksesUsers'));
+        return view('master-data.user.edit', compact('masterUser', 'auditees', 'aksesUsers', 'units'));
     }
 
     public function update(Request $request, MasterUser $masterUser)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:master_user,username,' . $masterUser->id,
-            'nip' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'no_telpon' => 'nullable|string|max:20',
-            'jabatan' => 'nullable|string|max:255',
-            'master_auditee_id' => 'required|exists:master_auditee,id',
+            'nama'                 => 'required|string|max:255',
+            'username'             => 'required|string|max:255|unique:master_user,username,' . $masterUser->id,
+            'nip'                  => 'required|string|max:255',
+            'email'                => 'nullable|email|max:255',
+            'no_telpon'            => 'nullable|string|max:20',
+            'jabatan'              => 'nullable|string|max:255',
+            'master_auditee_id'    => 'required|exists:master_auditee,id',
+            'master_unit_id'       => 'required|exists:master_unit,id',
             'master_akses_user_id' => 'required|exists:master_akses_user,id',
         ]);
 
         $data = [
-            'nama' => $request->nama,
-            'username' => $request->username,
-            'nip' => $request->nip,
-            'email' => $request->email,
-            'no_telpon' => $request->no_telpon,
-            'jabatan' => $request->jabatan,
-            'master_auditee_id' => $request->master_auditee_id,
+            'nama'                 => $request->nama,
+            'username'             => $request->username,
+            'nip'                  => $request->nip,
+            'email'                => $request->email,
+            'no_telpon'            => $request->no_telpon,
+            'jabatan'              => $request->jabatan,
+            'master_auditee_id'    => $request->master_auditee_id,
+            'master_unit_id'       => $request->master_unit_id,
             'master_akses_user_id' => $request->master_akses_user_id,
         ];
 

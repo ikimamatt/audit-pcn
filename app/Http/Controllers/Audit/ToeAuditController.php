@@ -64,8 +64,7 @@ class ToeAuditController extends Controller
             'kontrol' => 'nullable|array',
             'kontrol.*' => 'nullable|string',
             'file_kka_toe' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
-            'hasil_evaluasi' => 'required|array|min:1',
-            'hasil_evaluasi.*' => 'required|string',
+            'hasil_evaluasi' => 'required|string|in:Efektif,Tidak Efektif,Efektif Sebagian',
         ]);
 
         // Handle upload file KKA ToE
@@ -91,12 +90,10 @@ class ToeAuditController extends Controller
             'kontrol' => $kontrolJson,
             'file_kka_toe' => $fileKkaToePath,
         ]);
-        foreach ($request->hasil_evaluasi as $hasil) {
-            ToeEvaluasi::create([
-                'toe_audit_id' => $toe->id,
-                'hasil_evaluasi' => $hasil,
-            ]);
-        }
+        ToeEvaluasi::create([
+            'toe_audit_id' => $toe->id,
+            'hasil_evaluasi' => $request->hasil_evaluasi,
+        ]);
         return redirect()->route('audit.toe.index')->with('success', 'TOE dan hasil evaluasi berhasil disimpan!');
     }
 

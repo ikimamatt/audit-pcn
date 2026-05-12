@@ -7,6 +7,7 @@ use App\Models\Audit\PerencanaanAudit;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterUser;
 use App\Models\MasterData\MasterJenisAudit;
+use App\Models\MasterData\MasterUnit;
 use Illuminate\Http\Request;
 
 class PerencanaanAuditController extends Controller
@@ -19,28 +20,31 @@ class PerencanaanAuditController extends Controller
 
     public function create()
     {
-        $auditees = MasterAuditee::all();
+        $auditees   = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
-        // Ambil semua user sesuai request
-        $auditors = MasterUser::with('akses')->orderBy('nama')->get();
+        $units      = MasterUnit::orderBy('kode_unit')->get();
+        $auditors   = MasterUser::with('akses')->orderBy('nama')->get();
         
-        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits'));
+        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'units'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'tanggal_surat_tugas' => 'required|date',
-            'nomor_surat_tugas' => 'required|string|max:255',
-            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
-            'auditor' => 'nullable|array',
-            'auditor.*' => 'nullable|exists:master_user,id',
-            'auditee' => 'required|exists:master_auditee,id',
-            'ruang_lingkup' => 'required|array',
-            'tanggal_audit_mulai' => 'required|date',
+            'tanggal_surat_tugas'  => 'required|date',
+            'nomor_surat_tugas'    => 'required|string|max:255',
+            'jenis_audit_id'       => 'required|exists:master_jenis_audit,id',
+            'unit_id'              => 'nullable|exists:master_unit,id',
+            'auditor'              => 'nullable|array',
+            'auditor.*'            => 'nullable|exists:master_user,id',
+            'auditee'              => 'required|exists:master_auditee,id',
+            'ruang_lingkup'        => 'required|array',
+            'tanggal_audit_mulai'  => 'required|date',
             'tanggal_audit_sampai' => 'required|date',
-            'periode_awal' => 'required',
-            'periode_akhir' => 'required',
+            'periode_awal'         => 'required',
+            'periode_akhir'        => 'required',
+            'koordinator_id'       => 'required|exists:master_user,id',
+            'ketua_tim_id'         => 'required|exists:master_user,id',
         ]);
         
         // Gunakan nomor surat tugas dari input manual
@@ -63,16 +67,19 @@ class PerencanaanAuditController extends Controller
         $jenisAudit = MasterJenisAudit::find($request->jenis_audit_id);
         
         $perencanaan = PerencanaanAudit::create([
-            'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
-            'nomor_surat_tugas' => $nomorSuratTugas,
-            'jenis_audit_id' => $request->jenis_audit_id,
-            'jenis_audit' => $jenisAudit ? $jenisAudit->nama_jenis_audit : null, // Simpan juga untuk backward compatibility
-            'auditor' => $auditorData,
-            'auditee_id' => $request->auditee,
-            'ruang_lingkup' => $request->ruang_lingkup,
-            'tanggal_audit_mulai' => $request->tanggal_audit_mulai,
+            'tanggal_surat_tugas'  => $request->tanggal_surat_tugas,
+            'nomor_surat_tugas'    => $nomorSuratTugas,
+            'jenis_audit_id'       => $request->jenis_audit_id,
+            'jenis_audit'          => $jenisAudit ? $jenisAudit->nama_jenis_audit : null,
+            'auditor'              => $auditorData,
+            'auditee_id'           => $request->auditee,
+            'unit_id'              => $request->unit_id ?: null,
+            'ruang_lingkup'        => $request->ruang_lingkup,
+            'tanggal_audit_mulai'  => $request->tanggal_audit_mulai,
             'tanggal_audit_sampai' => $request->tanggal_audit_sampai,
-            'periode_audit' => $request->periode_awal . ' s/d ' . $request->periode_akhir,
+            'periode_audit'        => $request->periode_awal . ' s/d ' . $request->periode_akhir,
+            'koordinator_id'       => $request->koordinator_id,
+            'ketua_tim_id'         => $request->ketua_tim_id,
         ]);
         
         // Redirect ke index dengan session data untuk modal
@@ -93,10 +100,10 @@ class PerencanaanAuditController extends Controller
             $item->periode_akhir = $periodeParts[1] ?? '';
         }
         
-        $auditees = MasterAuditee::all();
+        $auditees    = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
-        // Ambil semua user sesuai request
-        $auditors = MasterUser::with('akses')->orderBy('nama')->get();
+        $units       = MasterUnit::orderBy('kode_unit')->get();
+        $auditors    = MasterUser::with('akses')->orderBy('nama')->get();
         
         // Mencocokkan auditor lama dengan user baru berdasarkan NIP
         $matchedAuditorIds = [];
@@ -114,7 +121,7 @@ class PerencanaanAuditController extends Controller
         }
         $item->matched_auditor_ids = $matchedAuditorIds;
         
-        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits'));
+        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits', 'units'));
     }
 
     public function update(Request $request, $id)
@@ -122,17 +129,20 @@ class PerencanaanAuditController extends Controller
         $item = PerencanaanAudit::findOrFail($id);
         
         $request->validate([
-            'tanggal_surat_tugas' => 'required|date',
-            'nomor_surat_tugas' => 'required|string|max:255',
-            'jenis_audit_id' => 'required|exists:master_jenis_audit,id',
-            'auditor' => 'nullable|array',
-            'auditor.*' => 'nullable|exists:master_user,id',
-            'auditee' => 'required|exists:master_auditee,id',
-            'ruang_lingkup' => 'required|array',
-            'tanggal_audit_mulai' => 'required|date',
+            'tanggal_surat_tugas'  => 'required|date',
+            'nomor_surat_tugas'    => 'required|string|max:255',
+            'jenis_audit_id'       => 'required|exists:master_jenis_audit,id',
+            'unit_id'              => 'nullable|exists:master_unit,id',
+            'auditor'              => 'nullable|array',
+            'auditor.*'            => 'nullable|exists:master_user,id',
+            'auditee'              => 'required|exists:master_auditee,id',
+            'ruang_lingkup'        => 'required|array',
+            'tanggal_audit_mulai'  => 'required|date',
             'tanggal_audit_sampai' => 'required|date',
-            'periode_awal' => 'required',
-            'periode_akhir' => 'required',
+            'periode_awal'         => 'required',
+            'periode_akhir'        => 'required',
+            'koordinator_id'       => 'nullable|exists:master_user,id',
+            'ketua_tim_id'         => 'nullable|exists:master_user,id',
         ]);
         
         // Gunakan nomor surat tugas dari input manual
@@ -155,16 +165,19 @@ class PerencanaanAuditController extends Controller
         $jenisAudit = MasterJenisAudit::find($request->jenis_audit_id);
         
         $item->update([
-            'tanggal_surat_tugas' => $request->tanggal_surat_tugas,
-            'nomor_surat_tugas' => $nomorSuratTugas,
-            'jenis_audit_id' => $request->jenis_audit_id,
-            'jenis_audit' => $jenisAudit ? $jenisAudit->nama_jenis_audit : null, // Simpan juga untuk backward compatibility
-            'auditor' => $auditorData,
-            'auditee_id' => $request->auditee,
-            'ruang_lingkup' => $request->ruang_lingkup,
-            'tanggal_audit_mulai' => $request->tanggal_audit_mulai,
+            'tanggal_surat_tugas'  => $request->tanggal_surat_tugas,
+            'nomor_surat_tugas'    => $nomorSuratTugas,
+            'jenis_audit_id'       => $request->jenis_audit_id,
+            'jenis_audit'          => $jenisAudit ? $jenisAudit->nama_jenis_audit : null,
+            'auditor'              => $auditorData,
+            'auditee_id'           => $request->auditee,
+            'unit_id'              => $request->unit_id ?: null,
+            'ruang_lingkup'        => $request->ruang_lingkup,
+            'tanggal_audit_mulai'  => $request->tanggal_audit_mulai,
             'tanggal_audit_sampai' => $request->tanggal_audit_sampai,
-            'periode_audit' => $request->periode_awal . ' s/d ' . $request->periode_akhir,
+            'periode_audit'        => $request->periode_awal . ' s/d ' . $request->periode_akhir,
+            'koordinator_id'       => $request->koordinator_id,
+            'ketua_tim_id'         => $request->ketua_tim_id,
         ]);
         
         // Redirect ke index dengan session data untuk modal

@@ -36,7 +36,10 @@ class ProgramKerjaAuditSeeder extends Seeder
                 'proses_bisnis' => json_encode(['Proses Perencanaan Kontrak Project Transmisi dan Pelayanan Pelanggan', 'Proses Pelaksanakan Kontrak Project Transmisi dan Pelayanan Pelanggan', 'Proses Penagihan Kontrak Project Transmisi dan Pelayanan Pelanggan']),
                 'informasi_umum' => 'Program Kerja Audit untuk ' . $perencanaanAudit->jenis_audit . ' pada ' . $perencanaanAudit->auditee->direktorat ?? 'Direktorat',
                 'kpi_tidak_tercapai' => 'KPI yang tidak tercapai dalam audit ' . ($index + 1) . ': Efisiensi operasional, Kepatuhan regulasi, dan Pengelolaan risiko',
-                'data_awal_dokumen' => 'Data awal dokumen untuk audit ' . ($index + 1) . ': Laporan keuangan, SOP, dan Dokumen pendukung lainnya',
+                'data_awal_dokumen' => json_encode([
+                    ['nama_dokumen' => 'Laporan keuangan', 'ruang_lingkup' => 'Seluruh perusahaan', 'periode' => 'Q1 2024'],
+                    ['nama_dokumen' => 'SOP Operasional', 'ruang_lingkup' => 'Departemen Operasional', 'periode' => 'Tahun 2024']
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -168,15 +168,33 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="#" class="btn btn-info btn-sm btn-evaluasi-modal" data-bpm-id="{{ $item->id }}">Evaluasi ({{ $item->evaluasi->count() }})</a>
+                                    @php $ev = $item->evaluasi->first(); @endphp
+                                    @if($ev)
+                                        @php
+                                            $evClass = match($ev->hasil_evaluasi) {
+                                                'Sesuai'      => 'bg-success',
+                                                'Tidak Sesuai' => 'bg-danger',
+                                                default       => 'bg-secondary',
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $evClass }}">{{ $ev->hasil_evaluasi }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @canModifyData
-                                    <a href="{{ route('audit.tod-bpm.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{ route('audit.tod-bpm.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm btn-delete-swal">Hapus</button>
-                                    </form>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('audit.tod-bpm.edit', $item->id) }}" class="btn btn-warning btn-sm text-white shadow-sm" title="Edit">
+                                            <i class="mdi mdi-pencil"></i>
+                                        </a>
+                                        <form action="{{ route('audit.tod-bpm.destroy', $item->id) }}" method="POST" class="delete-form m-0">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm shadow-sm btn-delete-swal" title="Hapus">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                     @endcanModifyData
                                     @canApproveReject
                                         @if($item->status_approval == 'pending')
@@ -251,22 +269,6 @@
             </div>
         </div>
     </div>
-</div>
-<!-- Modal Evaluasi BPM -->
-<div class="modal fade" id="evaluasiModal" tabindex="-1" aria-labelledby="evaluasiModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="evaluasiModalLabel">Evaluasi BPM</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div id="evaluasi-modal-content">
-          <div class="text-center py-5">Loading...</div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 @endsection
 
@@ -373,24 +375,5 @@
         });
     }
 
-    function loadEvaluasi(bpmId) {
-        const modalContent = document.getElementById('evaluasi-modal-content');
-        modalContent.innerHTML = '<div class="text-center py-5">Loading...</div>';
-        fetch(`/audit/tod-bpm-evaluasi-modal/${bpmId}`)
-            .then(res => res.text())
-            .then(html => { modalContent.innerHTML = html; });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.btn-evaluasi-modal').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const bpmId = btn.dataset.bpmId;
-                loadEvaluasi(bpmId);
-                var modal = new bootstrap.Modal(document.getElementById('evaluasiModal'));
-                modal.show();
-            });
-        });
-    });
 </script>
 @endsection 

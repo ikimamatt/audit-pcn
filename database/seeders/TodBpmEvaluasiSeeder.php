@@ -21,13 +21,13 @@ class TodBpmEvaluasiSeeder extends Seeder
         DB::table('tod_bpm_evaluasi')->insert([
             [
                 'tod_bpm_audit_id' => $todBpmAudits[0]->id,
-                'hasil_evaluasi' => 'Evaluasi BPM 1 - Satu',
+                'hasil_evaluasi' => 'Sesuai',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'tod_bpm_audit_id' => $todBpmAudits[1]->id,
-                'hasil_evaluasi' => 'Evaluasi BPM 2 - Satu',
+                'hasil_evaluasi' => 'Tidak Sesuai',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

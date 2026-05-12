@@ -27,34 +27,49 @@ class PkaMilestoneSeeder extends Seeder
             
             $milestones = [
                 [
-                    'nama_milestone' => 'Entry Meeting',
+                    'nama_milestone' => 'Surat Permintaan Dokumen kepada Auditee',
                     'tanggal_mulai' => $baseDate,
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 4 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 2 days')),
+                ],
+                [
+                    'nama_milestone' => 'Ekspose PKA Internal',
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 3 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 5 days')),
+                ],
+                [
+                    'nama_milestone' => 'Entry Meeting',
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 6 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 10 days')),
                 ],
                 [
                     'nama_milestone' => 'Walkthrough',
-                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 5 days')),
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 19 days')),
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 11 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 25 days')),
                 ],
                 [
                     'nama_milestone' => 'TOD',
-                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 20 days')),
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 39 days')),
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 26 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 45 days')),
                 ],
                 [
                     'nama_milestone' => 'TOE',
-                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 40 days')),
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 54 days')),
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 46 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 60 days')),
                 ],
                 [
                     'nama_milestone' => 'Draf LHA',
-                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 55 days')),
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 69 days')),
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 61 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 70 days')),
+                ],
+                [
+                    'nama_milestone' => 'Pra Exit Meeting untuk Finalisasi LHA',
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 71 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 75 days')),
                 ],
                 [
                     'nama_milestone' => 'Exit Meeting',
-                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 70 days')),
-                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 74 days')),
+                    'tanggal_mulai' => date('Y-m-d', strtotime($baseDate . ' + 76 days')),
+                    'tanggal_selesai' => date('Y-m-d', strtotime($baseDate . ' + 80 days')),
                 ],
             ];
 

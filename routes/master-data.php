@@ -7,6 +7,7 @@ use App\Http\Controllers\MasterData\MasterAuditeeController;
 use App\Http\Controllers\MasterData\MasterUserController;
 use App\Http\Controllers\MasterData\MasterAksesUserController;
 use App\Http\Controllers\MasterData\MasterJenisAuditController;
+use App\Http\Controllers\MasterData\MasterUnitController;
 
 // Master Data Routes
 Route::prefix('master')->name('master.')->group(function () {
@@ -37,4 +38,9 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('jenis-audit', MasterJenisAuditController::class)
         ->names('jenis-audit')
         ->parameters(['jenis-audit' => 'masterJenisAudit']);
+
+    // Unit
+    Route::resource('unit', MasterUnitController::class)
+        ->names('unit')
+        ->parameters(['unit' => 'masterUnit']);
 }); 

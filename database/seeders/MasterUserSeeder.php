@@ -20,27 +20,34 @@ class MasterUserSeeder extends Seeder
             return [strtoupper(trim($item->nama_akses)) => $item->id];
         });
 
+        // Ambil mapping unit ke id (by kode_unit)
+        $unitMap = DB::table('master_unit')->get()->mapWithKeys(function ($item) {
+            return [strtoupper(trim($item->kode_unit)) => $item->id];
+        });
+
         // ========================================
         // SUPERADMIN USER (HIDDEN - NOT VISIBLE IN MASTER USER VIEW)
         // ========================================
         $superadminAksesId = $aksesMap['SUPERADMIN'] ?? null;
-        $spiDivisiId = $divisiMap['spi'] ?? null;
+        $spiDivisiId       = $divisiMap['spi'] ?? null;
+        $firstUnitId       = $unitMap->first(); // fallback unit default
 
         if ($superadminAksesId && $spiDivisiId) {
             DB::table('master_user')->updateOrInsert(
                 ['username' => 'superadmin'],
                 [
-                    'nama' => 'System Administrator',
-                    'username' => 'superadmin',
-                    'nip' => 'SUPERADMIN001',
-                    'password' => Hash::make('pln@nusadaya'), // Change this in production!
-                    'email' => 'superadmin@pcn.co.id',
-                    'no_telpon' => '000000000000',
-                    'jabatan' => 'System Administrator',
-                    'master_auditee_id' => $spiDivisiId,
+                    'nama'                 => 'System Administrator',
+                    'username'             => 'superadmin',
+                    'nip'                  => 'SUPERADMIN001',
+                    'password'             => Hash::make('pln@nusadaya'),
+                    'email'                => 'superadmin@pcn.co.id',
+                    'no_telpon'            => '000000000000',
+                    'jabatan'              => 'System Administrator',
+                    'master_auditee_id'    => $spiDivisiId,
+                    'master_unit_id'       => $firstUnitId,
                     'master_akses_user_id' => $superadminAksesId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
                 ]
             );
             echo "✅ Superadmin user created (hidden from master user view)" . PHP_EOL;
@@ -349,17 +356,20 @@ class MasterUserSeeder extends Seeder
             }
 
             DB::table('master_user')->insert([
-                'nama' => $user['nama'],
-                'username' => $user['username'],
-                'nip' => $user['nip'],
-                'password' => Hash::make('pln@nusadaya'),
-                'email' => $user['email'] ?? null,
-                'no_telpon' => $user['no_telpon'] ?? null,
-                'jabatan' => $user['jabatan'] ?? null,
-                'master_auditee_id' => $divisiMap[$divisiKey],
+                'nama'                 => $user['nama'],
+                'username'             => $user['username'],
+                'nip'                  => $user['nip'],
+                'password'             => Hash::make('pln@nusadaya'),
+                'email'                => $user['email'] ?? null,
+                'no_telpon'            => $user['no_telpon'] ?? null,
+                'jabatan'              => $user['jabatan'] ?? null,
+                'master_auditee_id'    => $divisiMap[$divisiKey],
+                'master_unit_id'       => isset($user['unit_kode'])
+                                            ? ($unitMap[strtoupper($user['unit_kode'])] ?? $firstUnitId)
+                                            : $firstUnitId,
                 'master_akses_user_id' => $aksesMap[$aksesKey],
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at'           => now(),
+                'updated_at'           => now(),
             ]);
         }
 

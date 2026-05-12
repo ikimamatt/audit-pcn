@@ -348,6 +348,7 @@
                                         User</a></li>
                                 <li><a class="tp-link" href="{{ route('master.jenis-audit.index') }}">Master Jenis Audit</a>
                                 </li>
+                                <li><a class="tp-link" href="{{ route('master.unit.index') }}">Master Unit</a></li>
                                 <!-- <li><a class="tp-link" href="{{ route('second', ['tables', 'master_akses_user']) }}">Master Akses User</a></li> -->
                             </ul>
                         </div>

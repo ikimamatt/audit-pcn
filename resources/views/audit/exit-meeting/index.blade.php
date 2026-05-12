@@ -244,19 +244,21 @@
                                     </td>
                                     <td>
                                         @canModifyData
-                                        <a href="{{ route('audit.exit-meeting.edit', $realisasiAudit->id) }}" 
-                                           class="btn btn-sm btn-info">
-                                            <i class="mdi mdi-pencil"></i> Edit
-                                        </a>
-                                        <form action="{{ route('audit.exit-meeting.destroy', $realisasiAudit->id) }}" 
-                                              method="POST" 
-                                              class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger btn-delete-swal">
-                                                <i class="mdi mdi-delete"></i> Hapus
-                                            </button>
-                                        </form>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('audit.exit-meeting.edit', $realisasiAudit->id) }}" 
+                                               class="btn btn-warning btn-sm text-white shadow-sm" title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <form action="{{ route('audit.exit-meeting.destroy', $realisasiAudit->id) }}" 
+                                                  method="POST" 
+                                                  class="d-inline m-0">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm shadow-sm btn-delete-swal" title="Hapus">
+                                                    <i class="mdi mdi-delete"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                         @endcanModifyData
                                         @canApproveReject
                                             @php

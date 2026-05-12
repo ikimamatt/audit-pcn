@@ -19,6 +19,9 @@
                                     {{ $st->nomor_surat_tugas }}
                                     @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
                                     @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                    @if($st->tanggal_audit_mulai && $st->tanggal_audit_sampai)
+                                        · [{{ \Carbon\Carbon::parse($st->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($st->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                    @endif
                                 </option>
                             @empty
                                 <option value="" disabled>Semua surat tugas sudah memiliki PKA</option>
@@ -63,8 +66,32 @@
                         <textarea name="kpi_tidak_tercapai" class="form-control"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Data Awal Dokumen Audit</label>
-                        <textarea name="data_awal_dokumen" class="form-control"></textarea>
+                        <label class="form-label">Data Awal Yang Perlu Disiapkan</label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="bg-light text-center">
+                                    <tr>
+                                        <th width="5%">No</th>
+                                        <th width="35%">Nama Dokumen</th>
+                                        <th width="35%">Ruang Lingkup</th>
+                                        <th width="20%">Periode</th>
+                                        <th width="5%">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-awal-container">
+                                    <tr class="data-awal-item">
+                                        <td class="text-center align-middle row-number">1</td>
+                                        <td><input type="text" name="data_awal_dokumen[0][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[0][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[0][periode]" class="form-control" placeholder="Periode" required></td>
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-data-awal"><i class="mdi mdi-plus"></i> Tambah Data Awal</button>
                     </div>
                     <!-- Risk Based Audit -->
                     <div class="mb-3">
@@ -78,7 +105,7 @@
                     <div class="mb-3">
                         <label class="form-label">Milestone</label>
                         @php
-                        $milestones = ['Entry Meeting', 'Walkthrough', 'TOD', 'TOE', 'Draf LHA', 'Exit Meeting'];
+                        $milestones = ['Surat Permintaan Dokumen kepada Auditee', 'Ekspose PKA Internal', 'Entry Meeting', 'Walkthrough', 'TOD', 'TOE', 'Draf LHA', 'Pra Exit Meeting untuk Finalisasi LHA', 'Exit Meeting'];
                         @endphp
                         <div class="row">
                             @foreach($milestones as $m)
@@ -164,6 +191,39 @@ $(document).on('click', '#btn-add-risk', function() {
 });
 $(document).on('click', '.btn-remove-risk', function() {
     $(this).closest('.risk-item').remove();
+});
+
+// Dynamic Data Awal Dokumen
+let dataAwalIndex = 1;
+function updateDataAwalNumbers() {
+    $('#data-awal-container .row-number').each(function(index) {
+        $(this).text(index + 1);
+    });
+}
+
+$('#btn-add-data-awal').on('click', function() {
+    const html = `
+    <tr class="data-awal-item">
+        <td class="text-center align-middle row-number"></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][periode]" class="form-control" placeholder="Periode" required></td>
+        <td class="text-center align-middle">
+            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
+        </td>
+    </tr>`;
+    $('#data-awal-container').append(html);
+    dataAwalIndex++;
+    updateDataAwalNumbers();
+});
+
+$(document).on('click', '.btn-remove-data-awal', function() {
+    if ($('.data-awal-item').length > 1) {
+        $(this).closest('tr').remove();
+        updateDataAwalNumbers();
+    } else {
+        alert('Minimal harus ada 1 baris data awal');
+    }
 });
 
 // Milestone date validation

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->json('proses_bisnis')->nullable();
             $table->text('informasi_umum')->nullable();
             $table->text('kpi_tidak_tercapai')->nullable();
-            $table->text('data_awal_dokumen')->nullable();
+            $table->json('data_awal_dokumen')->nullable();
             $table->timestamps();
 
             $table->foreign('perencanaan_audit_id')->references('id')->on('perencanaan_audit')->onDelete('restrict');

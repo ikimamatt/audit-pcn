@@ -57,7 +57,7 @@ class ProgramKerjaAuditController extends Controller
             'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
             'informasi_umum' => $request->informasi_umum,
             'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
-            'data_awal_dokumen' => $request->data_awal_dokumen,
+            'data_awal_dokumen' => is_array($request->data_awal_dokumen) ? array_values($request->data_awal_dokumen) : [],
         ]);
 
         // Simpan risk based audit
@@ -141,7 +141,7 @@ class ProgramKerjaAuditController extends Controller
             'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
             'informasi_umum' => $request->informasi_umum,
             'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
-            'data_awal_dokumen' => $request->data_awal_dokumen,
+            'data_awal_dokumen' => is_array($request->data_awal_dokumen) ? array_values($request->data_awal_dokumen) : [],
         ]);
 
         // Update risk: hapus semua, insert ulang (bisa dioptimasi jika perlu)
@@ -273,7 +273,7 @@ class ProgramKerjaAuditController extends Controller
      */
     public function download($id)
     {
-        $item = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.koordinator', 'perencanaanAudit.ketuaTim', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
 
         $templatePath = base_path('Template Program Kerja Audit.docx');
 
@@ -297,6 +297,24 @@ class ProgramKerjaAuditController extends Controller
             $tanggalTugas = $item->perencanaanAudit->tanggal_surat_tugas ? \Carbon\Carbon::parse($item->perencanaanAudit->tanggal_surat_tugas)->locale('id')->translatedFormat('d F Y') : '-';
             $judulPka = $item->judul_pka ?? '-';
 
+            // Data Awal Yang Perlu Disiapkan
+            $dataAwalDokumenRaw = is_array($item->data_awal_dokumen) ? $item->data_awal_dokumen : json_decode($item->data_awal_dokumen ?? '[]', true);
+            $dataAwalDokumen = [];
+            if (!empty($dataAwalDokumenRaw) && is_array($dataAwalDokumenRaw)) {
+                foreach ($dataAwalDokumenRaw as $idx => $da) {
+                    $dataAwalDokumen[] = [
+                        'no_da' => $idx + 1,
+                        'nama_dokumen' => $da['nama_dokumen'] ?? '-',
+                        'ruang_lingkup_da' => $da['ruang_lingkup'] ?? '-',
+                        'periode_da' => $da['periode'] ?? '-'
+                    ];
+                }
+            } else {
+                $dataAwalDokumen = [
+                    ['no_da' => 1, 'nama_dokumen' => '-', 'ruang_lingkup_da' => '-', 'periode_da' => '-']
+                ];
+            }
+
             // Ruang Lingkup Audit (JSON array dari perencanaan_audit)
             $ruangLingkup = $item->perencanaanAudit->ruang_lingkup ?? [];
             if (is_string($ruangLingkup)) {
@@ -313,8 +331,126 @@ class ProgramKerjaAuditController extends Controller
             $templateProcessor->setValue('TANGGAL_PKA', $tanggalPka);
             $templateProcessor->setValue('NOMOR_TUGAS', $nomorTugas);
             $templateProcessor->setValue('TANGGAL_TUGAS', $tanggalTugas);
+            $templateProcessor->setValue('TANGGAL_SURAT_TUGAS', $tanggalTugas);
             $templateProcessor->setValue('JUDUL_PKA', $judulPka);
             $templateProcessor->setValue('RUANG_LINGKUP_AUDIT', '##RUANG_LINGKUP##');
+            
+            $templateProcessor->setValue('KOORDINATOR_NAMA', $item->perencanaanAudit->koordinator->nama ?? '-');
+            $templateProcessor->setValue('KOORDINATOR_NIP', $item->perencanaanAudit->koordinator->nip ?? '-');
+            $templateProcessor->setValue('KETUA_TIM_NAMA', $item->perencanaanAudit->ketuaTim->nama ?? '-');
+            $templateProcessor->setValue('KETUA_TIM_NIP', $item->perencanaanAudit->ketuaTim->nip ?? '-');
+
+            // Clone baris data awal
+            try {
+                $templateProcessor->cloneRowAndSetValues('no_da', $dataAwalDokumen);
+            } catch (\Exception $e) {
+                // Abaikan jika template belum punya variabel no_da
+            }
+            
+            // Siapkan Data Tim Pemeriksa
+            $timPemeriksa = [];
+            $noTim = 1;
+
+            // 1. Koordinator
+            if ($item->perencanaanAudit->koordinator) {
+                $timPemeriksa[] = [
+                    'no_tim' => $noTim++,
+                    'nama_tim' => $item->perencanaanAudit->koordinator->nama,
+                    'role_tim' => 'Koordinator',
+                    'nip_tim' => $item->perencanaanAudit->koordinator->nip,
+                ];
+            }
+
+            // 2. Ketua Tim
+            if ($item->perencanaanAudit->ketuaTim) {
+                $timPemeriksa[] = [
+                    'no_tim' => $noTim++,
+                    'nama_tim' => $item->perencanaanAudit->ketuaTim->nama,
+                    'role_tim' => 'Ketua Tim',
+                    'nip_tim' => $item->perencanaanAudit->ketuaTim->nip,
+                ];
+            }
+
+            // 3. Anggota
+            $auditors = is_array($item->perencanaanAudit->auditor) ? $item->perencanaanAudit->auditor : json_decode($item->perencanaanAudit->auditor ?? '[]', true);
+            if (is_array($auditors)) {
+                foreach ($auditors as $auditorString) {
+                    if (preg_match('/^(.*?)\s*-\s*NIP:\s*(.*)$/', $auditorString, $matches)) {
+                        $timPemeriksa[] = [
+                            'no_tim' => $noTim++,
+                            'nama_tim' => trim($matches[1]),
+                            'role_tim' => 'Anggota',
+                            'nip_tim' => trim($matches[2]),
+                        ];
+                    } else {
+                        $timPemeriksa[] = [
+                            'no_tim' => $noTim++,
+                            'nama_tim' => $auditorString,
+                            'role_tim' => 'Anggota',
+                            'nip_tim' => '-',
+                        ];
+                    }
+                }
+            }
+
+            if (empty($timPemeriksa)) {
+                $timPemeriksa[] = [
+                    'no_tim' => 1,
+                    'nama_tim' => '-',
+                    'role_tim' => '-',
+                    'nip_tim' => '-',
+                ];
+            }
+
+            try {
+                $templateProcessor->cloneRowAndSetValues('no_tim', $timPemeriksa);
+            } catch (\Exception $e) {
+                // Abaikan jika tidak ada variabel no_tim
+            }
+            
+            // Format format tanggal milestone untuk Word
+            $formatDateRange = function($ms) {
+                if (!$ms || (!$ms->tanggal_mulai && !$ms->tanggal_selesai)) return '-';
+                if ($ms->tanggal_mulai && !$ms->tanggal_selesai) return \Carbon\Carbon::parse($ms->tanggal_mulai)->locale('id')->translatedFormat('d F Y');
+                if (!$ms->tanggal_mulai && $ms->tanggal_selesai) return \Carbon\Carbon::parse($ms->tanggal_selesai)->locale('id')->translatedFormat('d F Y');
+                
+                $mulai = \Carbon\Carbon::parse($ms->tanggal_mulai)->locale('id');
+                $selesai = \Carbon\Carbon::parse($ms->tanggal_selesai)->locale('id');
+                
+                if ($mulai->format('Y-m-d') === $selesai->format('Y-m-d')) {
+                    return $mulai->translatedFormat('d F Y');
+                }
+                
+                if ($mulai->format('Y') === $selesai->format('Y')) {
+                    return $mulai->translatedFormat('d F') . ' s.d ' . $selesai->translatedFormat('d F Y');
+                }
+                
+                return $mulai->translatedFormat('d F Y') . ' s.d ' . $selesai->translatedFormat('d F Y');
+            };
+
+            // Set Template Variables for Milestones
+            $templateProcessor->setValue('MS_PERMINTAAN_DOKUMEN', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Surat Permintaan Dokumen kepada Auditee')));
+            $templateProcessor->setValue('MS_EKSPOSE_PKA', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Ekspose PKA Internal')));
+            $templateProcessor->setValue('MS_ENTRY_MEETING', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Entry Meeting')));
+            $templateProcessor->setValue('MS_WALKTHROUGH', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Walkthrough')));
+            $templateProcessor->setValue('MS_TOD', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'TOD')));
+            $templateProcessor->setValue('MS_TOE', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'TOE')));
+            $templateProcessor->setValue('MS_DRAF_LHA', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Draf LHA')));
+            $templateProcessor->setValue('MS_PRA_EXIT', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Pra Exit Meeting untuk Finalisasi LHA')));
+            $templateProcessor->setValue('MS_EXIT_MEETING', $formatDateRange($item->milestones->firstWhere('nama_milestone', 'Exit Meeting')));
+
+            // Set DAFTAR_AUDITOR langsung (berada di baris tabel terpisah)
+            $anggotaList = collect($timPemeriksa)->where('role_tim', 'Anggota')->values();
+            if ($anggotaList->count() > 0) {
+                $auditorLines = $anggotaList->map(function($a, $i) {
+                    return ($i + 1) . '. ' . $a['nama_tim'];
+                })->toArray();
+                // Gunakan </w:t><w:br/><w:t> untuk line break di Word
+                $auditorText = implode('</w:t><w:br/><w:t>', $auditorLines);
+            } else {
+                $auditorText = '-';
+            }
+            $templateProcessor->setValue('DAFTAR_AUDITOR', $auditorText);
 
             // Menyiapkan data untuk tabel dinamis (Proses Bisnis & Risk)
             $prosesBisnis = is_array($item->proses_bisnis) ? $item->proses_bisnis : json_decode($item->proses_bisnis ?? '[]', true) ?? [];
@@ -336,7 +472,15 @@ class ProgramKerjaAuditController extends Controller
             try {
                 $templateProcessor->cloneRowAndSetValues('NO', $tableData);
             } catch (\Exception $e) {
+                \Log::error('CloneRowAndSetValues Error: ' . $e->getMessage());
             }
+
+            // Variabel terpisah untuk tabel Audit Program (baris lanjutan halaman kedua)
+            // Gunakan marker, lalu post-process XML agar tiap proses bisnis jadi paragraf terpisah
+            $apNoMarker = '##AP_NO_DATA##';
+            $apPbMarker = '##AP_PB_DATA##';
+            $templateProcessor->setValue('AP_NO', $apNoMarker);
+            $templateProcessor->setValue('AP_PROSES_BISNIS', $apPbMarker);
 
             // Post-process XML: merge Risk cells + bangun paragraf risk dgn font yg benar
             $refClass = new \ReflectionClass(get_class($templateProcessor));
@@ -345,9 +489,10 @@ class ProgramKerjaAuditController extends Controller
             $xml = $mainPart->getValue($templateProcessor);
 
             $risksForCallback = $risks;
+            
             $xml = preg_replace_callback(
                 '/<w:tc[^>]*>.*?<\/w:tc>/s',
-                function ($match) use ($mergeStartMarker, $mergeContinueMarker, $risksForCallback) {
+                function ($match) use ($mergeStartMarker, $mergeContinueMarker, $risksForCallback, $apNoMarker, $apPbMarker, $prosesBisnis) {
                     $cellXml = $match[0];
 
                     if (strpos($cellXml, $mergeStartMarker) !== false) {
@@ -390,6 +535,8 @@ class ProgramKerjaAuditController extends Controller
                         if ($tcPrEnd !== false) {
                             $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
                                 . $riskParagraphs . '</w:tc>';
+                        } else {
+                            $cellXml = preg_replace('/(<w:tc[^>]*>).*?(<\/w:tc>)/s', '$1' . $riskParagraphs . '$2', $cellXml);
                         }
 
                     } elseif (strpos($cellXml, $mergeContinueMarker) !== false) {
@@ -398,6 +545,38 @@ class ProgramKerjaAuditController extends Controller
                             $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge/>', $cellXml, 1);
                         }
                         $cellXml = preg_replace('/<w:p[^\/].*?<\/w:p>/s', '<w:p/>', $cellXml);
+
+                    } elseif (strpos($cellXml, $apNoMarker) !== false) {
+                        // Kosongkan kolom NO karena penomoran sudah include di proses bisnis
+                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
+                        if ($tcPrEnd !== false) {
+                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
+                                . '<w:p/>' . '</w:tc>';
+                        }
+
+                    } elseif (strpos($cellXml, $apPbMarker) !== false) {
+                        // Bangun paragraf terpisah untuk tiap proses bisnis dengan nomor dan spacing
+                        $rPr = '';
+                        if (preg_match('/<w:rPr>.*?<\/w:rPr>/s', $cellXml, $m)) {
+                            $rPr = $m[0];
+                        }
+                        $pbParagraphs = '';
+                        if (count($prosesBisnis) > 0) {
+                            foreach ($prosesBisnis as $i => $pb) {
+                                $text = ($i + 1) . '. ' . htmlspecialchars($pb);
+                                $pbParagraphs .= '<w:p>'
+                                    . '<w:pPr><w:spacing w:after="200"/></w:pPr>'
+                                    . '<w:r>' . $rPr . '<w:t xml:space="preserve">' . $text . '</w:t></w:r>'
+                                    . '</w:p>';
+                            }
+                        } else {
+                            $pbParagraphs = '<w:p><w:r>' . $rPr . '<w:t>-</w:t></w:r></w:p>';
+                        }
+                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
+                        if ($tcPrEnd !== false) {
+                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
+                                . $pbParagraphs . '</w:tc>';
+                        }
                     }
 
                     return $cellXml;

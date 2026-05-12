@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MasterKodeRiskSeeder::class);
         $this->call(MasterAuditeeSeeder::class);
         $this->call(MasterAksesUserSeeder::class);
+        $this->call(MasterUnitSeeder::class);
         $this->call(MasterUserSeeder::class);
         $this->call(MasterJenisAuditSeeder::class);
 
