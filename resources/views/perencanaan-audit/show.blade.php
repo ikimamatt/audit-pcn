@@ -13,7 +13,40 @@
                 <div class="mb-3"><strong>Tanggal PKA:</strong> {{ $item->tanggal_pka }}</div>
                 <div class="mb-3"><strong>Informasi Umum:</strong> {{ $item->informasi_umum }}</div>
                 <div class="mb-3"><strong>KPI Tidak Tercapai:</strong> {{ $item->kpi_tidak_tercapai }}</div>
-                <div class="mb-3"><strong>Data Awal Dokumen Audit:</strong> {{ $item->data_awal_dokumen }}</div>
+                @php
+                    $dataAwal = is_array($item->data_awal_dokumen) ? $item->data_awal_dokumen : json_decode($item->data_awal_dokumen ?? '[]', true);
+                @endphp
+                <div class="mb-3">
+                    <strong>Data Awal Yang Perlu Disiapkan:</strong>
+                    @if(empty($dataAwal))
+                        -
+                    @elseif(!is_array($dataAwal))
+                        {{ $item->data_awal_dokumen }}
+                    @else
+                        <div class="table-responsive mt-2">
+                            <table class="table table-bordered table-sm">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama Dokumen</th>
+                                        <th>Ruang Lingkup</th>
+                                        <th>Periode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($dataAwal as $idx => $da)
+                                    <tr>
+                                        <td>{{ $idx + 1 }}</td>
+                                        <td>{{ $da['nama_dokumen'] ?? '-' }}</td>
+                                        <td>{{ $da['ruang_lingkup'] ?? '-' }}</td>
+                                        <td>{{ $da['periode'] ?? '-' }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
                 <div class="mb-3">
                     <strong>Risk Based Audit:</strong>
                     <ul>

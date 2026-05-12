@@ -59,7 +59,40 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Nama Auditor</label>
+                        <label class="form-label">Unit <span class="text-danger">*</span></label>
+                        <select name="unit_id" id="unit_id" class="form-select select2-search" required>
+                            <option value="">Pilih Unit</option>
+                            @foreach($units as $unit)
+                                <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
+                                    [{{ $unit->kode_unit }}] {{ $unit->nama_unit }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Koordinator</label>
+                        <select name="koordinator_id" id="koordinator_id" class="form-select select2-search" required>
+                            <option value="">Pilih Koordinator</option>
+                            @foreach($auditors as $auditor)
+                                <option value="{{ $auditor->id }}" {{ old('koordinator_id') == $auditor->id ? 'selected' : '' }}>
+                                    {{ $auditor->nama }} - {{ $auditor->nip }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ketua Tim</label>
+                        <select name="ketua_tim_id" id="ketua_tim_id" class="form-select select2-search" required>
+                            <option value="">Pilih Ketua Tim</option>
+                            @foreach($auditors as $auditor)
+                                <option value="{{ $auditor->id }}" {{ old('ketua_tim_id') == $auditor->id ? 'selected' : '' }}>
+                                    {{ $auditor->nama }} - {{ $auditor->nip }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Anggota Tim (Auditor)</label>
                         <div id="auditor-list">
                             @php 
                                 $auditorList = old('auditor', ['']); 

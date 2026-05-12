@@ -64,24 +64,16 @@ class TodBpmAuditSeeder extends Seeder
             // Get inserted TOD BPM IDs for evaluasi
             $todBpmIds = DB::table('tod_bpm_audit')->pluck('id')->toArray();
             
-            // Create evaluasi data for each TOD BPM
-            foreach ($todBpmIds as $todBpmId) {
-                $evaluasiItems = [
-                    'Proses mapping sudah sesuai dengan standar yang berlaku',
-                    'Dokumentasi proses lengkap dan mudah dipahami',
-                    'Identifikasi risiko sudah dilakukan dengan baik',
-                    'Pengendalian internal sudah teridentifikasi dengan jelas',
-                    'Rekomendasi perbaikan sudah disusun dengan tepat',
-                ];
+            // Create ONE evaluasi per TOD BPM (sesuai dropdown yang hanya 1 pilihan)
+            $evaluasiOptions = ['Sesuai', 'Tidak Sesuai'];
 
-                foreach ($evaluasiItems as $evaluasi) {
-                    $evaluasiData[] = [
-                        'tod_bpm_audit_id' => $todBpmId,
-                        'hasil_evaluasi' => $evaluasi,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
+            foreach ($todBpmIds as $todBpmId) {
+                $evaluasiData[] = [
+                    'tod_bpm_audit_id' => $todBpmId,
+                    'hasil_evaluasi'   => $evaluasiOptions[array_rand($evaluasiOptions)],
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ];
             }
 
             // Insert evaluasi data

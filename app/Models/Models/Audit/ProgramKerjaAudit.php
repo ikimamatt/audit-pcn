@@ -14,7 +14,8 @@ class ProgramKerjaAudit extends Model
     protected $table = 'program_kerja_audit';
     protected $guarded = [];
     protected $casts = [
-        'proses_bisnis' => 'array'
+        'proses_bisnis' => 'array',
+        'data_awal_dokumen' => 'array'
     ];
 
     public function perencanaanAudit()

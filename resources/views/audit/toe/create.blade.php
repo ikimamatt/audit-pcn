@@ -23,6 +23,9 @@
                                     {{ $st->nomor_surat_tugas }}
                                     @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
                                     @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                    @if($st->tanggal_audit_mulai && $st->tanggal_audit_sampai)
+                                        · [{{ \Carbon\Carbon::parse($st->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($st->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
@@ -74,14 +77,13 @@
                         <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Opsional</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Evaluasi Pengendalian</label>
-                        <div id="evaluasi-container">
-                            <div class="input-group mb-2 evaluasi-item">
-                                <textarea name="hasil_evaluasi[]" class="form-control" rows="2" required></textarea>
-                                <button type="button" class="btn btn-danger btn-remove-evaluasi">-</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-success btn-sm" id="btn-add-evaluasi">Tambah Evaluasi</button>
+                        <label for="hasil_evaluasi" class="form-label">Evaluasi Pengendalian</label>
+                        <select name="hasil_evaluasi" id="hasil_evaluasi" class="form-control" required>
+                            <option value="">Pilih Hasil Evaluasi</option>
+                            <option value="Efektif">Efektif</option>
+                            <option value="Tidak Efektif">Tidak Efektif</option>
+                            <option value="Efektif Sebagian">Efektif Sebagian</option>
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Simpan</button>
                     <a href="{{ route('audit.toe.index') }}" class="btn btn-secondary">Batal</a>
@@ -255,20 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Evaluasi functionality
-    document.getElementById('btn-add-evaluasi').onclick = function() {
-        const div = document.createElement('div');
-        div.className = 'input-group mb-2 evaluasi-item';
-        div.innerHTML = `<textarea name="hasil_evaluasi[]" class="form-control" rows="2" required></textarea><button type="button" class="btn btn-danger btn-remove-evaluasi">-</button>`;
-        container.appendChild(div);
-    };
-    container.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-remove-evaluasi')) {
-            if (container.querySelectorAll('.evaluasi-item').length > 1) {
-                e.target.parentElement.remove();
-            }
-        }
-    });
+    
 });
 </script>
 @endsection 

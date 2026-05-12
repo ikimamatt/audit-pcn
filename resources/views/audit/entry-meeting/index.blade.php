@@ -134,12 +134,14 @@
                                     </td>
                                     <td>
                                         @canModifyData
-                                        <a href="{{ route('audit.entry-meeting.edit', $item->id) }}" class="btn btn-sm btn-warning">
-                                            <i class="mdi mdi-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteData({{ $item->id }})">
-                                            <i class="mdi mdi-delete"></i>
-                                        </button>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('audit.entry-meeting.edit', $item->id) }}" class="btn btn-warning btn-sm text-white shadow-sm" title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-sm shadow-sm" onclick="deleteData({{ $item->id }})" title="Hapus">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </div>
                                         <form id="delete-form-{{ $item->id }}" action="{{ route('audit.entry-meeting.destroy', $item->id) }}" method="POST" class="d-none">
                                             @csrf
                                             @method('DELETE')

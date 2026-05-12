@@ -79,8 +79,7 @@ class TodBpmAuditController extends Controller
             'kontrol.*' => 'nullable|string',
             'walkthrough_id' => 'required|exists:walkthrough_audit,id',
             'file_kka_tod' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
-            'hasil_evaluasi' => 'required|array|min:1',
-            'hasil_evaluasi.*' => 'required|string',
+            'hasil_evaluasi' => 'required|string|in:Sesuai,Tidak Sesuai',
         ]);
 
         // Gunakan file dari walkthrough (wajib)
@@ -115,12 +114,10 @@ class TodBpmAuditController extends Controller
             'file_kka_tod' => $fileKkaTodPath,
         ]);
         
-        foreach ($request->hasil_evaluasi as $hasil) {
-            TodBpmEvaluasi::create([
-                'tod_bpm_audit_id' => $bpm->id,
-                'hasil_evaluasi' => $hasil,
-            ]);
-        }
+        TodBpmEvaluasi::create([
+            'tod_bpm_audit_id' => $bpm->id,
+            'hasil_evaluasi' => $request->hasil_evaluasi,
+        ]);
         
         return redirect()->route('audit.tod-bpm.index')->with('success', 'BPM dan hasil evaluasi berhasil disimpan!');
     }

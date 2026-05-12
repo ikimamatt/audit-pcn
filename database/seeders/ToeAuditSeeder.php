@@ -63,24 +63,16 @@ class ToeAuditSeeder extends Seeder
             // Get inserted TOE IDs for evaluasi
             $toeIds = DB::table('toe_audit')->pluck('id')->toArray();
             
-            // Create evaluasi data for each TOE
-            foreach ($toeIds as $toeId) {
-                $evaluasiItems = [
-                    'Terms of Engagement sudah sesuai dengan standar audit yang berlaku',
-                    'Scope audit sudah didefinisikan dengan jelas dan tepat',
-                    'Timeline audit sudah disusun dengan realistis',
-                    'Resource yang diperlukan sudah diidentifikasi dengan baik',
-                    'Komunikasi dengan auditee sudah terjalin dengan baik',
-                ];
+            // Create ONE evaluasi per TOE (sesuai dropdown yang hanya 1 pilihan)
+            $evaluasiOptions = ['Efektif', 'Tidak Efektif', 'Efektif Sebagian'];
 
-                foreach ($evaluasiItems as $evaluasi) {
-                    $evaluasiData[] = [
-                        'toe_audit_id' => $toeId,
-                        'hasil_evaluasi' => $evaluasi,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
+            foreach ($toeIds as $toeId) {
+                $evaluasiData[] = [
+                    'toe_audit_id'   => $toeId,
+                    'hasil_evaluasi' => $evaluasiOptions[array_rand($evaluasiOptions)],
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ];
             }
 
             // Insert evaluasi data

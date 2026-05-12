@@ -19,6 +19,9 @@
                                     {{ $st->nomor_surat_tugas }}
                                     @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
                                     @if($st->auditee) · {{ $st->auditee->divisi }}@endif
+                                    @if($st->tanggal_audit_mulai && $st->tanggal_audit_sampai)
+                                        · [{{ \Carbon\Carbon::parse($st->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($st->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
@@ -60,8 +63,40 @@
                         <textarea name="kpi_tidak_tercapai" class="form-control">{{ $item->kpi_tidak_tercapai }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Data Awal Dokumen Audit</label>
-                        <textarea name="data_awal_dokumen" class="form-control">{{ $item->data_awal_dokumen }}</textarea>
+                        <label class="form-label">Data Awal Yang Perlu Disiapkan</label>
+                        @php
+                            $dataAwal = is_array($item->data_awal_dokumen) ? $item->data_awal_dokumen : json_decode($item->data_awal_dokumen ?? '[]', true) ?? [];
+                            if (empty($dataAwal) || !is_array($dataAwal) || !isset($dataAwal[0]['nama_dokumen'])) {
+                                $dataAwal = [['nama_dokumen' => '', 'ruang_lingkup' => '', 'periode' => '']];
+                            }
+                        @endphp
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="bg-light text-center">
+                                    <tr>
+                                        <th width="5%">No</th>
+                                        <th width="35%">Nama Dokumen</th>
+                                        <th width="35%">Ruang Lingkup</th>
+                                        <th width="20%">Periode</th>
+                                        <th width="5%">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-awal-container">
+                                    @foreach($dataAwal as $i => $da)
+                                    <tr class="data-awal-item">
+                                        <td class="text-center align-middle row-number">{{ $i + 1 }}</td>
+                                        <td><input type="text" name="data_awal_dokumen[{{ $i }}][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" value="{{ $da['nama_dokumen'] ?? '' }}" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[{{ $i }}][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" value="{{ $da['ruang_lingkup'] ?? '' }}" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[{{ $i }}][periode]" class="form-control" placeholder="Periode" value="{{ $da['periode'] ?? '' }}" required></td>
+                                        <td class="text-center align-middle">
+                                            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-data-awal"><i class="mdi mdi-plus"></i> Tambah Data Awal</button>
                     </div>
                     <!-- Risk Based Audit -->
                     <div class="mb-3">
@@ -85,7 +120,7 @@
                     <div class="mb-3">
                         <label class="form-label">Milestone</label>
                         @php
-                        $milestones = ['Entry Meeting', 'Walkthrough', 'TOD', 'TOE', 'Draf LHA', 'Exit Meeting'];
+                        $milestones = ['Surat Permintaan Dokumen kepada Auditee', 'Ekspose PKA Internal', 'Entry Meeting', 'Walkthrough', 'TOD', 'TOE', 'Draf LHA', 'Pra Exit Meeting untuk Finalisasi LHA', 'Exit Meeting'];
                         @endphp
                         <div class="row">
                             @foreach($milestones as $m)
@@ -147,6 +182,39 @@ $(document).on('click', '#btn-add-risk', function() {
 });
 $(document).on('click', '.btn-remove-risk', function() {
     $(this).closest('.risk-item').remove();
+});
+
+// Dynamic Data Awal Dokumen
+let dataAwalIndex = {{ count($dataAwal ?? []) }};
+function updateDataAwalNumbers() {
+    $('#data-awal-container .row-number').each(function(index) {
+        $(this).text(index + 1);
+    });
+}
+
+$('#btn-add-data-awal').on('click', function() {
+    const html = `
+    <tr class="data-awal-item">
+        <td class="text-center align-middle row-number"></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
+        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][periode]" class="form-control" placeholder="Periode" required></td>
+        <td class="text-center align-middle">
+            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
+        </td>
+    </tr>`;
+    $('#data-awal-container').append(html);
+    dataAwalIndex++;
+    updateDataAwalNumbers();
+});
+
+$(document).on('click', '.btn-remove-data-awal', function() {
+    if ($('.data-awal-item').length > 1) {
+        $(this).closest('tr').remove();
+        updateDataAwalNumbers();
+    } else {
+        alert('Minimal harus ada 1 baris data awal');
+    }
 });
 
 // Dynamic Proses Bisnis

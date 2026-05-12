@@ -38,6 +38,9 @@
                                                 -
                                             @endif
                                             ({{ $perencanaanAudit->jenis_audit }})
+                                            @if($perencanaanAudit->tanggal_audit_mulai && $perencanaanAudit->tanggal_audit_sampai)
+                                                · [{{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                            @endif
                                         </option>
                                     @endforeach
                                 </select>

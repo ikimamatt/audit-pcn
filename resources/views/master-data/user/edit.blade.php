@@ -179,6 +179,29 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="master_unit_id" class="form-label">Unit <span class="text-danger">*</span></label>
+                                <select class="form-select @error('master_unit_id') is-invalid @enderror" 
+                                        id="master_unit_id" 
+                                        name="master_unit_id"
+                                        required>
+                                    <option value="">Pilih Unit</option>
+                                    @foreach($units as $unit)
+                                        <option value="{{ $unit->id }}" 
+                                                {{ old('master_unit_id', $masterUser->master_unit_id) == $unit->id ? 'selected' : '' }}>
+                                            [{{ $unit->kode_unit }}] {{ $unit->nama_unit }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('master_unit_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="master_akses_user_id" class="form-label">Akses <span class="text-danger">*</span></label>
                                 <select class="form-select @error('master_akses_user_id') is-invalid @enderror" 
                                         id="master_akses_user_id" 

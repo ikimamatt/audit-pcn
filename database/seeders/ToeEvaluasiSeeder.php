@@ -17,13 +17,13 @@ class ToeEvaluasiSeeder extends Seeder
         DB::table('toe_evaluasi')->insert([
             [
                 'toe_audit_id' => $toeAudits[0]->id,
-                'hasil_evaluasi' => 'Evaluasi TOE 1',
+                'hasil_evaluasi' => 'Efektif',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'toe_audit_id' => $toeAudits[1]->id,
-                'hasil_evaluasi' => 'Evaluasi TOE 2',
+                'hasil_evaluasi' => 'Efektif Sebagian',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

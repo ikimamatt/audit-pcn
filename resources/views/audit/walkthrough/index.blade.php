@@ -127,15 +127,17 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('audit.walkthrough.edit', $item->id) }}" class="btn btn-warning btn-sm">
-                                        <i class="mdi mdi-pencil"></i> Edit
-                                    </a>
-                                    <form action="{{ route('audit.walkthrough.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm btn-delete-swal">
-                                            <i class="mdi mdi-delete"></i> Hapus
-                                        </button>
-                                    </form>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('audit.walkthrough.edit', $item->id) }}" class="btn btn-warning btn-sm text-white shadow-sm" title="Edit">
+                                            <i class="mdi mdi-pencil"></i>
+                                        </a>
+                                        <form action="{{ route('audit.walkthrough.destroy', $item->id) }}" method="POST" class="delete-form m-0">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm shadow-sm btn-delete-swal" title="Hapus">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                     @canApproveReject
                                         @if($item->status_approval == 'pending')
                                             {{-- Level 1: ASMAN SPI can approve/reject --}}

@@ -30,6 +30,9 @@
                                     @if($perencanaan) · {{ $perencanaan->nomor_surat_tugas }}@endif
                                     @if($perencanaan && $perencanaan->jenis_audit) · {{ $perencanaan->jenis_audit }}@endif
                                     @if($perencanaan && $perencanaan->auditee) · {{ $perencanaan->auditee->divisi }}@endif
+                                    @if($perencanaan && $perencanaan->tanggal_audit_mulai && $perencanaan->tanggal_audit_sampai)
+                                        · [{{ \Carbon\Carbon::parse($perencanaan->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($perencanaan->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                    @endif
                                     @if($rejectedEntryMeeting) (Reject - Ajukan Ulang)@endif
                                 </option>
                                 @endforeach

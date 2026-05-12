@@ -13,6 +13,9 @@ return new class extends Migration
             $table->date('tanggal_surat_tugas');
             $table->string('nomor_surat_tugas');
             $table->string('jenis_audit');
+            $table->unsignedBigInteger('koordinator_id')->nullable();
+            $table->unsignedBigInteger('ketua_tim_id')->nullable();
+            $table->unsignedBigInteger('unit_id')->nullable();
             $table->json('auditor');
             $table->unsignedBigInteger('auditee_id');
             $table->json('ruang_lingkup');
@@ -22,6 +25,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('auditee_id')->references('id')->on('master_auditee')->onDelete('restrict');
+            $table->foreign('koordinator_id')->references('id')->on('master_user')->onDelete('restrict');
+            $table->foreign('ketua_tim_id')->references('id')->on('master_user')->onDelete('restrict');
+            // unit_id FK ditambahkan di migration 2026_05_12_031458 (setelah master_unit dibuat)
         });
     }
 

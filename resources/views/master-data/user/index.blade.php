@@ -51,6 +51,7 @@
                                 <th>No. Telpon</th>
                                 <th>Jabatan</th>
                                 <th>Divisi</th>
+                                <th>Unit</th>
                                 <th>Akses</th>
                                 <th>Aksi</th>
                             </tr>
@@ -66,6 +67,14 @@
                                     <td>{{ $item->no_telpon ?? '-' }}</td>
                                     <td>{{ $item->jabatan ?? '-' }}</td>
                                     <td>{{ $item->auditee->divisi ?? '-' }}</td>
+                                    <td>
+                                        @if($item->unit)
+                                            <span class="badge bg-secondary">{{ $item->unit->kode_unit }}</span>
+                                            {{ $item->unit->nama_unit }}
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $item->akses->nama_akses ?? '-' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -91,7 +100,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="text-center">Tidak ada data</td>
+                                    <td colspan="11" class="text-center">Tidak ada data</td>
                                 </tr>
                             @endforelse
                         </tbody>
