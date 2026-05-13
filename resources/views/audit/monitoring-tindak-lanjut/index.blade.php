@@ -33,11 +33,25 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
+                    <!-- Filter Year -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <form action="{{ route('audit.monitoring-tindak-lanjut.index') }}" method="GET" class="d-flex align-items-center">
+                                <label for="year" class="me-2 fw-bold">Tahun:</label>
+                                <select name="year" id="year" class="form-select me-2" onchange="this.form.submit()">
+                                    @foreach($years as $y)
+                                        <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+
                     <!-- Header -->
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="bg-secondary text-white p-3 rounded text-center">
-                                <h4 class="mb-0 fw-bold">RINCIAN JUMLAH TEMUAN & REKOMENDASI</h4>
+                                <h4 class="mb-0 fw-bold">RINCIAN JUMLAH TEMUAN & REKOMENDASI TAHUN {{ $selectedYear }}</h4>
                             </div>
                         </div>
                     </div>
@@ -52,7 +66,8 @@
                                     <th colspan="2" class="text-center">JUMLAH TEMUAN DAN REKOMENDASI (*)</th>
                                     <th colspan="2" class="text-center">JUMLAH TINDAK LANJUT (s/d BULAN {{ strtoupper($currentMonthName) }})</th>
                                     <th colspan="2" class="text-center">SISA TEMUAN & REKOMENDASI</th>
-                                    <th colspan="24" class="text-center">RINCIAN JUMLAH TEMUAN & REKOMENDASI</th>
+                                    <th colspan="14" class="text-center" style="background-color: #0d6efd;">SEMESTER 1</th>
+                                    <th colspan="14" class="text-center" style="background-color: #0dcaf0; color: #000;">SEMESTER 2</th>
                                 </tr>
                                 <tr class="table-dark">
                                     <th class="text-center">AOI</th>
@@ -73,6 +88,8 @@
                                     <th class="text-center month-mei">Mei</th>
                                     <th class="text-center month-jun">Jun</th>
                                     <th class="text-center month-jun">Jun</th>
+                                    <th class="text-center" style="background-color: #0d6efd;">SMT 1</th>
+                                    <th class="text-center" style="background-color: #0d6efd;">SMT 1</th>
                                     <th class="text-center month-jul">Jul</th>
                                     <th class="text-center month-jul">Jul</th>
                                     <th class="text-center month-ags">Ags</th>
@@ -85,6 +102,8 @@
                                     <th class="text-center month-nov">Nov</th>
                                     <th class="text-center month-des">Des</th>
                                     <th class="text-center month-des">Des</th>
+                                    <th class="text-center" style="background-color: #0dcaf0; color: #000;">SMT 2</th>
+                                    <th class="text-center" style="background-color: #0dcaf0; color: #000;">SMT 2</th>
                                 </tr>
                                 <tr class="table-dark">
                                     <th class="text-center">T</th>
@@ -105,6 +124,8 @@
                                     <th class="text-center month-mei">R</th>
                                     <th class="text-center month-jun">T</th>
                                     <th class="text-center month-jun">R</th>
+                                    <th class="text-center" style="background-color: #0d6efd;">T</th>
+                                    <th class="text-center" style="background-color: #0d6efd;">R</th>
                                     <th class="text-center month-jul">T</th>
                                     <th class="text-center month-jul">R</th>
                                     <th class="text-center month-ags">T</th>
@@ -117,6 +138,8 @@
                                     <th class="text-center month-nov">R</th>
                                     <th class="text-center month-des">T</th>
                                     <th class="text-center month-des">R</th>
+                                    <th class="text-center" style="background-color: #0dcaf0; color: #000;">T</th>
+                                    <th class="text-center" style="background-color: #0dcaf0; color: #000;">R</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -145,6 +168,8 @@
                                         <td class="text-center month-mei">{{ $data['bulanan']['mei']['real'] ?: '' }}</td>
                                         <td class="text-center month-jun">{{ $data['bulanan']['jun']['target'] ?: '' }}</td>
                                         <td class="text-center month-jun">{{ $data['bulanan']['jun']['real'] ?: '' }}</td>
+                                        <td class="text-center fw-bold text-primary">{{ $data['semester']['smt1']['target'] ?: '' }}</td>
+                                        <td class="text-center fw-bold text-primary">{{ $data['semester']['smt1']['real'] ?: '' }}</td>
                                         <td class="text-center month-jul">{{ $data['bulanan']['jul']['target'] ?: '' }}</td>
                                         <td class="text-center month-jul">{{ $data['bulanan']['jul']['real'] ?: '' }}</td>
                                         <td class="text-center month-ags">{{ $data['bulanan']['ags']['target'] ?: '' }}</td>
@@ -157,6 +182,8 @@
                                         <td class="text-center month-nov">{{ $data['bulanan']['nov']['real'] ?: '' }}</td>
                                         <td class="text-center month-des">{{ $data['bulanan']['des']['target'] ?: '' }}</td>
                                         <td class="text-center month-des">{{ $data['bulanan']['des']['real'] ?: '' }}</td>
+                                        <td class="text-center fw-bold text-info">{{ $data['semester']['smt2']['target'] ?: '' }}</td>
+                                        <td class="text-center fw-bold text-info">{{ $data['semester']['smt2']['real'] ?: '' }}</td>
                                 </tr>
                                     @endif
                                 @empty
@@ -196,6 +223,8 @@
                                     <td class="text-center month-mei">{{ $totalData['bulanan']['mei']['real'] ?: '' }}</td>
                                     <td class="text-center month-jun">{{ $totalData['bulanan']['jun']['target'] ?: '' }}</td>
                                     <td class="text-center month-jun">{{ $totalData['bulanan']['jun']['real'] ?: '' }}</td>
+                                    <td class="text-center fw-bold bg-primary text-white">{{ $semesterData['smt1']['target'] ?: '' }}</td>
+                                    <td class="text-center fw-bold bg-primary text-white">{{ $semesterData['smt1']['real'] ?: '' }}</td>
                                     <td class="text-center month-jul">{{ $totalData['bulanan']['jul']['target'] ?: '' }}</td>
                                     <td class="text-center month-jul">{{ $totalData['bulanan']['jul']['real'] ?: '' }}</td>
                                     <td class="text-center month-ags">{{ $totalData['bulanan']['ags']['target'] ?: '' }}</td>
@@ -208,6 +237,8 @@
                                     <td class="text-center month-nov">{{ $totalData['bulanan']['nov']['real'] ?: '' }}</td>
                                     <td class="text-center month-des">{{ $totalData['bulanan']['des']['target'] ?: '' }}</td>
                                     <td class="text-center month-des">{{ $totalData['bulanan']['des']['real'] ?: '' }}</td>
+                                    <td class="text-center fw-bold bg-info text-dark">{{ $semesterData['smt2']['target'] ?: '' }}</td>
+                                    <td class="text-center fw-bold bg-info text-dark">{{ $semesterData['smt2']['real'] ?: '' }}</td>
                                 </tr>
 
                                 <!-- Persentase Baris -->
@@ -227,11 +258,11 @@
                                             'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mei' => 5, 'jun' => 6,
                                             'jul' => 7, 'ags' => 8, 'sep' => 9, 'okt' => 10, 'nov' => 11, 'des' => 12
                                         ];
-                                        $currentMonth = \Carbon\Carbon::now()->month;
+                                        $currentMonthForCalc = $selectedYear < \Carbon\Carbon::now()->year ? 12 : \Carbon\Carbon::now()->month;
                                     @endphp
                                     
                                     @foreach($months as $monthKey => $monthNumber)
-                                        @if($monthNumber <= $currentMonth)
+                                        @if($monthNumber <= $currentMonthForCalc)
                                             <!-- Gabungkan T dan R dalam satu kolom -->
                                             <td class="text-center {{ $totalData['bulanan'][$monthKey]['target'] > 0 ? ($totalData['bulanan'][$monthKey]['real'] / $totalData['bulanan'][$monthKey]['target'] * 100 >= 100 ? 'table-success' : 'table-warning') : '' }}" colspan="2">
                                                 {{ $totalData['bulanan'][$monthKey]['target'] > 0 ? round($totalData['bulanan'][$monthKey]['real'] / $totalData['bulanan'][$monthKey]['target'] * 100) . '%' : '' }}
@@ -239,6 +270,20 @@
                                         @else
                                             <!-- Bulan yang belum tiba - kosong -->
                                             <td class="text-center" colspan="2"></td>
+                                        @endif
+                                        
+                                        @if($monthKey == 'jun')
+                                            <!-- Persentase SMT 1 -->
+                                            <td class="text-center fw-bold bg-primary text-white" colspan="2">
+                                                {{ $semesterData['smt1']['target'] > 0 ? $semesterData['smt1']['percentage'] . '%' : '' }}
+                                            </td>
+                                        @endif
+                                        
+                                        @if($monthKey == 'des')
+                                            <!-- Persentase SMT 2 -->
+                                            <td class="text-center fw-bold bg-info text-dark" colspan="2">
+                                                {{ $semesterData['smt2']['target'] > 0 ? $semesterData['smt2']['percentage'] . '%' : '' }}
+                                            </td>
                                         @endif
                                     @endforeach
                                 </tr>
@@ -249,14 +294,30 @@
 
                     <!-- Bottom Summary -->
                     <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="text-center">
-                                <h5 class="mb-2">REALISASI KUMULATIF S/D {{ strtoupper($currentMonthName) }} {{ date('Y') }}</h5>
-                                <div class="bg-warning text-white p-4 rounded">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <h5 class="mb-2">REALISASI SEMESTER 1 ({{ $selectedYear }})</h5>
+                                <div class="bg-primary text-white p-4 rounded shadow-sm">
+                                    <h2 class="mb-0 fw-bold">{{ $semesterData['smt1']['percentage'] }}%</h2>
+                                    <small class="text-white-50">Target: {{ $semesterData['smt1']['target'] }} | Realisasi: {{ $semesterData['smt1']['real'] }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <h5 class="mb-2">REALISASI SEMESTER 2 ({{ $selectedYear }})</h5>
+                                <div class="bg-info text-dark p-4 rounded shadow-sm">
+                                    <h2 class="mb-0 fw-bold">{{ $semesterData['smt2']['percentage'] }}%</h2>
+                                    <small class="text-black-50">Target: {{ $semesterData['smt2']['target'] }} | Realisasi: {{ $semesterData['smt2']['real'] }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <h5 class="mb-2">REALISASI KUMULATIF TAHUN {{ $selectedYear }}</h5>
+                                <div class="bg-warning text-white p-4 rounded shadow-sm">
                                     <h2 class="mb-0 fw-bold">{{ $realisasiKumulatif }}%</h2>
-                                    <small class="text-white-50">
-                                        Berdasarkan data bulan Januari - {{ strtoupper($currentMonthName) }}
-                                    </small>
+                                    <small class="text-white-50">Total Kumulatif Berjalan</small>
                                 </div>
                             </div>
                         </div>

@@ -18,9 +18,12 @@ class MonitoringTindakLanjutController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil bulan sekarang
-        $currentMonth = Carbon::now();
-        $currentMonthName = $currentMonth->format('M'); // Jan, Feb, Mar, etc.
+        // Tahun yang dipilih (default tahun ini)
+        $selectedYear = $request->input('year', Carbon::now()->year);
+        
+        // Ambil bulan sekarang (untuk batas perhitungan berjalan jika tahun yang dipilih adalah tahun ini)
+        $currentMonth = Carbon::create($selectedYear, Carbon::now()->month, 1);
+        $currentMonthName = Carbon::now()->format('M'); // Jan, Feb, Mar, dll.
         
         // Ambil data auditee yang memiliki data audit
         $auditeeData = $this->getAuditeeData($currentMonth);
@@ -29,13 +32,22 @@ class MonitoringTindakLanjutController extends Controller
         $totalData = $this->calculateTotalData($auditeeData);
         
         // Hitung realisasi kumulatif
-        $realisasiKumulatif = $this->calculateRealisasiKumulatif($totalData);
+        $realisasiKumulatif = $this->calculateRealisasiKumulatif($totalData, $selectedYear);
+        
+        // Hitung persentase semester
+        $semesterData = $this->calculateSemesterData($totalData);
+        
+        // Daftar tahun untuk filter (bisa disesuaikan dengan range data aktual)
+        $years = range(Carbon::now()->year - 2, Carbon::now()->year + 1);
         
         return view('audit.monitoring-tindak-lanjut.index', compact(
             'auditeeData', 
             'totalData', 
             'realisasiKumulatif', 
-            'currentMonthName'
+            'currentMonthName',
+            'semesterData',
+            'selectedYear',
+            'years'
         ));
     }
     
@@ -87,6 +99,18 @@ class MonitoringTindakLanjutController extends Controller
             // Hitung data bulanan berdasarkan target waktu rekomendasi
             $bulanan = $this->calculateMonthlyData($auditee, $currentMonth);
             
+            // Hitung target dan real semester per auditee
+            $smt1Target = 0; $smt1Real = 0;
+            $smt2Target = 0; $smt2Real = 0;
+            foreach (['jan', 'feb', 'mar', 'apr', 'mei', 'jun'] as $m) {
+                $smt1Target += $bulanan[$m]['target'];
+                $smt1Real += $bulanan[$m]['real'];
+            }
+            foreach (['jul', 'ags', 'sep', 'okt', 'nov', 'des'] as $m) {
+                $smt2Target += $bulanan[$m]['target'];
+                $smt2Real += $bulanan[$m]['real'];
+            }
+            
             $auditeeData[] = [
                 'no' => $no++,
                 'objek_pemeriksaan' => $auditee->divisi,
@@ -97,6 +121,10 @@ class MonitoringTindakLanjutController extends Controller
                 'sisa_target' => $sisaTarget,
                 'sisa_real' => $sisaReal,
                 'bulanan' => $bulanan,
+                'semester' => [
+                    'smt1' => ['target' => $smt1Target, 'real' => $smt1Real],
+                    'smt2' => ['target' => $smt2Target, 'real' => $smt2Real],
+                ],
                 'is_empty' => $aoiCount == 0 && $rekomCount == 0
             ];
         }
@@ -191,9 +219,10 @@ class MonitoringTindakLanjutController extends Controller
         return $totalData;
     }
     
-    private function calculateRealisasiKumulatif($totalData)
+    private function calculateRealisasiKumulatif($totalData, $selectedYear)
     {
-        $currentMonth = $this->getCurrentMonthNumber();
+        // Jika tahun yang dipilih adalah tahun lalu, hitung sampai Desember. Jika tahun ini, sampai bulan ini.
+        $currentMonth = $selectedYear < Carbon::now()->year ? 12 : $this->getCurrentMonthNumber();
         $months = [
             'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mei' => 5, 'jun' => 6,
             'jul' => 7, 'ags' => 8, 'sep' => 9, 'okt' => 10, 'nov' => 11, 'des' => 12
@@ -202,7 +231,7 @@ class MonitoringTindakLanjutController extends Controller
         $totalTarget = 0;
         $totalReal = 0;
         
-        // Hanya hitung sampai bulan saat ini
+        // Hanya hitung sampai bulan yang relevan
         foreach ($months as $monthKey => $monthNumber) {
             if ($monthNumber <= $currentMonth) {
                 $totalTarget += $totalData['bulanan'][$monthKey]['target'];
@@ -211,6 +240,41 @@ class MonitoringTindakLanjutController extends Controller
         }
         
         return $totalTarget > 0 ? round(($totalReal / $totalTarget) * 100) : 0;
+    }
+    
+    private function calculateSemesterData($totalData)
+    {
+        $smt1Target = 0; $smt1Real = 0;
+        $smt2Target = 0; $smt2Real = 0;
+
+        $smt1Months = ['jan', 'feb', 'mar', 'apr', 'mei', 'jun'];
+        $smt2Months = ['jul', 'ags', 'sep', 'okt', 'nov', 'des'];
+
+        foreach ($smt1Months as $month) {
+            $smt1Target += $totalData['bulanan'][$month]['target'];
+            $smt1Real += $totalData['bulanan'][$month]['real'];
+        }
+
+        foreach ($smt2Months as $month) {
+            $smt2Target += $totalData['bulanan'][$month]['target'];
+            $smt2Real += $totalData['bulanan'][$month]['real'];
+        }
+
+        $smt1Percentage = $smt1Target > 0 ? round(($smt1Real / $smt1Target) * 100) : 0;
+        $smt2Percentage = $smt2Target > 0 ? round(($smt2Real / $smt2Target) * 100) : 0;
+
+        return [
+            'smt1' => [
+                'target' => $smt1Target,
+                'real' => $smt1Real,
+                'percentage' => $smt1Percentage
+            ],
+            'smt2' => [
+                'target' => $smt2Target,
+                'real' => $smt2Real,
+                'percentage' => $smt2Percentage
+            ]
+        ];
     }
     
     private function getCurrentMonthNumber()
