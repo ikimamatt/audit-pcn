@@ -30,7 +30,7 @@
                         @if($suratTugas->isEmpty())
                             <div class="alert alert-info mt-2">
                                 <i class="mdi mdi-information-outline me-2"></i>
-                                Semua surat tugas sudah memiliki Program Kerja Audit. 
+                                Semua surat tugas sudah memiliki Program Kerja Audit.
                                 Silakan buat surat tugas baru terlebih dahulu.
                             </div>
                         @endif
@@ -47,16 +47,21 @@
                         <label class="form-label">Judul PKA</label>
                         <input type="text" name="judul_pka" class="form-control" required>
                     </div>
+
+                    {{-- ===== PROSES BISNIS + RISK BASED AUDIT (Hierarki Baru) ===== --}}
                     <div class="mb-3">
-                        <label class="form-label">Proses Bisnis</label>
-                        <div id="pb-list">
-                            <div class="input-group mb-2 pb-item">
-                                <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" required>
-                                <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-pb"><i class="mdi mdi-plus"></i> Tambah Proses Bisnis</button>
+                        <label class="form-label fw-bold">
+                            <i class="mdi mdi-sitemap me-1 text-primary"></i>Proses Bisnis &amp; Risk Based Audit
+                        </label>
+                        <small class="text-muted d-block mb-2">
+                            Setiap Proses Bisnis dapat memiliki beberapa Risiko. Setiap Risiko dapat memiliki beberapa Kontrol.
+                        </small>
+                        <div id="pb-container"></div>
+                        <button type="button" class="btn btn-sm btn-primary mt-2" id="btn-add-pb">
+                            <i class="mdi mdi-plus-circle me-1"></i>Tambah Proses Bisnis
+                        </button>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Informasi Umum</label>
                         <textarea name="informasi_umum" class="form-control"></textarea>
@@ -65,6 +70,7 @@
                         <label class="form-label">KPI Tidak Tercapai</label>
                         <textarea name="kpi_tidak_tercapai" class="form-control"></textarea>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Data Awal Yang Perlu Disiapkan</label>
                         <div class="table-responsive">
@@ -93,14 +99,7 @@
                         </div>
                         <button type="button" class="btn btn-sm btn-info mt-1" id="btn-add-data-awal"><i class="mdi mdi-plus"></i> Tambah Data Awal</button>
                     </div>
-                    <!-- Risk Based Audit -->
-                    <div class="mb-3">
-                        <label class="form-label">Risk Based Audit</label>
-                        <div id="risk-list">
-                            <!-- Dynamic risk input, JS akan menambah/menghapus -->
-                        </div>
-                        <button type="button" class="btn btn-sm btn-info" id="btn-add-risk">Tambah Risk</button>
-                    </div>
+
                     <!-- Milestone -->
                     <div class="mb-3">
                         <label class="form-label">Milestone</label>
@@ -128,6 +127,7 @@
                             @endforeach
                         </div>
                     </div>
+
                     <!-- Upload Dokumen -->
                     <div class="mb-3">
                         <label class="form-label">Upload Dokumen PKA</label>
@@ -135,7 +135,7 @@
                         <small class="text-muted">Format yang diizinkan: PDF, Excel (.xlsx, .xls). Maksimal 5MB per file.</small>
                         <div class="text-danger mt-1" id="fileError" style="display: none; font-size: 12px;"></div>
                     </div>
-                    <!-- Approval akan diimplementasikan selanjutnya -->
+
                     <div class="mb-3 d-flex gap-2">
                         @if($suratTugas->isNotEmpty())
                             <button type="submit" class="btn btn-primary">Simpan</button>
@@ -159,248 +159,213 @@
 
 @section('script')
 <script>
-// Dynamic Risk Based Audit
-let riskIndex = 0;
-function riskInput(idx, data = {}) {
-    return `<div class='card mb-2 p-2 risk-item'>
-        <div class='row'>
-            <div class='col-md-3'>
-                <label class='form-label'>Deskripsi Risiko</label>
-                <textarea name='risk[${idx}][deskripsi_resiko]' class='form-control' placeholder='Deskripsi Risiko' required>${data.deskripsi_resiko||''}</textarea>
-            </div>
-            <div class='col-md-2'>
-                <label class='form-label'>Penyebab Risiko</label>
-                <textarea name='risk[${idx}][penyebab_resiko]' class='form-control' placeholder='Penyebab Risiko' required>${data.penyebab_resiko||''}</textarea>
-            </div>
-            <div class='col-md-2'>
-                <label class='form-label'>Dampak Risiko</label>
-                <textarea name='risk[${idx}][dampak_resiko]' class='form-control' placeholder='Dampak Risiko' required>${data.dampak_resiko||''}</textarea>
-            </div>
-            <div class='col-md-3'>
-                <label class='form-label'>Pengendalian Eksisting</label>
-                <textarea name='risk[${idx}][pengendalian_eksisting]' class='form-control' placeholder='Pengendalian Eksisting' required>${data.pengendalian_eksisting||''}</textarea>
-            </div>
-            <div class='col-md-2 d-flex align-items-end'>
-                <button type='button' class='btn btn-danger btn-remove-risk'>Hapus</button>
-            </div>
-        </div>
-    </div>`;
-}
-$(document).on('click', '#btn-add-risk', function() {
-    $('#risk-list').append(riskInput(riskIndex++));
-});
-$(document).on('click', '.btn-remove-risk', function() {
-    $(this).closest('.risk-item').remove();
-});
+$(document).ready(function () {
 
-// Dynamic Data Awal Dokumen
-let dataAwalIndex = 1;
-function updateDataAwalNumbers() {
-    $('#data-awal-container .row-number').each(function(index) {
-        $(this).text(index + 1);
+    let pbCounter       = 0;
+    let risikoCounters  = {};
+    let kontrolCounters = {};
+
+    /* ── Template builders ── */
+    function buildKontrolRow(pbIdx, risikoIdx, kIdx, value) {
+        value = value || '';
+        return `<div class="input-group mb-1 kontrol-item" data-pb="${pbIdx}" data-risiko="${risikoIdx}" data-kontrol="${kIdx}">
+            <span class="input-group-text bg-success text-white" style="font-size:.75rem;min-width:32px;justify-content:center;">${kIdx + 1}</span>
+            <input type="text"
+                   name="proses_bisnis[${pbIdx}][risiko][${risikoIdx}][kontrol][${kIdx}][deskripsi_kontrol]"
+                   class="form-control form-control-sm"
+                   placeholder="Deskripsi kontrol pengendalian..."
+                   value="${value}">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-kontrol"><i class="mdi mdi-close"></i></button>
+        </div>`;
+    }
+
+    function buildRisikoBlock(pbIdx, risikoIdx, data) {
+        data = data || {};
+        const p = `proses_bisnis[${pbIdx}][risiko][${risikoIdx}]`;
+        return `<div class="card mb-2 risiko-item" style="border:1.5px solid #f59e0b;border-radius:8px;" data-pb="${pbIdx}" data-risiko="${risikoIdx}">
+            <div class="card-header d-flex align-items-center gap-2 py-2" style="background:#fffbeb;border-bottom:1px solid #fde68a;border-radius:7px 7px 0 0;">
+                <i class="mdi mdi-alert-outline text-warning"></i>
+                <span class="fw-semibold" style="font-size:.85rem;color:#92400e;">Risiko #${risikoIdx + 1}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-auto btn-remove-risiko py-0 px-2" data-pb="${pbIdx}">
+                    <i class="mdi mdi-delete-outline"></i> Hapus Risiko
+                </button>
+            </div>
+            <div class="card-body py-2 px-3">
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label form-label-sm">Deskripsi Risiko <span class="text-danger">*</span></label>
+                        <textarea name="${p}[deskripsi_risiko]" class="form-control form-control-sm" rows="2" placeholder="Deskripsi risiko..." required>${data.deskripsi_risiko || ''}</textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label form-label-sm">Penyebab Risiko</label>
+                        <textarea name="${p}[penyebab_risiko]" class="form-control form-control-sm" rows="2" placeholder="Penyebab risiko...">${data.penyebab_risiko || ''}</textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label form-label-sm">Dampak Risiko</label>
+                        <textarea name="${p}[dampak_risiko]" class="form-control form-control-sm" rows="2" placeholder="Dampak risiko...">${data.dampak_risiko || ''}</textarea>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label form-label-sm"><i class="mdi mdi-shield-check-outline text-success me-1"></i>Kontrol Pengendalian</label>
+                    <div class="kontrol-container" id="kontrol-${pbIdx}-${risikoIdx}"></div>
+                    <button type="button" class="btn btn-sm btn-outline-success btn-add-kontrol mt-1" data-pb="${pbIdx}" data-risiko="${risikoIdx}">
+                        <i class="mdi mdi-plus me-1"></i>Tambah Kontrol
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function buildPbBlock(pbIdx, namaValue) {
+        namaValue = namaValue || '';
+        return `<div class="card mb-3 pb-item" style="border:2px solid #3b82f6;border-radius:10px;" data-pb="${pbIdx}">
+            <div class="card-header d-flex align-items-center gap-2 py-2" style="background:#eff6ff;border-bottom:1px solid #bfdbfe;border-radius:9px 9px 0 0;">
+                <i class="mdi mdi-sitemap text-primary"></i>
+                <span class="fw-bold" style="font-size:.9rem;color:#1e40af;">Proses Bisnis #${pbIdx + 1}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-auto btn-remove-pb py-0 px-2" data-pb="${pbIdx}">
+                    <i class="mdi mdi-delete-outline"></i> Hapus
+                </button>
+            </div>
+            <div class="card-body py-2 px-3">
+                <div class="mb-2">
+                    <label class="form-label form-label-sm fw-semibold">Nama Proses Bisnis <span class="text-danger">*</span></label>
+                    <input type="text" name="proses_bisnis[${pbIdx}][nama]" class="form-control form-control-sm"
+                           placeholder="Masukkan nama proses bisnis..." value="${namaValue}" required>
+                </div>
+                <div class="risiko-container mb-2" id="risiko-container-${pbIdx}"></div>
+                <button type="button" class="btn btn-sm btn-warning btn-add-risiko" data-pb="${pbIdx}">
+                    <i class="mdi mdi-plus me-1"></i>Tambah Risiko
+                </button>
+            </div>
+        </div>`;
+    }
+
+    /* ── Tambah / Hapus PB ── */
+    function addPb(namaValue, prefilledRisikoList) {
+        const pbIdx = pbCounter++;
+        risikoCounters[pbIdx] = 0;
+        $('#pb-container').append(buildPbBlock(pbIdx, namaValue));
+
+        if (prefilledRisikoList && prefilledRisikoList.length > 0) {
+            prefilledRisikoList.forEach(function(risiko) {
+                addRisiko(pbIdx, risiko, risiko.kontrolList || []);
+            });
+        }
+    }
+
+    addPb(); // default 1 PB kosong
+
+    $('#btn-add-pb').on('click', function () { addPb(); });
+
+    $(document).on('click', '.btn-remove-pb', function () {
+        if ($('.pb-item').length <= 1) { alert('Minimal harus ada 1 Proses Bisnis.'); return; }
+        $(this).closest('.pb-item').remove();
     });
-}
 
-$('#btn-add-data-awal').on('click', function() {
-    const html = `
-    <tr class="data-awal-item">
-        <td class="text-center align-middle row-number"></td>
-        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
-        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
-        <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][periode]" class="form-control" placeholder="Periode" required></td>
-        <td class="text-center align-middle">
-            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
-        </td>
-    </tr>`;
-    $('#data-awal-container').append(html);
-    dataAwalIndex++;
-    updateDataAwalNumbers();
-});
+    /* ── Tambah / Hapus Risiko ── */
+    function addRisiko(pbIdx, data, prefilledKontrolList) {
+        if (risikoCounters[pbIdx] === undefined) risikoCounters[pbIdx] = 0;
+        const risikoIdx = risikoCounters[pbIdx]++;
+        kontrolCounters[pbIdx + '_' + risikoIdx] = 0;
+        $(`#risiko-container-${pbIdx}`).append(buildRisikoBlock(pbIdx, risikoIdx, data || {}));
 
-$(document).on('click', '.btn-remove-data-awal', function() {
-    if ($('.data-awal-item').length > 1) {
-        $(this).closest('tr').remove();
-        updateDataAwalNumbers();
-    } else {
-        alert('Minimal harus ada 1 baris data awal');
+        if (prefilledKontrolList && prefilledKontrolList.length > 0) {
+            prefilledKontrolList.forEach(function(k) {
+                addKontrol(pbIdx, risikoIdx, k.deskripsi_kontrol || k);
+            });
+        }
     }
-});
 
-// Milestone date validation
-$(document).ready(function() {
-    // Function to create safe ID
-    function getSafeId(milestone) {
-        return milestone.replace(/ /g, '_');
+    $(document).on('click', '.btn-add-risiko', function () {
+        addRisiko($(this).data('pb'));
+    });
+
+    $(document).on('click', '.btn-remove-risiko', function () {
+        $(this).closest('.risiko-item').remove();
+    });
+
+    /* ── Tambah / Hapus Kontrol ── */
+    function addKontrol(pbIdx, risikoIdx, value) {
+        const key = pbIdx + '_' + risikoIdx;
+        if (kontrolCounters[key] === undefined) kontrolCounters[key] = 0;
+        const kIdx = kontrolCounters[key]++;
+        $(`#kontrol-${pbIdx}-${risikoIdx}`).append(buildKontrolRow(pbIdx, risikoIdx, kIdx, value || ''));
+        renumberKontrol(pbIdx, risikoIdx);
     }
-    
-    // Function to validate milestone dates
+
+    $(document).on('click', '.btn-add-kontrol', function () {
+        addKontrol($(this).data('pb'), $(this).data('risiko'));
+    });
+
+    $(document).on('click', '.btn-remove-kontrol', function () {
+        const $i = $(this).closest('.kontrol-item');
+        const pb = $i.data('pb'); const r = $i.data('risiko');
+        $i.remove(); renumberKontrol(pb, r);
+    });
+
+    function renumberKontrol(pb, r) {
+        $(`#kontrol-${pb}-${r} .kontrol-item .input-group-text`).each(function(i){ $(this).text(i+1); });
+    }
+
+    /* ── Data Awal Dokumen ── */
+    let dataAwalIndex = 1;
+    function updateDataAwalNumbers() {
+        $('#data-awal-container .row-number').each(function(i){ $(this).text(i+1); });
+    }
+    $('#btn-add-data-awal').on('click', function () {
+        $('#data-awal-container').append(`<tr class="data-awal-item">
+            <td class="text-center align-middle row-number"></td>
+            <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
+            <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
+            <td><input type="text" name="data_awal_dokumen[${dataAwalIndex}][periode]" class="form-control" placeholder="Periode" required></td>
+            <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button></td>
+        </tr>`);
+        dataAwalIndex++; updateDataAwalNumbers();
+    });
+    $(document).on('click', '.btn-remove-data-awal', function () {
+        if ($('.data-awal-item').length > 1) { $(this).closest('tr').remove(); updateDataAwalNumbers(); }
+        else alert('Minimal harus ada 1 baris data awal');
+    });
+
+    /* ── Milestone Validation ── */
+    function getSafeId(m) { return m.replace(/ /g, '_'); }
     function validateMilestoneDates() {
-        let isValid = true;
-        let milestoneDates = {};
-        
-        // Collect all milestone dates
-        $('.milestone-date').each(function() {
-            const milestone = $(this).data('milestone');
-            const type = $(this).attr('name').includes('mulai]') ? 'mulai' : 'selesai';
-            const date = $(this).val();
-            
-            if (!milestoneDates[milestone]) {
-                milestoneDates[milestone] = {};
-            }
-            milestoneDates[milestone][type] = date;
+        let valid = true, dates = {};
+        $('.milestone-date').each(function () {
+            const m = $(this).data('milestone');
+            const t = $(this).attr('name').includes('mulai]') ? 'mulai' : 'selesai';
+            if (!dates[m]) dates[m] = {};
+            dates[m][t] = $(this).val();
         });
-        
-        // Validate each milestone
-        Object.keys(milestoneDates).forEach(function(milestone) {
-            const dates = milestoneDates[milestone];
-            const errorElement = $(`#error-${getSafeId(milestone)}`);
-            
-            // Check if both dates are filled
-            if (dates.mulai && dates.selesai) {
-                const startDate = new Date(dates.mulai);
-                const endDate = new Date(dates.selesai);
-                
-                // Check if start date is after end date
-                if (startDate > endDate) {
-                    errorElement.text('Tanggal mulai tidak boleh setelah tanggal selesai').show();
-                    isValid = false;
-                }
-                // Check if start date and end date are the same day - REMOVED: milestone bisa di hari yang sama
-                // else if (startDate.getTime() === endDate.getTime()) {
-                //     errorElement.text('Tanggal mulai dan selesai tidak boleh sama hari').show();
-                //     isValid = false;
-                // }
-                else {
-                    errorElement.hide();
-                }
-            } else {
-                errorElement.hide();
-            }
+        Object.keys(dates).forEach(function (m) {
+            const d = dates[m], $e = $(`#error-${getSafeId(m)}`);
+            if (d.mulai && d.selesai && new Date(d.mulai) > new Date(d.selesai)) {
+                $e.text('Tanggal mulai tidak boleh setelah tanggal selesai').show(); valid = false;
+            } else { $e.hide(); }
         });
-        
-        // Check for overlapping dates between milestones - milestone tidak boleh overlap
-        let allDates = [];
-        Object.keys(milestoneDates).forEach(function(milestone) {
-            const dates = milestoneDates[milestone];
-            if (dates.mulai && dates.selesai) {
-                allDates.push({
-                    milestone: milestone,
-                    start: new Date(dates.mulai),
-                    end: new Date(dates.selesai)
-                });
-            }
-        });
-        
-        // Check for overlaps
-        for (let i = 0; i < allDates.length; i++) {
-            for (let j = i + 1; j < allDates.length; j++) {
-                const date1 = allDates[i];
-                const date2 = allDates[j];
-                
-                // Check if dates overlap
-                if (date1.start <= date2.end && date2.start <= date1.end) {
-                    const errorElement1 = $(`#error-${getSafeId(date1.milestone)}`);
-                    const errorElement2 = $(`#error-${getSafeId(date2.milestone)}`);
-                    
-                    errorElement1.text(`Tanggal bertabrakan dengan ${date2.milestone}`).show();
-                    errorElement2.text(`Tanggal bertabrakan dengan ${date1.milestone}`).show();
-                    isValid = false;
-                }
-            }
-        }
-        
-        return isValid;
+        return valid;
     }
-    
-    // Add event listeners for date changes
-    $(document).on('change', '.milestone-date', function() {
-        validateMilestoneDates();
-    });
-    
-    // Form submission validation
-    $('#pkaForm').on('submit', function(e) {
-        if (!validateMilestoneDates()) {
-            e.preventDefault();
-            alert('Mohon perbaiki tanggal milestone yang bertabrakan atau tidak valid.');
-            return false;
-        }
-        
-        // Validate file upload
-        if (!validateFileUpload()) {
-            e.preventDefault();
-            return false;
-        }
-    });
-    
-    // File upload validation
-    function validateFileUpload() {
-        const fileInput = document.getElementById('dokumenUpload');
-        const files = fileInput.files;
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-        const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-        const allowedExtensions = ['.pdf', '.xlsx', '.xls'];
-        
-        if (files.length === 0) {
-            return true; // No files selected is OK
-        }
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            
-            // Check file size
-            if (file.size > maxSize) {
-                showFileError(`File "${file.name}" terlalu besar. Maksimal 5MB per file.`);
-                return false;
-            }
-            
-            // Check file type
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            if (!allowedExtensions.includes(fileExtension)) {
-                showFileError(`File "${file.name}" tidak didukung. Hanya PDF dan Excel yang diizinkan.`);
-                return false;
-            }
-            
-            // Additional MIME type check
-            if (!allowedTypes.includes(file.type) && file.type !== '') {
-                showFileError(`File "${file.name}" tidak didukung. Hanya PDF dan Excel yang diizinkan.`);
-                return false;
-            }
-        }
-        
-        hideFileError();
-        return true;
-    }
-    
-    function showFileError(message) {
-        $('#fileError').text(message).show();
-    }
-    
-    function hideFileError() {
-        $('#fileError').hide();
-    }
-    
-    // Real-time file validation
-    $('#dokumenUpload').on('change', function() {
-        validateFileUpload();
-    });
-    // Dynamic Proses Bisnis
-    $('#btn-add-pb').on('click', function() {
-        const pbHtml = `
-            <div class="input-group mb-2 pb-item">
-                <input type="text" name="proses_bisnis[]" class="form-control" placeholder="Masukkan Proses Bisnis" required>
-                <button class="btn btn-danger btn-remove-pb" type="button"><i class="mdi mdi-delete"></i></button>
-            </div>
-        `;
-        $('#pb-list').append(pbHtml);
-    });
+    $(document).on('change', '.milestone-date', function () { validateMilestoneDates(); });
 
-    $(document).on('click', '.btn-remove-pb', function() {
-        if ($('.pb-item').length > 1) {
-            $(this).closest('.pb-item').remove();
-        } else {
-            alert('Minimal harus ada 1 Proses Bisnis');
+    /* ── File Upload Validation ── */
+    function validateFileUpload() {
+        const files = document.getElementById('dokumenUpload').files;
+        const ext   = ['.pdf','.xlsx','.xls'];
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].size > 5*1024*1024) { $('#fileError').text(`File "${files[i].name}" terlalu besar. Max 5MB.`).show(); return false; }
+            if (!ext.includes('.'+files[i].name.split('.').pop().toLowerCase())) {
+                $('#fileError').text(`File "${files[i].name}" tidak didukung.`).show(); return false;
+            }
         }
+        $('#fileError').hide(); return true;
+    }
+    $('#dokumenUpload').on('change', function () { validateFileUpload(); });
+
+    /* ── Form Submit ── */
+    $('#pkaForm').on('submit', function (e) {
+        if (!validateMilestoneDates()) { e.preventDefault(); alert('Perbaiki tanggal milestone.'); return false; }
+        if (!validateFileUpload())     { e.preventDefault(); return false; }
     });
 });
 </script>
-@endsection 
+@endsection

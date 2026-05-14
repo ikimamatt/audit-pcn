@@ -326,19 +326,114 @@
     </div>
 </div>
 
-{{-- ===== RISK BASED AUDIT ===== --}}
+{{-- ===== RISK BASED AUDIT (Hierarki Baru: PB → Risiko → Kontrol) ===== --}}
 <div class="section-card">
     <div class="section-header">
         <div class="s-icon" style="background:#fef2f2;">
             <i class="mdi mdi-alert-circle-outline" style="color:#dc2626;"></i>
         </div>
         <h6>Risk Based Audit</h6>
-        <span class="ms-auto" style="font-size:.78rem;font-weight:600;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:20px;">
-            {{ $item->risks->count() }} Risiko
-        </span>
+        @if($item->prosesBisnis && $item->prosesBisnis->count() > 0)
+            <span class="ms-auto" style="font-size:.78rem;font-weight:600;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:20px;">
+                {{ $item->prosesBisnis->count() }} Proses Bisnis
+            </span>
+        @else
+            <span class="ms-auto" style="font-size:.78rem;font-weight:600;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:20px;">
+                {{ $item->risks->count() }} Risiko (Data Lama)
+            </span>
+        @endif
     </div>
-    <div class="section-body p-0">
-        @if($item->risks && $item->risks->count() > 0)
+    <div class="section-body">
+
+        @if($item->prosesBisnis && $item->prosesBisnis->count() > 0)
+        {{-- ── Tampilan Hierarki Baru ── --}}
+        <div class="accordion" id="accordionPb">
+            @foreach($item->prosesBisnis as $pbIdx => $pb)
+            <div class="accordion-item mb-2" style="border:1.5px solid #bfdbfe;border-radius:10px;overflow:hidden;">
+                <h2 class="accordion-header" id="pbHead{{ $pb->id }}">
+                    <button class="accordion-button {{ $pbIdx > 0 ? 'collapsed' : '' }}"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#pbCollapse{{ $pb->id }}"
+                            aria-expanded="{{ $pbIdx === 0 ? 'true' : 'false' }}"
+                            style="background:#eff6ff;font-weight:600;font-size:.9rem;color:#1e40af;">
+                        <span class="me-2" style="background:#3b82f6;color:#fff;border-radius:6px;padding:2px 9px;font-size:.78rem;">
+                            {{ $pbIdx + 1 }}
+                        </span>
+                        {{ $pb->nama_proses_bisnis }}
+                        <span class="ms-auto me-3 badge" style="background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:600;">
+                            {{ $pb->risikoList->count() }} Risiko
+                        </span>
+                    </button>
+                </h2>
+                <div id="pbCollapse{{ $pb->id }}"
+                     class="accordion-collapse collapse {{ $pbIdx === 0 ? 'show' : '' }}"
+                     aria-labelledby="pbHead{{ $pb->id }}"
+                     data-bs-parent="#accordionPb">
+                    <div class="accordion-body p-3">
+
+                        @if($pb->risikoList->count() > 0)
+                            @foreach($pb->risikoList as $rIdx => $risiko)
+                            <div class="card mb-2" style="border:1.5px solid #fde68a;border-radius:8px;">
+                                <div class="card-header d-flex align-items-center gap-2 py-2"
+                                     style="background:#fffbeb;border-bottom:1px solid #fde68a;">
+                                    <i class="mdi mdi-alert-outline text-warning"></i>
+                                    <span class="fw-semibold" style="font-size:.85rem;color:#92400e;">
+                                        Risiko #{{ $rIdx + 1 }}: {{ $risiko->deskripsi_risiko }}
+                                    </span>
+                                </div>
+                                <div class="card-body py-2 px-3">
+                                    @if($risiko->penyebab_risiko || $risiko->dampak_risiko)
+                                    <div class="row g-2 mb-2">
+                                        @if($risiko->penyebab_risiko)
+                                        <div class="col-md-6">
+                                            <div style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;">Penyebab</div>
+                                            <div style="font-size:.82rem;color:#374151;">{{ $risiko->penyebab_risiko }}</div>
+                                        </div>
+                                        @endif
+                                        @if($risiko->dampak_risiko)
+                                        <div class="col-md-6">
+                                            <div style="font-size:.72rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;">Dampak</div>
+                                            <div style="font-size:.82rem;color:#374151;">{{ $risiko->dampak_risiko }}</div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @endif
+
+                                    @if($risiko->kontrolList->count() > 0)
+                                    <div>
+                                        <div class="d-flex align-items-center gap-1 mb-1">
+                                            <i class="mdi mdi-shield-check-outline text-success" style="font-size:.9rem;"></i>
+                                            <span style="font-size:.78rem;font-weight:700;color:#065f46;">Kontrol Pengendalian</span>
+                                        </div>
+                                        <ol class="mb-0 ps-3" style="font-size:.82rem;color:#374151;">
+                                            @foreach($risiko->kontrolList as $kontrol)
+                                            <li>{{ $kontrol->deskripsi_kontrol }}</li>
+                                            @endforeach
+                                        </ol>
+                                    </div>
+                                    @else
+                                        <span class="empty-text">Belum ada kontrol terdaftar</span>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <span class="empty-text">Belum ada risiko pada proses bisnis ini</span>
+                        @endif
+
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        @elseif($item->risks && $item->risks->count() > 0)
+        {{-- ── Fallback: Tampilan Data Lama (pka_risk_based_audit) ── --}}
+        <div class="alert alert-info py-2 mb-3" style="font-size:.8rem;">
+            <i class="mdi mdi-information-outline me-1"></i>
+            Menampilkan data risiko lama. Silakan edit PKA ini untuk menggunakan struktur baru.
+        </div>
         <div class="table-responsive">
             <table class="risk-table">
                 <thead>
@@ -363,11 +458,14 @@
                 </tbody>
             </table>
         </div>
+
         @else
-            <div class="section-body"><span class="empty-text">Tidak ada data risiko</span></div>
+            <span class="empty-text">Tidak ada data risiko</span>
         @endif
     </div>
 </div>
+
+
 
 {{-- ===== MILESTONE ===== --}}
 <div class="section-card">

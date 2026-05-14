@@ -28,6 +28,14 @@ class ProgramKerjaAudit extends Model
         return $this->hasMany(PkaRiskBasedAudit::class, 'program_kerja_audit_id');
     }
 
+    /**
+     * Relasi ke tabel pka_proses_bisnis (struktur hierarki baru)
+     */
+    public function prosesBisnis()
+    {
+        return $this->hasMany(PkaProsesBisnis::class, 'program_kerja_audit_id')->orderBy('urutan');
+    }
+
     public function milestones()
     {
         return $this->hasMany(PkaMilestone::class, 'program_kerja_audit_id');
