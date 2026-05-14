@@ -1,27 +1,60 @@
 @extends('layouts.vertical', ['title' => 'Pemantauan Hasil Audit'])
 
 @section('css')
+    @vite([
+        'node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css',
+        'node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css',
+     ])
     <style>
         .btn-update-status {
-                font-size: 0.8rem;
-                padding: 0.35rem 0.5rem;
-                white-space: nowrap;
-            }
+            font-size: 0.8rem;
+            padding: 0.35rem 0.5rem;
+            white-space: nowrap;
+        }
 
-            .badge.w-100 {
-                display: block;
-                text-align: center;
-            }
+        .badge.w-100 {
+            display: block;
+            text-align: center;
+        }
 
-            .table td {
-                vertical-align: middle;
-            }
+        .table td {
+            vertical-align: middle;
+        }
 
-            .modal-body .badge {
-                font-size: 1rem;
-                padding: 0.5rem 1rem;
-            }
-        </style>
+        .modal-body .badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            width: fit-content;
+        }
+
+        .btn-grid .btn {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+        }
+
+        .btn-grid .btn i {
+            margin: 0 !important;
+            font-size: 1.1rem;
+        }
+
+        .btn-grid form {
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -66,21 +99,18 @@
                     @endif
 
                     <div class="table-responsive" style="overflow-x:auto;">
-                        <table class="table table-bordered table-hover" style="min-width:1200px;">
+                        <table id="scroll-horizontal-datatable" class="table table-bordered table-hover w-100 nowrap" style="min-width:1200px;">
                             <thead>
                                 <tr>
                                     <th>No</th>
                                     <th>Auditee</th>
                                     <th>Nomor Tugas</th>
                                     <th>Nomor ISS</th>
-                                    <th>Temuan</th>
-                                    <th>Rekomendasi</th>
-                                    <th>Eviden</th>
+
                                     <th>Target Waktu</th>
                                     <th>PIC Rekomendasi</th>
                                     <th>Status Tindak Lanjut</th>
                                     <th>Aksi</th>
-                                    <th>View</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -124,34 +154,7 @@
                                                 <span class="text-muted">-</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if($row->temuan)
-                                                <div class="text-truncate" style="max-width: 200px;"
-                                                    title="{{ $row->temuan->permasalahan ?? 'N/A' }}">
-                                                    <strong>Permasalahan:</strong><br>
-                                                    {{ Str::limit($row->temuan->permasalahan ?? 'N/A', 100) }}
-                                                </div>
-                                                <div class="text-truncate" style="max-width: 200px;"
-                                                    title="{{ $row->temuan->penyebab ?? 'N/A' }}">
-                                                    <strong>Penyebab:</strong><br>
-                                                    {{ Str::limit($row->temuan->penyebab ?? 'N/A', 100) }}
-                                                </div>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="text-truncate" style="max-width: 200px;"
-                                                title="{{ $row->rekomendasi }}">
-                                                {{ Str::limit($row->rekomendasi, 100) }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="text-truncate" style="max-width: 200px;"
-                                                title="{{ $row->eviden_rekomendasi }}">
-                                                {{ Str::limit($row->eviden_rekomendasi, 100) }}
-                                            </div>
-                                        </td>
+
                                         <td>
                                             <span class="badge {{ $row->target_waktu < now() ? 'bg-danger' : 'bg-success' }}">
                                                 {{ \Carbon\Carbon::parse($row->target_waktu)->format('d/m/Y') }}
@@ -255,33 +258,32 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="btn-group-vertical btn-group-sm" role="group">
+                                            <div class="btn-grid">
+                                                <a href="{{ route('audit.pemantauan.tindak-lanjut.index', $row->id) }}"
+                                                    class="btn btn-info text-white" title="View Detail">
+                                                    <i class="mdi mdi-eye"></i>
+                                                </a>
                                                 <a href="{{ route('audit.pemantauan.edit', $row->id) }}"
-                                                    class="btn btn-warning btn-sm mb-1">Edit</a>
+                                                    class="btn btn-warning text-white" title="Edit">
+                                                    <i class="mdi mdi-pencil"></i>
+                                                </a>
                                                 @php
                                                     $latestStatus = $row->tindakLanjut->sortByDesc('created_at')->first()?->status_tindak_lanjut ?? $row->status_tindak_lanjut;
                                                 @endphp
                                                 <a href="{{ route('audit.penutup-lha-rekomendasi.tindak-lanjut.form', $row->id) }}"
-                                                    class="btn btn-success btn-sm mb-1" @if($latestStatus == 'closed')
-                                                        title="Meski status sudah closed, Anda masih bisa menambah tindak lanjut"
-                                                    data-bs-toggle="tooltip" @endif>
-                                                    @if($latestStatus == 'closed')
-                                                        <i class="mdi mdi-plus-circle me-1"></i>
-                                                    @endif
-                                                    Tindak Lanjut
+                                                    class="btn btn-success" title="Tambah Tindak Lanjut" @if($latestStatus == 'closed')
+                                                    data-bs-toggle="tooltip" data-bs-original-title="Meski status sudah closed, Anda masih bisa menambah tindak lanjut" @endif>
+                                                    <i class="mdi mdi-plus"></i>
                                                 </a>
                                                 <form action="{{ route('audit.penutup-lha-rekomendasi.destroy', $row->id) }}"
-                                                    method="POST" style="display:inline-block;"
-                                                    onsubmit="return confirm('Yakin ingin menghapus data ini?')">
+                                                    method="POST" onsubmit="return confirm('Yakin ingin menghapus data ini?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                                    <button type="submit" class="btn btn-danger" title="Delete">
+                                                        <i class="mdi mdi-delete"></i>
+                                                    </button>
                                                 </form>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('audit.pemantauan.tindak-lanjut.index', $row->id) }}"
-                                                class="btn btn-info btn-sm">View</a>
                                         </td>
                                     </tr>
 
@@ -390,6 +392,10 @@
         </div>
     </div>
 
+@endsection
+
+@section('script')
+    @vite(['resources/js/pages/datatable.init.js'])
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize tooltips
