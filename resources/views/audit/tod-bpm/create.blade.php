@@ -43,19 +43,19 @@
                             <textarea name="nama_bpo" id="nama_bpo" class="form-control" rows="2" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Resiko</label>
+                            <label class="form-label">Risiko</label>
                             <div id="resiko-container">
                                 <div class="resiko-item mb-3 border p-3 rounded">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <strong>Resiko <span class="resiko-number">1</span></strong>
+                                        <strong>Risiko <span class="resiko-number">1</span></strong>
                                         <button type="button" class="btn btn-sm btn-danger btn-remove-resiko">Hapus</button>
                                     </div>
                                     <textarea name="resiko[]" class="form-control resiko-input" rows="2"
-                                        placeholder="Masukkan resiko"></textarea>
+                                        placeholder="Masukkan risiko"></textarea>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-success btn-sm" id="btn-add-resiko">Tambah Resiko</button>
-                            <small class="text-muted d-block mt-2">Resiko akan otomatis terisi dari PKA saat surat tugas
+                            <button type="button" class="btn btn-success btn-sm" id="btn-add-resiko">Tambah Risiko</button>
+                            <small class="text-muted d-block mt-2">Risiko akan otomatis terisi dari PKA saat surat tugas
                                 dipilih</small>
                         </div>
                         <div class="mb-3">
@@ -69,7 +69,7 @@
                                         placeholder="Masukkan kontrol"></textarea>
                                 </div>
                             </div>
-                            <small class="text-muted d-block mt-2">Kontrol harus diisi manual untuk setiap resiko yang
+                            <small class="text-muted d-block mt-2">Kontrol harus diisi manual untuk setiap risiko yang
                                 dipilih</small>
                         </div>
                         <div class="mb-3">
@@ -193,10 +193,10 @@
                 resikoItem.className = 'resiko-item mb-3 border p-3 rounded';
                 resikoItem.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong>Resiko <span class="resiko-number">${resikoIndex + 1}</span></strong>
+                        <strong>Risiko <span class="resiko-number">${resikoIndex + 1}</span></strong>
                         <button type="button" class="btn btn-sm btn-danger btn-remove-resiko">Hapus</button>
                     </div>
-                    <textarea name="resiko[]" class="form-control resiko-input" rows="2" placeholder="Masukkan resiko">${resikoText}</textarea>
+                    <textarea name="resiko[]" class="form-control resiko-input" rows="2" placeholder="Masukkan risiko">${resikoText}</textarea>
                 `;
                 resikoContainer.appendChild(resikoItem);
 
@@ -226,7 +226,7 @@
                     updateResikoNumbers();
                     updateKontrolNumbers();
                 } else {
-                    alert('Minimal harus ada 1 resiko');
+                    alert('Minimal harus ada 1 risiko');
                 }
             }
 

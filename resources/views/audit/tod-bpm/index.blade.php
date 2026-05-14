@@ -54,7 +54,7 @@
                                 <th>Tanggal Audit</th>
                                 <th>Judul BPM</th>
                                 <th>Nama BPO</th>
-                                <th>Resiko</th>
+                                <th>Risiko</th>
                                 <th>Kontrol</th>
                                 <th>File BPM</th>
                                 <th>File KKA ToD</th>

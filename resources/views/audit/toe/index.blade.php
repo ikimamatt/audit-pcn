@@ -52,7 +52,7 @@
                                 <th>Judul BPM</th>
                                 <th>Pengendalian Eksisting</th>
                                 <th>Pemilihan Sampel Audit</th>
-                                <th>Resiko</th>
+                                <th>Risiko</th>
                                 <th>Kontrol</th>
                                 <th>File KKA ToE</th>
                                 <th>Status</th>

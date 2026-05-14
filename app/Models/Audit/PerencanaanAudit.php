@@ -45,6 +45,11 @@ class PerencanaanAudit extends Model
         return $this->belongsTo(\App\Models\MasterData\MasterJenisAudit::class, 'jenis_audit_id');
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(\App\Models\MasterData\MasterUnit::class, 'unit_id');
+    }
+
     public function koordinator()
     {
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'koordinator_id');
