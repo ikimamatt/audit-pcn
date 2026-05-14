@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Http\Controllers\Audit;
 use App\Http\Controllers\Controller;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Models\Models\Audit\PkaRiskBasedAudit;
+use App\Models\Models\Audit\PkaProsesBisnis;
+use App\Models\Models\Audit\PkaRisiko;
+use App\Models\Models\Audit\PkaKontrol;
 use App\Models\Models\Audit\PkaMilestone;
 use App\Models\Models\Audit\PkaDokumen;
 use App\Models\Audit\PerencanaanAudit;
@@ -40,47 +43,47 @@ class ProgramKerjaAuditController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'tanggal_pka' => 'required|date',
-            'no_pka' => 'required',
-            'judul_pka' => 'required|string',
-            'proses_bisnis' => 'required|array',
-            // validasi lain sesuai kebutuhan
+            'perencanaan_audit_id'        => 'required|exists:perencanaan_audit,id',
+            'tanggal_pka'                 => 'required|date',
+            'no_pka'                      => 'required',
+            'judul_pka'                   => 'required|string',
+            'proses_bisnis'               => 'required|array|min:1',
+            'proses_bisnis.*.nama'        => 'required|string',
+            'proses_bisnis.*.risiko'      => 'nullable|array',
         ]);
+
+        // Kumpulkan nama proses bisnis untuk backward-compat kolom JSON lama
+        $prosesBisnisNama = collect($request->proses_bisnis)
+            ->pluck('nama')
+            ->filter()
+            ->values()
+            ->toArray();
 
         // Simpan data utama PKA
         $pka = ProgramKerjaAudit::create([
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
-            'tanggal_pka' => $request->tanggal_pka,
-            'no_pka' => $request->no_pka,
-            'judul_pka' => $request->judul_pka,
-            'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
-            'informasi_umum' => $request->informasi_umum,
-            'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
-            'data_awal_dokumen' => is_array($request->data_awal_dokumen) ? array_values($request->data_awal_dokumen) : [],
+            'tanggal_pka'          => $request->tanggal_pka,
+            'no_pka'               => $request->no_pka,
+            'judul_pka'            => $request->judul_pka,
+            'proses_bisnis'        => $prosesBisnisNama,
+            'informasi_umum'       => $request->informasi_umum,
+            'kpi_tidak_tercapai'   => $request->kpi_tidak_tercapai,
+            'data_awal_dokumen'    => is_array($request->data_awal_dokumen)
+                                        ? array_values($request->data_awal_dokumen)
+                                        : [],
         ]);
 
-        // Simpan risk based audit
-        if ($request->has('risk')) {
-            foreach ($request->risk as $risk) {
-                PkaRiskBasedAudit::create([
-                    'program_kerja_audit_id' => $pka->id,
-                    'deskripsi_resiko' => $risk['deskripsi_resiko'] ?? '',
-                    'penyebab_resiko' => $risk['penyebab_resiko'] ?? '',
-                    'dampak_resiko' => $risk['dampak_resiko'] ?? '',
-                    'pengendalian_eksisting' => $risk['pengendalian_eksisting'] ?? '',
-                ]);
-            }
-        }
+        // Simpan hierarki Proses Bisnis → Risiko → Kontrol
+        $this->storeHierarki($pka->id, $request->proses_bisnis ?? []);
 
         // Simpan milestone
         if ($request->has('milestone')) {
             foreach ($request->milestone as $nama => $ms) {
                 PkaMilestone::create([
                     'program_kerja_audit_id' => $pka->id,
-                    'nama_milestone' => $nama,
-                    'tanggal_mulai' => $ms['mulai'] ?? null,
-                    'tanggal_selesai' => $ms['selesai'] ?? null,
+                    'nama_milestone'         => $nama,
+                    'tanggal_mulai'          => $ms['mulai'] ?? null,
+                    'tanggal_selesai'        => $ms['selesai'] ?? null,
                 ]);
             }
         }
@@ -91,8 +94,8 @@ class ProgramKerjaAuditController extends Controller
                 $path = $file->store('dokumen_pka', 'public');
                 PkaDokumen::create([
                     'program_kerja_audit_id' => $pka->id,
-                    'nama_dokumen' => $file->getClientOriginalName(),
-                    'file_path' => $path,
+                    'nama_dokumen'           => $file->getClientOriginalName(),
+                    'file_path'              => $path,
                 ]);
             }
         }
@@ -105,7 +108,16 @@ class ProgramKerjaAuditController extends Controller
      */
     public function show($id)
     {
-        $item = ProgramKerjaAudit::with(['perencanaanAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with([
+            'perencanaanAudit.auditee',
+            'perencanaanAudit.koordinator',
+            'perencanaanAudit.ketuaTim',
+            'prosesBisnis.risikoList.kontrolList',
+            'risks',
+            'milestones',
+            'dokumen',
+        ])->findOrFail($id);
+
         return view('perencanaan-audit.show', compact('item'));
     }
 
@@ -114,7 +126,13 @@ class ProgramKerjaAuditController extends Controller
      */
     public function edit($id)
     {
-        $item = ProgramKerjaAudit::with(['perencanaanAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with([
+            'perencanaanAudit',
+            'prosesBisnis.risikoList.kontrolList',
+            'milestones',
+            'dokumen',
+        ])->findOrFail($id);
+
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         return view('perencanaan-audit.edit', compact('item', 'suratTugas'));
     }
@@ -125,38 +143,39 @@ class ProgramKerjaAuditController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'tanggal_pka' => 'required|date',
-            'no_pka' => 'required',
-            'judul_pka' => 'required|string',
-            'proses_bisnis' => 'required|array',
+            'perencanaan_audit_id'        => 'required|exists:perencanaan_audit,id',
+            'tanggal_pka'                 => 'required|date',
+            'no_pka'                      => 'required',
+            'judul_pka'                   => 'required|string',
+            'proses_bisnis'               => 'required|array|min:1',
+            'proses_bisnis.*.nama'        => 'required|string',
         ]);
 
         $pka = ProgramKerjaAudit::findOrFail($id);
+
+        // Kumpulkan nama untuk backward-compat JSON lama
+        $prosesBisnisNama = collect($request->proses_bisnis)
+            ->pluck('nama')
+            ->filter()
+            ->values()
+            ->toArray();
+
         $pka->update([
             'perencanaan_audit_id' => $request->perencanaan_audit_id,
-            'tanggal_pka' => $request->tanggal_pka,
-            'no_pka' => $request->no_pka,
-            'judul_pka' => $request->judul_pka,
-            'proses_bisnis' => array_values(array_filter($request->proses_bisnis ?? [])),
-            'informasi_umum' => $request->informasi_umum,
-            'kpi_tidak_tercapai' => $request->kpi_tidak_tercapai,
-            'data_awal_dokumen' => is_array($request->data_awal_dokumen) ? array_values($request->data_awal_dokumen) : [],
+            'tanggal_pka'          => $request->tanggal_pka,
+            'no_pka'               => $request->no_pka,
+            'judul_pka'            => $request->judul_pka,
+            'proses_bisnis'        => $prosesBisnisNama,
+            'informasi_umum'       => $request->informasi_umum,
+            'kpi_tidak_tercapai'   => $request->kpi_tidak_tercapai,
+            'data_awal_dokumen'    => is_array($request->data_awal_dokumen)
+                                        ? array_values($request->data_awal_dokumen)
+                                        : [],
         ]);
 
-        // Update risk: hapus semua, insert ulang (bisa dioptimasi jika perlu)
-        $pka->risks()->delete();
-        if ($request->has('risk')) {
-            foreach ($request->risk as $risk) {
-                PkaRiskBasedAudit::create([
-                    'program_kerja_audit_id' => $pka->id,
-                    'deskripsi_resiko' => $risk['deskripsi_resiko'] ?? '',
-                    'penyebab_resiko' => $risk['penyebab_resiko'] ?? '',
-                    'dampak_resiko' => $risk['dampak_resiko'] ?? '',
-                    'pengendalian_eksisting' => $risk['pengendalian_eksisting'] ?? '',
-                ]);
-            }
-        }
+        // Hapus semua hierarki lama lalu insert ulang (CASCADE ke risiko & kontrol otomatis)
+        $pka->prosesBisnis()->delete();
+        $this->storeHierarki($pka->id, $request->proses_bisnis ?? []);
 
         // Update milestone: hapus semua, insert ulang
         $pka->milestones()->delete();
@@ -164,26 +183,74 @@ class ProgramKerjaAuditController extends Controller
             foreach ($request->milestone as $nama => $ms) {
                 PkaMilestone::create([
                     'program_kerja_audit_id' => $pka->id,
-                    'nama_milestone' => $nama,
-                    'tanggal_mulai' => $ms['mulai'] ?? null,
-                    'tanggal_selesai' => $ms['selesai'] ?? null,
+                    'nama_milestone'         => $nama,
+                    'tanggal_mulai'          => $ms['mulai'] ?? null,
+                    'tanggal_selesai'        => $ms['selesai'] ?? null,
                 ]);
             }
         }
 
-        // Upload dokumen baru
+        // Upload dokumen baru (dokumen lama tidak dihapus)
         if ($request->hasFile('dokumen')) {
             foreach ($request->file('dokumen') as $file) {
                 $path = $file->store('dokumen_pka', 'public');
                 PkaDokumen::create([
                     'program_kerja_audit_id' => $pka->id,
-                    'nama_dokumen' => $file->getClientOriginalName(),
-                    'file_path' => $path,
+                    'nama_dokumen'           => $file->getClientOriginalName(),
+                    'file_path'              => $path,
                 ]);
             }
         }
 
         return redirect()->route('audit.pka.index')->with('success', 'Program Kerja Audit berhasil diupdate!');
+    }
+
+    /**
+     * Simpan hierarki Proses Bisnis → Risiko → Kontrol.
+     * Dipakai oleh store() dan update().
+     */
+    private function storeHierarki(int $pkaId, array $prosesBisnisList): void
+    {
+        foreach ($prosesBisnisList as $pbUrutan => $pbData) {
+            $namaPb = trim($pbData['nama'] ?? '');
+            if ($namaPb === '') {
+                continue;
+            }
+
+            $pb = PkaProsesBisnis::create([
+                'program_kerja_audit_id' => $pkaId,
+                'nama_proses_bisnis'     => $namaPb,
+                'urutan'                 => $pbUrutan + 1,
+            ]);
+
+            foreach ($pbData['risiko'] ?? [] as $risikoUrutan => $risikoData) {
+                $deskripsi = trim($risikoData['deskripsi_risiko'] ?? '');
+                if ($deskripsi === '') {
+                    continue;
+                }
+
+                $risiko = PkaRisiko::create([
+                    'pka_proses_bisnis_id' => $pb->id,
+                    'deskripsi_risiko'     => $deskripsi,
+                    'penyebab_risiko'      => $risikoData['penyebab_risiko'] ?? null,
+                    'dampak_risiko'        => $risikoData['dampak_risiko'] ?? null,
+                    'urutan'               => $risikoUrutan + 1,
+                ]);
+
+                foreach ($risikoData['kontrol'] ?? [] as $kontrolUrutan => $kontrolData) {
+                    $deskKontrol = trim($kontrolData['deskripsi_kontrol'] ?? '');
+                    if ($deskKontrol === '') {
+                        continue;
+                    }
+
+                    PkaKontrol::create([
+                        'pka_risiko_id'     => $risiko->id,
+                        'deskripsi_kontrol' => $deskKontrol,
+                        'urutan'            => $kontrolUrutan + 1,
+                    ]);
+                }
+            }
+        }
     }
 
     // Approval dokumen
@@ -208,7 +275,13 @@ class ProgramKerjaAuditController extends Controller
      */
     public function checkRelations($id)
     {
-        $item = ProgramKerjaAudit::with(['entryMeeting', 'walkthroughAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with([
+            'entryMeeting',
+            'walkthroughAudit',
+            'prosesBisnis.risikoList.kontrolList',
+            'milestones',
+            'dokumen',
+        ])->findOrFail($id);
 
         $relations = [];
 
@@ -218,10 +291,14 @@ class ProgramKerjaAuditController extends Controller
         if ($item->walkthroughAudit) {
             $relations[] = '1 data Walkthrough Audit';
         }
-        $riskCount = $item->risks->count();
-        if ($riskCount > 0) {
-            $relations[] = "{$riskCount} Risk Based Audit";
+
+        $pbCount = $item->prosesBisnis->count();
+        if ($pbCount > 0) {
+            $risikoCount  = $item->prosesBisnis->sum(fn($pb) => $pb->risikoList->count());
+            $kontrolCount = $item->prosesBisnis->sum(fn($pb) => $pb->risikoList->sum(fn($r) => $r->kontrolList->count()));
+            $relations[] = "{$pbCount} Proses Bisnis ({$risikoCount} Risiko, {$kontrolCount} Kontrol)";
         }
+
         $milestoneCount = $item->milestones->count();
         if ($milestoneCount > 0) {
             $relations[] = "{$milestoneCount} Milestone";
@@ -233,9 +310,9 @@ class ProgramKerjaAuditController extends Controller
 
         return response()->json([
             'has_relations' => count($relations) > 0,
-            'relations' => $relations,
-            'no_pka' => $item->no_pka,
-            'surat_tugas' => $item->perencanaanAudit->nomor_surat_tugas ?? '-',
+            'relations'     => $relations,
+            'no_pka'        => $item->no_pka,
+            'surat_tugas'   => $item->perencanaanAudit->nomor_surat_tugas ?? '-',
         ]);
     }
 
@@ -245,22 +322,25 @@ class ProgramKerjaAuditController extends Controller
      */
     public function destroy($id)
     {
-        $item = ProgramKerjaAudit::with(['entryMeeting', 'walkthroughAudit', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with(['entryMeeting', 'walkthroughAudit'])->findOrFail($id);
 
-        // Hapus entry_meeting terkait (FK RESTRICT, harus dihapus manual)
+        // Hapus entry_meeting terkait (FK RESTRICT)
         if ($item->entryMeeting) {
             $item->entryMeeting->delete();
         }
 
-        // Hapus walkthrough_audit terkait (sudah CASCADE di DB tapi eksplisit lebih aman)
+        // Hapus walkthrough_audit terkait
         if ($item->walkthroughAudit) {
             $item->walkthroughAudit->delete();
         }
 
-        // Hapus child records lainnya
+        // prosesBisnis CASCADE ke risiko & kontrol otomatis
+        // milestones & dokumen juga CASCADE
+        // risks (lama) dihapus manual
         $item->risks()->delete();
         $item->milestones()->delete();
         $item->dokumen()->delete();
+        $item->prosesBisnis()->delete(); // CASCADE → pka_risiko → pka_kontrol
 
         // Hapus parent
         $item->delete();
