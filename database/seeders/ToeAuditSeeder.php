@@ -4,99 +4,138 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Audit\PerencanaanAudit;
 
 class ToeAuditSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil semua Program Kerja Audit yang sudah ada
-        $programKerjaAudit = \App\Models\Models\Audit\ProgramKerjaAudit::with('perencanaanAudit')->get();
+        // Ambil TOD yang sudah approved (TOE bergantung pada TOD)
+        $todList = DB::table('tod_bpm_audit')
+            ->where('status_approval', 'approved')
+            ->get();
 
-        if ($programKerjaAudit->isEmpty()) {
-            $this->command->warn('Tidak ada data Program Kerja Audit. Skipping ToeAuditSeeder.');
+        if ($todList->isEmpty()) {
+            // Fallback: ambil semua TOD jika tidak ada yang approved
+            $todList = DB::table('tod_bpm_audit')->get();
+        }
+
+        if ($todList->isEmpty()) {
+            $this->command->warn('[ToeAuditSeeder] Tidak ada data TOD. Seeder dilewati.');
             return;
         }
 
         $statusOptions = ['pending', 'approved', 'rejected'];
-        $statusWeights = [40, 40, 20]; // 40% pending, 40% approved, 20% rejected
+        $statusWeights = [40, 40, 20];
 
-        $toeData = [];
-        $evaluasiData = [];
+        $toeData         = [];
+        $toePivotRisiko  = [];
+        $toePivotKontrol = [];
+        $evaluasiData    = [];
 
-        foreach ($programKerjaAudit as $index => $pka) {
-            // Pilih status berdasarkan weight
-            $randomStatus = $this->getRandomStatus($statusOptions, $statusWeights);
-            
-            // Generate rejection reason if status is rejected
-            $rejectionReason = null;
-            if ($randomStatus === 'rejected') {
-                $rejectionReasons = [
-                    'Dokumen TOE tidak lengkap dan perlu dilengkapi terlebih dahulu sebelum dapat diapprove.',
-                    'Judul BPM dalam TOE tidak sesuai dengan scope audit yang direncanakan, perlu revisi.',
-                    'Pengendalian eksisting yang diidentifikasi tidak sesuai dengan standar yang berlaku.',
-                    'Evaluasi TOE menunjukkan hasil yang tidak memuaskan, perlu perbaikan.',
-                    'Dokumentasi pengendalian internal tidak lengkap, perlu dilengkapi.',
-                ];
-                $rejectionReason = $rejectionReasons[array_rand($rejectionReasons)];
+        foreach ($todList as $tod) {
+            // Ambil risiko & kontrol pivot dari TOD yang bersangkutan
+            $todRisikoIds  = DB::table('tod_bpm_risiko')
+                ->where('tod_bpm_audit_id', $tod->id)
+                ->pluck('pka_risiko_id')
+                ->toArray();
+
+            $todKontrolIds = DB::table('tod_bpm_kontrol')
+                ->where('tod_bpm_audit_id', $tod->id)
+                ->pluck('pka_kontrol_id')
+                ->toArray();
+
+            if (empty($todRisikoIds)) {
+                $this->command->warn("[ToeAuditSeeder] TOD #{$tod->id} tidak punya pivot risiko. Dilewati.");
+                continue;
             }
 
-            $data = [
-                'perencanaan_audit_id' => $pka->perencanaan_audit_id,
-                'judul_bpm' => 'Terms of Engagement untuk ' . $pka->perencanaanAudit->jenis_audit . ' ' . ($index + 1),
-                'pengendalian_eksisting' => 'Pengendalian eksisting untuk ' . $pka->perencanaanAudit->jenis_audit . ' meliputi: SOP, monitoring berkala, dan review manajemen.',
-                'status_approval' => $randomStatus,
-                'rejection_reason' => $rejectionReason,
-                'approved_by' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? 1 : null,
-                'approved_at' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? now() : null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            $randomStatus    = $this->getRandomStatus($statusOptions, $statusWeights);
+            $rejectionReason = null;
+            if ($randomStatus === 'rejected') {
+                $alasan = [
+                    'Dokumen TOE tidak lengkap, perlu dilengkapi sebelum diapprove.',
+                    'Pengendalian yang diidentifikasi tidak sesuai dengan standar berlaku.',
+                    'Evaluasi TOE menunjukkan hasil yang tidak memuaskan, perlu perbaikan.',
+                ];
+                $rejectionReason = $alasan[array_rand($alasan)];
+            }
 
-            $toeData[] = $data;
-        }
+            // Insert TOE (tanpa pengendalian_eksisting — digantikan pivot kontrol)
+            $toeId = DB::table('toe_audit')->insertGetId([
+                'perencanaan_audit_id'    => $tod->perencanaan_audit_id,
+                'judul_bpm'               => $tod->judul_bpm,
+                'pemilihan_sampel_audit'  => 'Sampel audit dipilih berdasarkan risiko tinggi dan materialitas transaksi.',
+                'resiko'                  => null, // digantikan pivot
+                'kontrol'                 => null, // digantikan pivot
+                // pengendalian_eksisting: NULL — akan dihapus di fase migrasi berikutnya
+                'status_approval'         => $randomStatus,
+                'rejection_reason'        => $rejectionReason,
+                'approved_by'             => in_array($randomStatus, ['approved', 'rejected']) ? 1 : null,
+                'approved_at'             => in_array($randomStatus, ['approved', 'rejected']) ? now() : null,
+                'created_at'              => now(),
+                'updated_at'              => now(),
+            ]);
 
-        // Insert all TOE data
-        if (!empty($toeData)) {
-            DB::table('toe_audit')->insert($toeData);
-            
-            // Get inserted TOE IDs for evaluasi
-            $toeIds = DB::table('toe_audit')->pluck('id')->toArray();
-            
-            // Create ONE evaluasi per TOE (sesuai dropdown yang hanya 1 pilihan)
-            $evaluasiOptions = ['Efektif', 'Tidak Efektif', 'Efektif Sebagian'];
+            // ── Pivot Risiko (sama dengan yang ada di TOD) ────────────────
+            foreach ($todRisikoIds as $risikoId) {
+                $toePivotRisiko[] = [
+                    'toe_audit_id'  => $toeId,
+                    'pka_risiko_id' => $risikoId,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ];
+            }
 
-            foreach ($toeIds as $toeId) {
-                $evaluasiData[] = [
+            // ── Pivot Kontrol (sama dengan yang ada di TOD) ───────────────
+            foreach ($todKontrolIds as $kontrolId) {
+                $toePivotKontrol[] = [
                     'toe_audit_id'   => $toeId,
-                    'hasil_evaluasi' => $evaluasiOptions[array_rand($evaluasiOptions)],
+                    'pka_kontrol_id' => $kontrolId,
                     'created_at'     => now(),
                     'updated_at'     => now(),
                 ];
             }
 
-            // Insert evaluasi data
-            if (!empty($evaluasiData)) {
-                DB::table('toe_evaluasi')->insert($evaluasiData);
-            }
+            // ── Evaluasi ──────────────────────────────────────────────────
+            $evaluasiOptions = ['Efektif', 'Tidak Efektif', 'Efektif Sebagian'];
+            $evaluasiData[] = [
+                'toe_audit_id'   => $toeId,
+                'hasil_evaluasi' => $evaluasiOptions[array_rand($evaluasiOptions)],
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ];
         }
 
-        $this->command->info('TOE seeder berhasil dijalankan dengan ' . count($toeData) . ' data dan status approval yang bervariasi.');
+        // Batch insert
+        if (!empty($toePivotRisiko)) {
+            DB::table('toe_risiko')->insert($toePivotRisiko);
+        }
+        if (!empty($toePivotKontrol)) {
+            DB::table('toe_kontrol')->insert($toePivotKontrol);
+        }
+        if (!empty($evaluasiData)) {
+            DB::table('toe_evaluasi')->insert($evaluasiData);
+        }
+
+        $this->command->info("[ToeAuditSeeder] Selesai.");
+        $this->command->info("  → TOE dibuat      : " . count($evaluasiData));
+        $this->command->info("  → Pivot Risiko    : " . count($toePivotRisiko));
+        $this->command->info("  → Pivot Kontrol   : " . count($toePivotKontrol));
     }
 
-    private function getRandomStatus($options, $weights)
+    private function getRandomStatus(array $options, array $weights): string
     {
-        $totalWeight = array_sum($weights);
-        $random = mt_rand(1, $totalWeight);
-        
-        $currentWeight = 0;
-        foreach ($options as $index => $option) {
-            $currentWeight += $weights[$index];
-            if ($random <= $currentWeight) {
-                return $option;
+        $total   = array_sum($weights);
+        $random  = mt_rand(1, $total);
+        $current = 0;
+
+        foreach ($options as $i => $opt) {
+            $current += $weights[$i];
+            if ($random <= $current) {
+                return $opt;
             }
         }
-        
-        return $options[0]; // fallback
+
+        return $options[0];
     }
-} 
+}

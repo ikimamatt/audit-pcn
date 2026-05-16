@@ -54,31 +54,35 @@ class DatabaseSeeder extends Seeder
         // DO NOT run these in production!
         // ========================================
         
-        // Pastikan MasterAuditeeSeeder dijalankan sebelum PerencanaanAuditSeeder
+        // ── Perencanaan Audit ──────────────────────────────────────
         $this->call(PerencanaanAuditSeeder::class);
         $this->call(RealisasiAuditSeeder::class);
-        
-        // ProgramKerjaAuditSeeder bergantung pada perencanaan_audit
+
+        // ── Program Kerja Audit (PKA) ──────────────────────────────
+        // ProgramKerjaAuditSeeder sudah termasuk:
+        //   - pka_proses_bisnis, pka_risiko, pka_kontrol (hierarki baru)
+        //   - pka_dokumen
+        // PkaMilestoneSeeder: milestone per PKA
         $this->call(ProgramKerjaAuditSeeder::class);
-        
-        // PKA related seeders (bergantung pada program_kerja_audit)
         $this->call(PkaMilestoneSeeder::class);
-        $this->call(PkaRiskBasedAuditSeeder::class);
-        $this->call(PkaDokumenSeeder::class);
-        
-        // Seeder yang bergantung pada perencanaan_audit
+
+        // ── Walkthrough (bergantung pada milestone Walkthrough di PKA) ──
         $this->call(WalkthroughAuditSeeder::class);
+
+        // ── TOD (bergantung pada Walkthrough + PKA hierarki) ──────
+        // TodBpmAuditSeeder sudah termasuk tod_bpm_risiko, tod_bpm_kontrol, tod_bpm_evaluasi
         $this->call(TodBpmAuditSeeder::class);
-        $this->call(TodBpmEvaluasiSeeder::class);
+
+        // ── TOE (bergantung pada TOD + PKA hierarki) ──────────────
+        // ToeAuditSeeder sudah termasuk toe_risiko, toe_kontrol, toe_evaluasi
         $this->call(ToeAuditSeeder::class);
-        $this->call(ToeEvaluasiSeeder::class);
+
+        // ── Modul selanjutnya ─────────────────────────────────────
         $this->call(EntryMeetingSeeder::class);
         $this->call(JadwalPkptAuditSeeder::class);
         $this->call([
             PelaporanHasilAuditSeeder::class,
             PelaporanTemuanSeeder::class,
-            // PelaporanIsiLhaSeeder::class,
-            // PenutupLhaRekomendasiSeeder::class,
         ]);
     }
 }

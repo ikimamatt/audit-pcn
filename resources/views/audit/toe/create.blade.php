@@ -14,77 +14,70 @@
             <div class="card-body">
                 <form action="{{ route('audit.toe.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+
+                    {{-- Surat Tugas --}}
                     <div class="mb-3">
-                        <label for="perencanaan_audit_id" class="form-label">Surat Tugas Audit</label>
+                        <label for="perencanaan_audit_id" class="form-label">Surat Tugas Audit <span class="text-danger">*</span></label>
                         <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-control select2-search" required>
                             <option value="">Pilih Surat Tugas</option>
                             @foreach($suratTugas as $st)
-                                <option value="{{ $st->id }}">
+                                <option value="{{ $st->id }}" {{ old('perencanaan_audit_id') == $st->id ? 'selected' : '' }}>
                                     {{ $st->nomor_surat_tugas }}
                                     @if($st->jenis_audit) · {{ $st->jenis_audit }}@endif
                                     @if($st->auditee) · {{ $st->auditee->divisi }}@endif
                                     @if($st->tanggal_audit_mulai && $st->tanggal_audit_sampai)
-                                        · [{{ \Carbon\Carbon::parse($st->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($st->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
+                                        · [{{ \Carbon\Carbon::parse($st->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }}
+                                        - {{ \Carbon\Carbon::parse($st->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
                                     @endif
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    {{-- Judul BPM --}}
                     <div class="mb-3">
-                        <label for="judul_bpm" class="form-label">Judul BPM</label>
+                        <label for="judul_bpm" class="form-label">Judul BPM <span class="text-danger">*</span></label>
                         <select name="judul_bpm" id="judul_bpm" class="form-control select2-search" required>
                             <option value="">-- Pilih Surat Tugas terlebih dahulu --</option>
                         </select>
-                        <small class="text-muted">Judul BPM akan muncul setelah Surat Tugas dipilih</small>
+                        <small class="text-muted">Judul BPM dari TOD yang sudah dibuat untuk surat tugas ini</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="pengendalian_eksisting" class="form-label">Pengendalian Eksisting</label>
-                        <textarea name="pengendalian_eksisting" id="pengendalian_eksisting" class="form-control" rows="2" required></textarea>
-                    </div>
+
+                    {{-- Pemilihan Sampel --}}
                     <div class="mb-3">
                         <label for="pemilihan_sampel_audit" class="form-label">Pemilihan Sampel Audit</label>
-                        <textarea name="pemilihan_sampel_audit" id="pemilihan_sampel_audit" class="form-control" rows="3"></textarea>
+                        <textarea name="pemilihan_sampel_audit" id="pemilihan_sampel_audit" class="form-control" rows="3">{{ old('pemilihan_sampel_audit') }}</textarea>
                     </div>
+
+                    {{-- Risiko & Kontrol dari PKA --}}
                     <div class="mb-3">
-                        <label class="form-label">Risiko</label>
-                        <div id="resiko-container">
-                            <div class="resiko-item mb-3 border p-3 rounded">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong>Risiko <span class="resiko-number">1</span></strong>
-                                    <button type="button" class="btn btn-sm btn-danger btn-remove-resiko">Hapus</button>
-                                </div>
-                                <textarea name="resiko[]" class="form-control resiko-input" rows="2" placeholder="Masukkan risiko"></textarea>
+                        <label class="form-label fw-semibold">Risiko &amp; Kontrol dari PKA</label>
+                        <div id="hierarki-container">
+                            <div class="alert alert-secondary text-center py-3">
+                                <i class="mdi mdi-information-outline me-1"></i>
+                                Pilih Surat Tugas untuk memuat daftar risiko dari PKA.
                             </div>
                         </div>
-                        <button type="button" class="btn btn-success btn-sm" id="btn-add-resiko">Tambah Risiko</button>
-                        <small class="text-muted d-block mt-2">Risiko akan otomatis terisi dari PKA saat surat tugas dipilih</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Kontrol</label>
-                        <div id="kontrol-container">
-                            <div class="kontrol-item mb-3 border p-3 rounded">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong>Kontrol <span class="kontrol-number">1</span></strong>
-                                </div>
-                                <textarea name="kontrol[]" class="form-control kontrol-input" rows="2" placeholder="Masukkan kontrol"></textarea>
-                            </div>
-                        </div>
-                        <small class="text-muted d-block mt-2">Kontrol harus diisi manual untuk setiap risiko yang dipilih</small>
-                    </div>
+
+                    {{-- File KKA TOE --}}
                     <div class="mb-3">
                         <label for="file_kka_toe" class="form-label">Upload File KKA ToE</label>
                         <input type="file" name="file_kka_toe" id="file_kka_toe" class="form-control" accept=".pdf">
-                        <small class="text-muted">Hanya file PDF yang diperbolehkan (maksimal 5MB) - Opsional</small>
+                        <small class="text-muted">PDF, maks. 5MB — Opsional</small>
                     </div>
+
+                    {{-- Hasil Evaluasi --}}
                     <div class="mb-3">
-                        <label for="hasil_evaluasi" class="form-label">Evaluasi Pengendalian</label>
+                        <label for="hasil_evaluasi" class="form-label">Evaluasi Pengendalian <span class="text-danger">*</span></label>
                         <select name="hasil_evaluasi" id="hasil_evaluasi" class="form-control" required>
                             <option value="">Pilih Hasil Evaluasi</option>
-                            <option value="Efektif">Efektif</option>
-                            <option value="Tidak Efektif">Tidak Efektif</option>
-                            <option value="Efektif Sebagian">Efektif Sebagian</option>
+                            <option value="Efektif" {{ old('hasil_evaluasi') == 'Efektif' ? 'selected' : '' }}>Efektif</option>
+                            <option value="Tidak Efektif" {{ old('hasil_evaluasi') == 'Tidak Efektif' ? 'selected' : '' }}>Tidak Efektif</option>
+                            <option value="Efektif Sebagian" {{ old('hasil_evaluasi') == 'Efektif Sebagian' ? 'selected' : '' }}>Efektif Sebagian</option>
                         </select>
                     </div>
+
                     <button type="submit" class="btn btn-primary">Simpan</button>
                     <a href="{{ route('audit.toe.index') }}" class="btn btn-secondary">Batal</a>
                 </form>
@@ -96,7 +89,6 @@
 
 @php
     $bpmJson = $bpmList->map(fn($b) => [
-        'id'                   => $b->id,
         'judul_bpm'            => $b->judul_bpm,
         'perencanaan_audit_id' => $b->perencanaan_audit_id,
     ])->values();
@@ -104,160 +96,128 @@
 
 @section('script')
 <script>
-// Data semua TOD BPM dari server, dikelompokkan per perencanaan_audit_id
-const allBpmData = @json($bpmJson);
+$(document).ready(function () {
+    const allBpmData        = @json($bpmJson);
+    const apiUrl            = "{{ url('audit/pka/hierarki-flat') }}";
+    const hierarkiContainer = document.getElementById('hierarki-container');
 
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('evaluasi-container');
-    const perencanaanSelect = document.getElementById('perencanaan_audit_id');
-    const judulBpmSelect    = document.getElementById('judul_bpm');
-
-    // Filter dropdown Judul BPM sesuai surat tugas yang dipilih
-    function filterBpmByPerencanaan(perencanaanId) {
-        judulBpmSelect.innerHTML = '';
-
-        if (!perencanaanId) {
-            judulBpmSelect.innerHTML = '<option value="">-- Pilih Surat Tugas terlebih dahulu --</option>';
+    // ── Filter Judul BPM ───────────────────────────────────────────────────
+    function filterBpm(pid) {
+        const $jb = $('#judul_bpm');
+        $jb.empty();
+        if (!pid) {
+            $jb.append('<option value="">-- Pilih Surat Tugas terlebih dahulu --</option>');
             return;
         }
-
-        const filtered = allBpmData.filter(b => b.perencanaan_audit_id == perencanaanId);
-
+        const filtered = allBpmData.filter(b => b.perencanaan_audit_id == pid);
         if (filtered.length === 0) {
-            judulBpmSelect.innerHTML = '<option value="">Tidak ada TOD BPM untuk surat tugas ini</option>';
-            return;
+            $jb.append('<option value="">Tidak ada TOD untuk surat tugas ini</option>');
+        } else {
+            $jb.append('<option value="">Pilih Judul BPM</option>');
+            filtered.forEach(b => $jb.append(new Option(b.judul_bpm, b.judul_bpm)));
         }
-
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Pilih Judul BPM';
-        judulBpmSelect.appendChild(placeholder);
-
-        filtered.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = b.judul_bpm;
-            opt.textContent = b.judul_bpm;
-            judulBpmSelect.appendChild(opt);
-        });
+        if ($jb.hasClass('select2-hidden-accessible')) $jb.trigger('change.select2');
     }
 
-    // Handle perubahan surat tugas
-    perencanaanSelect.addEventListener('change', function() {
-        filterBpmByPerencanaan(this.value);
-        loadRisksFromPKA();
-    });
-    
-    // Load risks from PKA
-    function loadRisksFromPKA() {
-        const perencanaanId = perencanaanSelect.value;
-        if (!perencanaanId) {
+    // ── Hierarki PKA ───────────────────────────────────────────────────────
+    function loadHierarki(pid) {
+        if (!pid) {
+            hierarkiContainer.innerHTML = `<div class="alert alert-secondary text-center py-3">
+                <i class="mdi mdi-information-outline me-1"></i>
+                Pilih Surat Tugas untuk memuat daftar risiko dari PKA.
+            </div>`;
             return;
         }
-        
-        fetch(`{{ url('audit/toe/get-risks') }}/${perencanaanId}`)
-            .then(response => response.json())
+
+        hierarkiContainer.innerHTML = `<div class="text-center py-3 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div> Memuat data risiko...
+        </div>`;
+
+        fetch(`${apiUrl}/${pid}`)
+            .then(r => r.json())
             .then(data => {
-                if (data.risks && data.risks.length > 0) {
-                    // Clear existing resiko and kontrol
-                    document.getElementById('resiko-container').innerHTML = '';
-                    document.getElementById('kontrol-container').innerHTML = '';
-                    
-                    // Add risks from PKA
-                    data.risks.forEach((risk, index) => {
-                        addResikoItem(risk.deskripsi_resiko, ''); // Kontrol selalu kosong
-                    });
-                    
-                    updateResikoNumbers();
-                    updateKontrolNumbers();
+                if (!data.has_hierarki) {
+                    const pkaUrl = data.pka_id ? `{{ url('audit/pka') }}/${data.pka_id}/edit` : `{{ url('audit/pka') }}`;
+                    hierarkiContainer.innerHTML = `<div class="alert alert-warning">
+                        <i class="mdi mdi-alert-outline me-1"></i>
+                        <strong>PKA belum memiliki hierarki risiko &amp; kontrol.</strong><br>
+                        <a href="${pkaUrl}" class="btn btn-sm btn-warning ms-2" target="_blank">Buka PKA</a>
+                    </div>`;
+                    return;
                 }
+                renderHierarki(data.risiko, [], []);
             })
-            .catch(error => {
-                console.error('Error loading risks:', error);
+            .catch(() => {
+                hierarkiContainer.innerHTML = `<div class="alert alert-danger">Gagal memuat data risiko.</div>`;
             });
     }
-    
-    // Add resiko item
-    function addResikoItem(resikoText = '', kontrolText = '') {
-        const resikoContainer = document.getElementById('resiko-container');
-        const kontrolContainer = document.getElementById('kontrol-container');
-        const resikoIndex = resikoContainer.children.length;
-        
-        // Create resiko item
-        const resikoItem = document.createElement('div');
-        resikoItem.className = 'resiko-item mb-3 border p-3 rounded';
-        resikoItem.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>Risiko <span class="resiko-number">${resikoIndex + 1}</span></strong>
-                <button type="button" class="btn btn-sm btn-danger btn-remove-resiko">Hapus</button>
-            </div>
-            <textarea name="resiko[]" class="form-control resiko-input" rows="2" placeholder="Masukkan risiko">${resikoText}</textarea>
-        `;
-        resikoContainer.appendChild(resikoItem);
-        
-        // Create corresponding kontrol item
-        const kontrolItem = document.createElement('div');
-        kontrolItem.className = 'kontrol-item mb-3 border p-3 rounded';
-        kontrolItem.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong>Kontrol <span class="kontrol-number">${resikoIndex + 1}</span></strong>
-            </div>
-            <textarea name="kontrol[]" class="form-control kontrol-input" rows="2" placeholder="Masukkan kontrol">${kontrolText}</textarea>
-        `;
-        kontrolContainer.appendChild(kontrolItem);
-        
-        // Add event listener for remove button
-        resikoItem.querySelector('.btn-remove-resiko').addEventListener('click', function() {
-            removeResikoItem(resikoItem, kontrolItem);
+
+    function renderHierarki(risikoList, preRisiko, preKontrol) {
+        let html = `<div class="list-group">`;
+        risikoList.forEach((risiko, i) => {
+            const rId = `risiko-${risiko.id}`;
+            const isChecked = preRisiko.includes(risiko.id);
+            html += `<div class="list-group-item p-0 mb-2 border rounded">
+                <div class="p-3">
+                    <div class="form-check">
+                        <input class="form-check-input risiko-checkbox" type="checkbox"
+                               name="pka_risiko_ids[]" value="${risiko.id}"
+                               id="${rId}" data-target="kontrol-group-${risiko.id}"
+                               ${isChecked ? 'checked' : ''}>
+                        <label class="form-check-label fw-semibold" for="${rId}">
+                            <span class="badge bg-danger-subtle text-danger me-1">R${i+1}</span>
+                            ${esc(risiko.deskripsi_risiko)}
+                        </label>
+                    </div>
+                    ${risiko.penyebab_risiko ? `<div class="text-muted small ms-4 mt-1"><strong>Penyebab:</strong> ${esc(risiko.penyebab_risiko)}</div>` : ''}
+                    ${risiko.dampak_risiko ? `<div class="text-muted small ms-4"><strong>Dampak:</strong> ${esc(risiko.dampak_risiko)}</div>` : ''}
+                </div>`;
+            if (risiko.kontrol && risiko.kontrol.length > 0) {
+                html += `<div class="kontrol-group px-4 pb-3" id="kontrol-group-${risiko.id}" style="display:${isChecked?'block':'none'};">
+                    <div class="border-start border-2 border-primary ps-3">
+                        <p class="text-muted small mb-2 fw-semibold">Pilih Kontrol yang diuji:</p>`;
+                risiko.kontrol.forEach((k, j) => {
+                    html += `<div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" name="pka_kontrol_ids[]"
+                               value="${k.id}" id="kontrol-${k.id}" ${preKontrol.includes(k.id)?'checked':''}>
+                        <label class="form-check-label small" for="kontrol-${k.id}">
+                            <span class="badge bg-primary-subtle text-primary me-1">K${j+1}</span>
+                            ${esc(k.deskripsi_kontrol)}
+                        </label>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            html += `</div>`;
+        });
+        html += `</div>`;
+        hierarkiContainer.innerHTML = html;
+
+        document.querySelectorAll('.risiko-checkbox').forEach(cb => {
+            cb.addEventListener('change', function () {
+                const g = document.getElementById(this.dataset.target);
+                if (!g) return;
+                g.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) g.querySelectorAll('input[type="checkbox"]').forEach(k => k.checked = false);
+            });
         });
     }
-    
-    // Remove resiko item
-    function removeResikoItem(resikoItem, kontrolItem) {
-        const resikoContainer = document.getElementById('resiko-container');
-        if (resikoContainer.children.length > 1) {
-            resikoItem.remove();
-            kontrolItem.remove();
-            updateResikoNumbers();
-            updateKontrolNumbers();
-        } else {
-            alert('Minimal harus ada 1 risiko');
-        }
-    }
-    
-    // Update resiko numbers
-    function updateResikoNumbers() {
-        const resikoItems = document.querySelectorAll('.resiko-item');
-        resikoItems.forEach((item, index) => {
-            item.querySelector('.resiko-number').textContent = index + 1;
-        });
-    }
-    
-    // Update kontrol numbers
-    function updateKontrolNumbers() {
-        const kontrolItems = document.querySelectorAll('.kontrol-item');
-        kontrolItems.forEach((item, index) => {
-            item.querySelector('.kontrol-number').textContent = index + 1;
-        });
-    }
-    
-    // Add resiko button
-    document.getElementById('btn-add-resiko').addEventListener('click', function() {
-        addResikoItem();
-        updateResikoNumbers();
-        updateKontrolNumbers();
+
+    function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── jQuery Select2 change event ───────────────────────────────────────
+    $('#perencanaan_audit_id').on('change', function () {
+        const pid = $(this).val();
+        filterBpm(pid);
+        loadHierarki(pid);
     });
-    
-    // Handle remove resiko clicks (for dynamically added items)
-    document.getElementById('resiko-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-remove-resiko')) {
-            const resikoItem = e.target.closest('.resiko-item');
-            const resikoIndex = Array.from(document.querySelectorAll('.resiko-item')).indexOf(resikoItem);
-            const kontrolItem = document.querySelectorAll('.kontrol-item')[resikoIndex];
-            removeResikoItem(resikoItem, kontrolItem);
-        }
-    });
-    
-    
+
+    // ── Init saat halaman dimuat ──────────────────────────────────────────
+    const initPid = $('#perencanaan_audit_id').val();
+    if (initPid) {
+        filterBpm(initPid);
+        loadHierarki(initPid);
+    }
 });
 </script>
-@endsection 
+@endsection

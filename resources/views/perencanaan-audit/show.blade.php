@@ -312,12 +312,17 @@
             <i class="mdi mdi-sitemap-outline" style="color:#1d4ed8;"></i>
         </div>
         <h6>Proses Bisnis</h6>
+        @if($item->prosesBisnis->isNotEmpty())
+            <span class="ms-auto" style="font-size:.78rem;font-weight:600;background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:20px;">
+                {{ $item->prosesBisnis->count() }} PB
+            </span>
+        @endif
     </div>
     <div class="section-body">
-        @if($item->proses_bisnis && is_array($item->proses_bisnis) && count($item->proses_bisnis) > 0)
-            @foreach($item->proses_bisnis as $pb)
+        @if($item->prosesBisnis->isNotEmpty())
+            @foreach($item->prosesBisnis->sortBy('urutan') as $pb)
                 <span class="pb-chip">
-                    <i class="mdi mdi-check-circle-outline"></i>{{ $pb }}
+                    <i class="mdi mdi-check-circle-outline"></i>{{ $pb->nama_proses_bisnis }}
                 </span>
             @endforeach
         @else
@@ -325,6 +330,7 @@
         @endif
     </div>
 </div>
+
 
 {{-- ===== RISK BASED AUDIT (Hierarki Baru: PB → Risiko → Kontrol) ===== --}}
 <div class="section-card">
