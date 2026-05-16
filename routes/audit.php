@@ -10,12 +10,17 @@ use App\Http\Controllers\Audit\MonitoringTindakLanjutController;
 // Audit Routes
 Route::prefix('audit')->name('audit.')->group(function () {
     // Perencanaan Audit
-    Route::resource('perencanaan', PerencanaanAuditController::class);
+    // PENTING: Route spesifik HARUS didaftarkan SEBELUM resource agar tidak bentrok dengan {perencanaan}
     Route::get('perencanaan/get-nomor-surat-tugas', [PerencanaanAuditController::class, 'getNomorSuratTugas'])->name('perencanaan.get-nomor-surat-tugas');
+    Route::resource('perencanaan', PerencanaanAuditController::class);
+
+    // PKA: Route spesifik SEBELUM resource (agar tidak ditangkap oleh pka/{pka})
+    Route::get('pka/hierarki-flat/{perencanaanId}', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'getHierarkiFlat'])->name('pka.hierarki-flat');
     Route::resource('pka', \App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class);
     Route::get('pka/{pka}/download', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'download'])->name('pka.download');
     Route::get('pka/{pka}/check-relations', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'checkRelations'])->name('pka.check-relations');
     Route::post('pka/{pka}/dokumen/{dok}/approval', [\App\Http\Controllers\Http\Controllers\Audit\ProgramKerjaAuditController::class, 'approval'])->name('pka.approval');
+
     Route::resource('pkpt', \App\Http\Controllers\Http\Controllers\Audit\JadwalPkptAuditController::class);
     Route::post('pkpt/{pkpt}/approval', [\App\Http\Controllers\Http\Controllers\Audit\JadwalPkptAuditController::class, 'approval'])->name('pkpt.approval');
     Route::resource('walkthrough', \App\Http\Controllers\Audit\WalkthroughAuditController::class);
@@ -24,14 +29,14 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::post('walkthrough/{walkthrough}/approval', [\App\Http\Controllers\Audit\WalkthroughAuditController::class, 'approval'])->name('walkthrough.approval');
     Route::resource('tod-bpm', \App\Http\Controllers\Audit\TodBpmAuditController::class);
     Route::post('tod-bpm/{tod_bpm}/approval', [\App\Http\Controllers\Audit\TodBpmAuditController::class, 'approval'])->name('tod-bpm.approval');
-    Route::get('tod-bpm/get-risks/{perencanaanId}', [\App\Http\Controllers\Audit\TodBpmAuditController::class, 'getRisksByPerencanaan'])->name('tod-bpm.get-risks');
     Route::resource('tod-bpm-evaluasi', \App\Http\Controllers\Audit\TodBpmEvaluasiController::class);
     Route::get('tod-bpm-evaluasi-modal/{bpmId}', [\App\Http\Controllers\Audit\TodBpmEvaluasiController::class, 'modal'])->name('tod-bpm-evaluasi.modal');
 
     // TOE Audit
     Route::resource('toe', ToeAuditController::class);
     Route::post('toe/{id}/approval', [ToeAuditController::class, 'approval'])->name('toe.approval');
-    Route::get('toe/get-risks/{perencanaanId}', [ToeAuditController::class, 'getRisksByPerencanaan'])->name('toe.get-risks');
+
+
 
     // TOE Evaluasi
     Route::get('toe-evaluasi', [ToeEvaluasiController::class, 'index'])->name('toe-evaluasi.index');

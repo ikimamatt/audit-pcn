@@ -9,6 +9,7 @@ use App\Models\Audit\PerencanaanAudit;
 use App\Models\TodBpmEvaluasi;
 use App\Models\WalkthroughAudit;
 use App\Models\Models\Audit\ProgramKerjaAudit;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
@@ -19,29 +20,21 @@ class TodBpmAuditController extends Controller
      */
     public function index(Request $request)
     {
-        // Simple approach - get all data and filter in memory
         $data = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi'])->get();
 
-        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {
-            $data = $data->filter(function($item) use ($userAuditeeId) {
-                return $item->perencanaanAudit && $item->perencanaanAudit->auditee_id == $userAuditeeId;
-            });
+            $data = $data->filter(fn($item) =>
+                $item->perencanaanAudit && $item->perencanaanAudit->auditee_id == $userAuditeeId
+            );
         }
 
-        // Filter by month if provided
         if ($request->filled('bulan')) {
             $selectedMonth = Carbon::parse($request->bulan);
-            
-            $data = $data->filter(function($item) use ($selectedMonth) {
-                if (!$item->perencanaanAudit) {
-                    return false;
-                }
-                
-                $auditStart = Carbon::parse($item->perencanaanAudit->tanggal_audit_mulai);
-                return $auditStart->year == $selectedMonth->year && 
-                       $auditStart->month == $selectedMonth->month;
+            $data = $data->filter(function ($item) use ($selectedMonth) {
+                if (!$item->perencanaanAudit) return false;
+                $start = Carbon::parse($item->perencanaanAudit->tanggal_audit_mulai);
+                return $start->year == $selectedMonth->year && $start->month == $selectedMonth->month;
             });
         }
 
@@ -53,14 +46,13 @@ class TodBpmAuditController extends Controller
      */
     public function create()
     {
-        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
-        // Ambil walkthrough yang sudah memiliki file BPM
+        $suratTugas  = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')
             ->with('perencanaanAudit')
             ->get()
             ->groupBy('perencanaan_audit_id');
-        
+
         return view('audit.tod-bpm.create', compact('suratTugas', 'walkthroughs'));
     }
 
@@ -71,55 +63,72 @@ class TodBpmAuditController extends Controller
     {
         $request->validate([
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'judul_bpm' => 'required|string',
-            'nama_bpo' => 'required|string',
-            'resiko' => 'nullable|array',
-            'resiko.*' => 'nullable|string',
-            'kontrol' => 'nullable|array',
-            'kontrol.*' => 'nullable|string',
-            'walkthrough_id' => 'required|exists:walkthrough_audit,id',
-            'file_kka_tod' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
-            'hasil_evaluasi' => 'required|string|in:Sesuai,Tidak Sesuai',
+            'judul_bpm'            => 'required|string',
+            'nama_bpo'             => 'required|string',
+            'walkthrough_id'       => 'required|exists:walkthrough_audit,id',
+            'pka_risiko_ids'       => 'nullable|array',
+            'pka_risiko_ids.*'     => 'exists:pka_risiko,id',
+            'pka_kontrol_ids'      => 'nullable|array',
+            'pka_kontrol_ids.*'    => 'exists:pka_kontrol,id',
+            'file_kka_tod'         => 'nullable|file|mimes:pdf|max:5120',
+            'hasil_evaluasi'       => 'required|string|in:Sesuai,Tidak Sesuai',
         ]);
 
-        // Gunakan file dari walkthrough (wajib)
+        // Ambil file BPM dari walkthrough
         $walkthrough = WalkthroughAudit::findOrFail($request->walkthrough_id);
         if (!$walkthrough->file_bpm) {
-            return redirect()->back()->with('error', 'File BPM dari walkthrough tidak ditemukan! Pastikan walkthrough sudah memiliki file BPM.')->withInput();
+            return redirect()->back()
+                ->with('error', 'File BPM dari walkthrough tidak ditemukan!')
+                ->withInput();
         }
-        
-        $filePath = $walkthrough->file_bpm;
 
-        // Handle upload file KKA ToD
         $fileKkaTodPath = null;
         if ($request->hasFile('file_kka_tod')) {
             $fileKkaTodPath = $request->file('file_kka_tod')->store('tod-bpm/kka-tod', 'public');
         }
 
-        // Convert resiko and kontrol arrays to JSON strings
-        $resikoJson = $request->has('resiko') && is_array($request->resiko) 
-            ? json_encode(array_filter($request->resiko)) 
-            : null;
-        $kontrolJson = $request->has('kontrol') && is_array($request->kontrol) 
-            ? json_encode(array_filter($request->kontrol)) 
-            : null;
+        DB::transaction(function () use ($request, $walkthrough, $fileKkaTodPath) {
+            $bpm = TodBpmAudit::create([
+                'perencanaan_audit_id' => $request->perencanaan_audit_id,
+                'judul_bpm'            => $request->judul_bpm,
+                'nama_bpo'             => $request->nama_bpo,
+                'file_bpm'             => $walkthrough->file_bpm,
+                'file_kka_tod'         => $fileKkaTodPath,
+                'resiko'               => null,
+                'kontrol'              => null,
+            ]);
 
-        $bpm = TodBpmAudit::create([
-            'perencanaan_audit_id' => $request->perencanaan_audit_id,
-            'judul_bpm' => $request->judul_bpm,
-            'nama_bpo' => $request->nama_bpo,
-            'resiko' => $resikoJson,
-            'kontrol' => $kontrolJson,
-            'file_bpm' => $filePath,
-            'file_kka_tod' => $fileKkaTodPath,
-        ]);
-        
-        TodBpmEvaluasi::create([
-            'tod_bpm_audit_id' => $bpm->id,
-            'hasil_evaluasi' => $request->hasil_evaluasi,
-        ]);
-        
-        return redirect()->route('audit.tod-bpm.index')->with('success', 'BPM dan hasil evaluasi berhasil disimpan!');
+            // Simpan pivot risiko
+            if ($request->filled('pka_risiko_ids')) {
+                foreach ($request->pka_risiko_ids as $risikoId) {
+                    DB::table('tod_bpm_risiko')->insert([
+                        'tod_bpm_audit_id' => $bpm->id,
+                        'pka_risiko_id'    => $risikoId,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+
+            // Simpan pivot kontrol
+            if ($request->filled('pka_kontrol_ids')) {
+                foreach ($request->pka_kontrol_ids as $kontrolId) {
+                    DB::table('tod_bpm_kontrol')->insert([
+                        'tod_bpm_audit_id' => $bpm->id,
+                        'pka_kontrol_id'   => $kontrolId,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+
+            TodBpmEvaluasi::create([
+                'tod_bpm_audit_id' => $bpm->id,
+                'hasil_evaluasi'   => $request->hasil_evaluasi,
+            ]);
+        });
+
+        return redirect()->route('audit.tod-bpm.index')->with('success', 'TOD berhasil disimpan!');
     }
 
     /**
@@ -127,8 +136,25 @@ class TodBpmAuditController extends Controller
      */
     public function show($id)
     {
-        $item = TodBpmAudit::with(['perencanaanAudit', 'evaluasi'])->findOrFail($id);
-        return view('audit.tod-bpm.show', compact('item'));
+        $item = TodBpmAudit::with([
+            'perencanaanAudit',
+            'evaluasi',
+            'pkaRisiko.kontrolList',
+            'pkaKontrol',
+        ])->findOrFail($id);
+
+        // Bangun struktur: risiko → kontrol yang dipilih
+        $selectedKontrolIds = $item->pkaKontrol->pluck('id')->toArray();
+        $risikoData = $item->pkaRisiko->map(function ($risiko) use ($selectedKontrolIds) {
+            return [
+                'risiko'          => $risiko,
+                'kontrolDipilih'  => $risiko->kontrolList->filter(
+                    fn($k) => in_array($k->id, $selectedKontrolIds)
+                )->values(),
+            ];
+        });
+
+        return view('audit.tod-bpm.show', compact('item', 'risikoData'));
     }
 
     /**
@@ -136,16 +162,27 @@ class TodBpmAuditController extends Controller
      */
     public function edit($id)
     {
-        $item = TodBpmAudit::with('perencanaanAudit')->findOrFail($id);
-        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
-        // Ambil walkthrough yang sudah memiliki file BPM
+        $item = TodBpmAudit::with([
+            'perencanaanAudit',
+            'pkaRisiko',
+            'pkaKontrol',
+        ])->findOrFail($id);
+
+        $suratTugas  = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')
             ->with('perencanaanAudit')
             ->get()
             ->groupBy('perencanaan_audit_id');
-        
-        return view('audit.tod-bpm.edit', compact('item', 'suratTugas', 'walkthroughs'));
+
+        // ID yang sudah dipilih sebelumnya (untuk pre-check checkbox)
+        $selectedRisikoIds  = $item->pkaRisiko->pluck('id')->toArray();
+        $selectedKontrolIds = $item->pkaKontrol->pluck('id')->toArray();
+
+        return view('audit.tod-bpm.edit', compact(
+            'item', 'suratTugas', 'walkthroughs',
+            'selectedRisikoIds', 'selectedKontrolIds'
+        ));
     }
 
     /**
@@ -154,54 +191,72 @@ class TodBpmAuditController extends Controller
     public function update(Request $request, $id)
     {
         $item = TodBpmAudit::findOrFail($id);
+
         $request->validate([
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'judul_bpm' => 'required|string',
-            'nama_bpo' => 'required|string',
-            'resiko' => 'nullable|array',
-            'resiko.*' => 'nullable|string',
-            'kontrol' => 'nullable|array',
-            'kontrol.*' => 'nullable|string',
-            'walkthrough_id' => 'nullable|exists:walkthrough_audit,id',
-            'file_kka_tod' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
+            'judul_bpm'            => 'required|string',
+            'nama_bpo'             => 'required|string',
+            'walkthrough_id'       => 'nullable|exists:walkthrough_audit,id',
+            'pka_risiko_ids'       => 'nullable|array',
+            'pka_risiko_ids.*'     => 'exists:pka_risiko,id',
+            'pka_kontrol_ids'      => 'nullable|array',
+            'pka_kontrol_ids.*'    => 'exists:pka_kontrol,id',
+            'file_kka_tod'         => 'nullable|file|mimes:pdf|max:5120',
         ]);
-        
-        // Convert resiko and kontrol arrays to JSON strings
-        $resikoJson = $request->has('resiko') && is_array($request->resiko) 
-            ? json_encode(array_filter($request->resiko)) 
-            : null;
-        $kontrolJson = $request->has('kontrol') && is_array($request->kontrol) 
-            ? json_encode(array_filter($request->kontrol)) 
-            : null;
 
-        $data = [
-            'perencanaan_audit_id' => $request->perencanaan_audit_id,
-            'judul_bpm' => $request->judul_bpm,
-            'nama_bpo' => $request->nama_bpo,
-            'resiko' => $resikoJson,
-            'kontrol' => $kontrolJson,
-        ];
-        
-        // Jika walkthrough_id dipilih, gunakan file dari walkthrough
-        if ($request->walkthrough_id) {
-            $walkthrough = WalkthroughAudit::findOrFail($request->walkthrough_id);
-            if ($walkthrough->file_bpm) {
-                $data['file_bpm'] = $walkthrough->file_bpm;
+        DB::transaction(function () use ($request, $item) {
+            $data = [
+                'perencanaan_audit_id' => $request->perencanaan_audit_id,
+                'judul_bpm'            => $request->judul_bpm,
+                'nama_bpo'             => $request->nama_bpo,
+                'resiko'               => null,
+                'kontrol'              => null,
+            ];
+
+            if ($request->walkthrough_id) {
+                $walkthrough = WalkthroughAudit::findOrFail($request->walkthrough_id);
+                if ($walkthrough->file_bpm) {
+                    $data['file_bpm'] = $walkthrough->file_bpm;
+                }
             }
-        }
-        // Jika tidak dipilih, tetap gunakan file yang sudah ada
-        
-        // Handle upload file KKA ToD
-        if ($request->hasFile('file_kka_tod')) {
-            // Hapus file lama jika ada
-            if ($item->file_kka_tod && Storage::disk('public')->exists($item->file_kka_tod)) {
-                Storage::disk('public')->delete($item->file_kka_tod);
+
+            if ($request->hasFile('file_kka_tod')) {
+                if ($item->file_kka_tod && Storage::disk('public')->exists($item->file_kka_tod)) {
+                    Storage::disk('public')->delete($item->file_kka_tod);
+                }
+                $data['file_kka_tod'] = $request->file('file_kka_tod')->store('tod-bpm/kka-tod', 'public');
             }
-            $data['file_kka_tod'] = $request->file('file_kka_tod')->store('tod-bpm/kka-tod', 'public');
-        }
-        
-        $item->update($data);
-        return redirect()->route('audit.tod-bpm.index')->with('success', 'Data BPM berhasil diupdate!');
+
+            $item->update($data);
+
+            // Sync pivot risiko
+            DB::table('tod_bpm_risiko')->where('tod_bpm_audit_id', $item->id)->delete();
+            if ($request->filled('pka_risiko_ids')) {
+                foreach ($request->pka_risiko_ids as $risikoId) {
+                    DB::table('tod_bpm_risiko')->insert([
+                        'tod_bpm_audit_id' => $item->id,
+                        'pka_risiko_id'    => $risikoId,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+
+            // Sync pivot kontrol
+            DB::table('tod_bpm_kontrol')->where('tod_bpm_audit_id', $item->id)->delete();
+            if ($request->filled('pka_kontrol_ids')) {
+                foreach ($request->pka_kontrol_ids as $kontrolId) {
+                    DB::table('tod_bpm_kontrol')->insert([
+                        'tod_bpm_audit_id' => $item->id,
+                        'pka_kontrol_id'   => $kontrolId,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('audit.tod-bpm.index')->with('success', 'Data TOD berhasil diupdate!');
     }
 
     /**
@@ -210,21 +265,20 @@ class TodBpmAuditController extends Controller
     public function destroy($id)
     {
         $item = TodBpmAudit::findOrFail($id);
-        $item->delete();
-        return redirect()->route('audit.tod-bpm.index')->with('success', 'Data BPM berhasil dihapus!');
+        $item->delete(); // cascade hapus pivot otomatis via FK
+        return redirect()->route('audit.tod-bpm.index')->with('success', 'Data TOD berhasil dihapus!');
     }
 
     public function approval($id, Request $request)
     {
         $item = TodBpmAudit::findOrFail($id);
-        
-        // Validasi alasan penolakan jika reject
+
         if ($request->action == 'reject') {
             $request->validate([
                 'rejection_reason' => 'required|string|min:10',
             ], [
                 'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
+                'rejection_reason.min'      => 'Alasan penolakan minimal 10 karakter',
             ]);
         }
 
@@ -239,31 +293,5 @@ class TodBpmAuditController extends Controller
         }
 
         return redirect()->back()->with('error', $result['message']);
-    }
-
-    /**
-     * Get risks from PKA based on perencanaan_audit_id
-     */
-    public function getRisksByPerencanaan($perencanaanId)
-    {
-        $pka = ProgramKerjaAudit::where('perencanaan_audit_id', $perencanaanId)
-            ->with('risks')
-            ->first();
-        
-        if (!$pka) {
-            return response()->json(['risks' => []]);
-        }
-        
-        $risks = $pka->risks->map(function($risk) {
-            return [
-                'id' => $risk->id,
-                'deskripsi_resiko' => $risk->deskripsi_resiko,
-                'penyebab_resiko' => $risk->penyebab_resiko,
-                'dampak_resiko' => $risk->dampak_resiko,
-                'pengendalian_eksisting' => $risk->pengendalian_eksisting,
-            ];
-        });
-        
-        return response()->json(['risks' => $risks]);
     }
 }

@@ -4,100 +4,141 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Audit\PerencanaanAudit;
 
 class TodBpmAuditSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil semua Program Kerja Audit yang sudah ada
-        $programKerjaAudit = \App\Models\Models\Audit\ProgramKerjaAudit::with('perencanaanAudit')->get();
+        $pkaList = \App\Models\Models\Audit\ProgramKerjaAudit::with([
+            'perencanaanAudit',
+            'prosesBisnis.risikoList.kontrolList',
+        ])->get();
 
-        if ($programKerjaAudit->isEmpty()) {
-            $this->command->warn('Tidak ada data Program Kerja Audit. Skipping TodBpmAuditSeeder.');
+        if ($pkaList->isEmpty()) {
+            $this->command->warn('[TodBpmAuditSeeder] Tidak ada data PKA. Seeder dilewati.');
             return;
         }
 
+        // Ambil walkthrough approved yang punya file BPM
+        $walkthroughApproved = DB::table('walkthrough_audit')
+            ->where('status_approval', 'approved')
+            ->whereNotNull('file_bpm')
+            ->get()
+            ->keyBy('perencanaan_audit_id');
+
         $statusOptions = ['pending', 'approved', 'rejected'];
-        $statusWeights = [40, 40, 20]; // 40% pending, 40% approved, 20% rejected
+        $statusWeights = [40, 40, 20];
 
-        $todBpmData = [];
-        $evaluasiData = [];
+        $todPivotRisiko  = [];
+        $todPivotKontrol = [];
+        $evaluasiData    = [];
+        $todCount        = 0;
 
-        foreach ($programKerjaAudit as $index => $pka) {
-            // Pilih status berdasarkan weight
-            $randomStatus = $this->getRandomStatus($statusOptions, $statusWeights);
-            
-            // Generate rejection reason if status is rejected
-            $rejectionReason = null;
-            if ($randomStatus === 'rejected') {
-                $rejectionReasons = [
-                    'Dokumen BPM tidak lengkap dan perlu dilengkapi terlebih dahulu sebelum dapat diapprove.',
-                    'Judul BPM tidak sesuai dengan scope audit yang direncanakan, perlu revisi.',
-                    'Nama BPO yang disebutkan tidak sesuai dengan struktur organisasi yang ada.',
-                    'File BPM yang diupload tidak dapat dibuka atau rusak, perlu upload ulang.',
-                    'Evaluasi BPM menunjukkan hasil yang tidak memuaskan, perlu perbaikan.',
-                ];
-                $rejectionReason = $rejectionReasons[array_rand($rejectionReasons)];
+        foreach ($pkaList as $pka) {
+            // Kumpulkan semua risiko (flat dari semua PB)
+            $semuaRisiko = collect();
+            foreach ($pka->prosesBisnis as $pb) {
+                foreach ($pb->risikoList as $risiko) {
+                    $semuaRisiko->push($risiko);
+                }
             }
 
-            $data = [
+            if ($semuaRisiko->isEmpty()) {
+                $this->command->warn("[TodBpmAuditSeeder] PKA #{$pka->id} tidak punya risiko hierarki. Dilewati.");
+                continue;
+            }
+
+            // Tentukan file BPM dari walkthrough (jika ada)
+            $walkthrough = $walkthroughApproved->get($pka->perencanaan_audit_id);
+            $fileBpm     = $walkthrough ? $walkthrough->file_bpm : 'bpm/placeholder_' . $pka->id . '.pdf';
+            $walkthroughId = $walkthrough ? $walkthrough->id : null;
+
+            $randomStatus   = $this->getRandomStatus($statusOptions, $statusWeights);
+            $rejectionReason = null;
+            if ($randomStatus === 'rejected') {
+                $alasan = [
+                    'Dokumen BPM tidak lengkap, perlu dilengkapi sebelum dapat diapprove.',
+                    'Judul BPM tidak sesuai dengan scope audit yang direncanakan.',
+                    'File BPM yang diupload tidak dapat dibuka, perlu upload ulang.',
+                ];
+                $rejectionReason = $alasan[array_rand($alasan)];
+            }
+
+            $todId = DB::table('tod_bpm_audit')->insertGetId([
                 'perencanaan_audit_id' => $pka->perencanaan_audit_id,
-                'judul_bpm' => 'Business Process Mapping untuk ' . $pka->perencanaanAudit->jenis_audit . ' ' . ($index + 1),
-                'nama_bpo' => 'BPO ' . ($index + 1) . ' - ' . ($pka->perencanaanAudit->auditee->direktorat ?? 'Direktorat'),
-                'file_bpm' => 'bpm/bpm_' . ($index + 1) . '.pdf',
-                'status_approval' => $randomStatus,
-                'rejection_reason' => $rejectionReason,
-                'approved_by' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? 1 : null,
-                'approved_at' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? now() : null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+                'judul_bpm'            => 'Business Process Mapping - ' . ($pka->perencanaanAudit->jenis_audit ?? 'Audit'),
+                'nama_bpo'             => 'BPO - ' . ($pka->perencanaanAudit->auditee->direktorat ?? 'Direktorat'),
+                'file_bpm'             => $fileBpm,
+                'resiko'               => null, // tidak digunakan, digantikan pivot
+                'kontrol'              => null, // tidak digunakan, digantikan pivot
+                'status_approval'      => $randomStatus,
+                'rejection_reason'     => $rejectionReason,
+                'approved_by'          => in_array($randomStatus, ['approved', 'rejected']) ? 1 : null,
+                'approved_at'          => in_array($randomStatus, ['approved', 'rejected']) ? now() : null,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ]);
 
-            $todBpmData[] = $data;
-        }
+            $todCount++;
 
-        // Insert all TOD BPM data
-        if (!empty($todBpmData)) {
-            DB::table('tod_bpm_audit')->insert($todBpmData);
-            
-            // Get inserted TOD BPM IDs for evaluasi
-            $todBpmIds = DB::table('tod_bpm_audit')->pluck('id')->toArray();
-            
-            // Create ONE evaluasi per TOD BPM (sesuai dropdown yang hanya 1 pilihan)
-            $evaluasiOptions = ['Sesuai', 'Tidak Sesuai'];
-
-            foreach ($todBpmIds as $todBpmId) {
-                $evaluasiData[] = [
-                    'tod_bpm_audit_id' => $todBpmId,
-                    'hasil_evaluasi'   => $evaluasiOptions[array_rand($evaluasiOptions)],
+            // ── Pivot: pilih semua risiko dan kontrolnya ───────────────────
+            foreach ($semuaRisiko as $risiko) {
+                $todPivotRisiko[] = [
+                    'tod_bpm_audit_id' => $todId,
+                    'pka_risiko_id'    => $risiko->id,
                     'created_at'       => now(),
                     'updated_at'       => now(),
                 ];
+
+                foreach ($risiko->kontrolList as $kontrol) {
+                    $todPivotKontrol[] = [
+                        'tod_bpm_audit_id' => $todId,
+                        'pka_kontrol_id'   => $kontrol->id,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ];
+                }
             }
 
-            // Insert evaluasi data
-            if (!empty($evaluasiData)) {
-                DB::table('tod_bpm_evaluasi')->insert($evaluasiData);
-            }
+            // ── Evaluasi ───────────────────────────────────────────────────
+            $evaluasiData[] = [
+                'tod_bpm_audit_id' => $todId,
+                'hasil_evaluasi'   => ['Sesuai', 'Tidak Sesuai'][array_rand(['Sesuai', 'Tidak Sesuai'])],
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ];
         }
 
-        $this->command->info('TOD BPM seeder berhasil dijalankan dengan ' . count($todBpmData) . ' data dan status approval yang bervariasi.');
+        // Batch insert pivot dan evaluasi
+        if (!empty($todPivotRisiko)) {
+            DB::table('tod_bpm_risiko')->insert($todPivotRisiko);
+        }
+        if (!empty($todPivotKontrol)) {
+            DB::table('tod_bpm_kontrol')->insert($todPivotKontrol);
+        }
+        if (!empty($evaluasiData)) {
+            DB::table('tod_bpm_evaluasi')->insert($evaluasiData);
+        }
+
+        $this->command->info("[TodBpmAuditSeeder] Selesai.");
+        $this->command->info("  → TOD dibuat      : {$todCount}");
+        $this->command->info("  → Pivot Risiko    : " . count($todPivotRisiko));
+        $this->command->info("  → Pivot Kontrol   : " . count($todPivotKontrol));
     }
 
-    private function getRandomStatus($options, $weights)
+    private function getRandomStatus(array $options, array $weights): string
     {
-        $totalWeight = array_sum($weights);
-        $random = mt_rand(1, $totalWeight);
-        
-        $currentWeight = 0;
-        foreach ($options as $index => $option) {
-            $currentWeight += $weights[$index];
-            if ($random <= $currentWeight) {
-                return $option;
+        $total   = array_sum($weights);
+        $random  = mt_rand(1, $total);
+        $current = 0;
+
+        foreach ($options as $i => $opt) {
+            $current += $weights[$i];
+            if ($random <= $current) {
+                return $opt;
             }
         }
-        
-        return $options[0]; // fallback
+
+        return $options[0];
     }
-} 
+}

@@ -823,4 +823,61 @@ class ProgramKerjaAuditController extends Controller
 
         return redirect()->back()->with('error', 'Template dokumen .docx tidak ditemukan. Pastikan file "Template Program Kerja Audit.docx" ada di root folder.');
     }
+
+    /**
+     * API: Kembalikan flat list Risiko + Kontrol dari PKA yang terkait surat tugas.
+     * Digunakan oleh form TOD dan TOE saat user memilih Surat Tugas.
+     *
+     * Response:
+     *   { has_hierarki: bool, pka_id: int|null, risiko: [ { id, deskripsi, penyebab, dampak, kontrol: [...] } ] }
+     */
+    public function getHierarkiFlat($perencanaanId)
+    {
+        $pka = ProgramKerjaAudit::where('perencanaan_audit_id', $perencanaanId)
+            ->with(['prosesBisnis.risikoList.kontrolList'])
+            ->first();
+
+        if (!$pka) {
+            return response()->json([
+                'has_hierarki' => false,
+                'pka_id'       => null,
+                'risiko'       => [],
+            ]);
+        }
+
+        // Cek apakah PKA sudah punya hierarki baru
+        $hasHierarki = $pka->prosesBisnis->isNotEmpty();
+
+        if (!$hasHierarki) {
+            return response()->json([
+                'has_hierarki' => false,
+                'pka_id'       => $pka->id,
+                'risiko'       => [],
+            ]);
+        }
+
+        // Flatten semua risiko dari semua proses bisnis
+        $risikoFlat = collect();
+        foreach ($pka->prosesBisnis as $pb) {
+            foreach ($pb->risikoList as $risiko) {
+                $risikoFlat->push([
+                    'id'               => $risiko->id,
+                    'deskripsi_risiko' => $risiko->deskripsi_risiko,
+                    'penyebab_risiko'  => $risiko->penyebab_risiko,
+                    'dampak_risiko'    => $risiko->dampak_risiko,
+                    'kontrol'          => $risiko->kontrolList->map(fn($k) => [
+                        'id'                => $k->id,
+                        'deskripsi_kontrol' => $k->deskripsi_kontrol,
+                    ])->values(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'has_hierarki' => true,
+            'pka_id'       => $pka->id,
+            'risiko'       => $risikoFlat->values(),
+        ]);
+    }
 }
+
