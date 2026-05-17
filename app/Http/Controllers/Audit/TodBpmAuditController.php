@@ -20,7 +20,7 @@ class TodBpmAuditController extends Controller
      */
     public function index(Request $request)
     {
-        $data = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi'])->get();
+        $data = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko.kontrolList', 'pkaKontrol'])->get();
 
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {
