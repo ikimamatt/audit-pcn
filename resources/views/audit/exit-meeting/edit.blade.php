@@ -18,7 +18,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('audit.exit-meeting.update', $realisasiAudit->id) }}" method="POST">
+                <form action="{{ route('audit.exit-meeting.update', $realisasiAudit->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -108,7 +108,7 @@
                                 <label for="file_undangan" class="form-label">Upload Undangan Exit Meeting</label>
                                 <input type="file" class="form-control @error('file_undangan') is-invalid @enderror" 
                                        id="file_undangan" name="file_undangan" accept=".pdf">
-                                <small class="text-muted">Format: PDF. Maksimal 2MB</small>
+                                <small class="text-muted">Format: PDF. Maksimal 5MB</small>
                                 @if($realisasiAudit->file_undangan)
                                     <small class="text-info d-block">File saat ini: <a href="{{ asset('storage/' . $realisasiAudit->file_undangan) }}" target="_blank">Lihat</a></small>
                                 @endif
@@ -123,7 +123,7 @@
                                 <label for="file_absensi" class="form-label">Upload Absensi Exit Meeting</label>
                                 <input type="file" class="form-control @error('file_absensi') is-invalid @enderror" 
                                        id="file_absensi" name="file_absensi" accept=".pdf">
-                                <small class="text-muted">Format: PDF. Maksimal 2MB</small>
+                                <small class="text-muted">Format: PDF. Maksimal 5MB</small>
                                 @if($realisasiAudit->file_absensi)
                                     <small class="text-info d-block">File saat ini: <a href="{{ asset('storage/' . $realisasiAudit->file_absensi) }}" target="_blank">Lihat</a></small>
                                 @endif
