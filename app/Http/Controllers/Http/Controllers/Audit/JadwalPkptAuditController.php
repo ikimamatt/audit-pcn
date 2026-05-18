@@ -105,19 +105,4 @@ class JadwalPkptAuditController extends Controller
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil dihapus!');
     }
 
-    public function approval($id, Request $request)
-    {
-        $item = JadwalPkptAudit::findOrFail($id);
-        if ($request->action == 'approve') {
-            $item->status_approval = 'approved';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-        } elseif ($request->action == 'reject') {
-            $item->status_approval = 'rejected';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-        }
-        $item->save();
-        return redirect()->back()->with('success', 'Status jadwal PKPT berhasil diubah!');
-    }
 }

@@ -13,8 +13,14 @@ class PelaporanHasilAuditController extends Controller
 {
     public function index(Request $request)
     {
-        // Get all data first - semua user bisa melihat semua data
         $query = PelaporanHasilAudit::with(['perencanaanAudit.auditee', 'temuan.kodeAoi', 'temuan.kodeRisk']);
+        
+        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+        if ($userAuditeeId !== null) {
+            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
+            });
+        }
         
         // Apply filters
         if ($request->filled('jenis_lha_lhk')) {
@@ -31,8 +37,11 @@ class PelaporanHasilAuditController extends Controller
         
         $data = $query->orderBy('created_at', 'desc')->get();
         
-        // Semua surat tugas bisa dilihat semua user
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
+        $suratTugasQuery = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas');
+        if ($userAuditeeId !== null) {
+            $suratTugasQuery->where('auditee_id', $userAuditeeId);
+        }
+        $suratTugas = $suratTugasQuery->get();
         
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
@@ -47,6 +56,11 @@ class PelaporanHasilAuditController extends Controller
 
     public function create()
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk membuat pelaporan hasil audit.');
+        }
+
+        // Ambil data perencanaan audit (surat tugas)
         $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
@@ -61,6 +75,10 @@ class PelaporanHasilAuditController extends Controller
 
     public function store(Request $request)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk menyimpan pelaporan hasil audit.');
+        }
+
         $request->validate([
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
             'nomor_lha_lhk' => 'required|string',
@@ -158,6 +176,10 @@ class PelaporanHasilAuditController extends Controller
 
     public function edit($id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit pelaporan hasil audit.');
+        }
+
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
         $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
@@ -176,6 +198,10 @@ class PelaporanHasilAuditController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah pelaporan hasil audit.');
+        }
+
         $item = PelaporanHasilAudit::findOrFail($id);
         $request->validate([
             'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
@@ -295,6 +321,10 @@ class PelaporanHasilAuditController extends Controller
 
     public function destroy($id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus pelaporan hasil audit.');
+        }
+
         $item = PelaporanHasilAudit::findOrFail($id);
         $item->delete();
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data pelaporan hasil audit berhasil dihapus!');
@@ -533,7 +563,9 @@ class PelaporanHasilAuditController extends Controller
             \Log::info('Total temuan found:', ['count' => $allTemuan->count()]);
             
             // Check status_approval values
-            $statusCounts = $allTemuan->groupBy('status_approval')->map->count();
+            $statusCounts = $allTemuan->groupBy('status_approval')->map(function($group) {
+                return $group->count();
+            });
             \Log::info('Status approval counts:', $statusCounts->toArray());
             
             // Temporarily remove status filter to see all data

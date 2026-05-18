@@ -32,7 +32,7 @@
                                 <th>Jenis Audit</th>
                                 <th>Jumlah Auditor</th>
                                 <th>Tanggal Audit</th>
-                                <th>Status</th>
+
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -44,29 +44,14 @@
                                 <td>{{ $item->jenis_audit }}</td>
                                 <td>{{ $item->jumlah_auditor }}</td>
                                 <td>{{ $item->tanggal_mulai }} s/d {{ $item->tanggal_selesai }}</td>
-                                <td>
-                                    @if($item->status_approval == 'approved')
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif($item->status_approval == 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
-                                    @else
-                                        <span class="badge bg-warning">Pending</span>
-                                    @endif
-                                </td>
+
                                 <td>
                                     <a href="{{ route('audit.pkpt.edit', $item->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                     <form action="{{ route('audit.pkpt.destroy', $item->id) }}" method="POST" style="display:inline-block" class="delete-form">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm btn-delete-swal">Hapus</button>
                                     </form>
-                                    @if($item->status_approval == 'pending')
-                                    <form action="{{ route('audit.pkpt.approval', $item->id) }}" method="POST" style="display:inline-block">
-                                        @csrf
-                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                        <button type="button" class="btn btn-success btn-sm btn-approve-swal" data-id="{{ $item->id }}">Approve</button>
-                                        <button type="submit" name="action" value="reject" class="btn btn-secondary btn-sm">Reject</button>
-                                    </form>
-                                    @endif
+
                                 </td>
                             </tr>
                             @endforeach
@@ -123,27 +108,7 @@
             });
         });
 
-        // Approve confirmation
-        document.querySelectorAll('.btn-approve-swal').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const form = btn.closest('form');
-                const itemId = btn.dataset.id;
-                const hiddenInputAction = document.getElementById(`action-${itemId}`);
 
-                confirmWithSwal({
-                    title: 'Approve Jadwal?',
-                    text: 'Yakin ingin approve jadwal ini?',
-                    icon: 'question',
-                    confirmButtonText: 'Ya, Approve',
-                    cancelButtonText: 'Batal',
-                    onConfirm: function() {
-                        hiddenInputAction.value = 'approve'; // Set the hidden input value
-                        form.submit();
-                    }
-                });
-            });
-        });
     });
 </script>
     @vite([ 'resources/js/pages/datatable.init.js'])

@@ -9,16 +9,14 @@ class MasterAksesUserSeeder extends Seeder
 {
     public function run(): void
     {
+        // 6 Role baku sistem RBAC
         $aksesList = [
-            'Superadmin', // Hidden role - not visible in master user view
             'KSPI',
-            'Auditor',
-            'PIC Auditee',
-            'BOD',
-            'ASMAN KSPI',
-            'Manager',
-            'Assistant Manager',
-            'Auditee',
+            'ASMAN SPI',
+            'AUDITOR',
+            'AUDITEE',
+            'SUPER ADMIN',
+            'VIEW BOD',
         ];
 
         foreach ($aksesList as $akses) {
@@ -27,5 +25,7 @@ class MasterAksesUserSeeder extends Seeder
                 ['nama_akses' => $akses]
             );
         }
+
+        echo "✅ MasterAksesUser seeder berhasil dijalankan (6 role baku)." . PHP_EOL;
     }
-} 
+}

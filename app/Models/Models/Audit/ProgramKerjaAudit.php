@@ -55,4 +55,9 @@ class ProgramKerjaAudit extends Model
     {
         return $this->hasOne(WalkthroughAudit::class, 'program_kerja_audit_id');
     }
+
+    public function approvedByLevel1() { return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by_level1'); }
+    public function rejectedByLevel1() { return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'rejected_by_level1'); }
+    public function approvedByLevel2() { return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by_level2'); }
+    public function rejectedByLevel2() { return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'rejected_by_level2'); }
 }

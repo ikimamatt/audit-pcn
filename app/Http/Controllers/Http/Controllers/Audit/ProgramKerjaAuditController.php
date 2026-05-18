@@ -258,17 +258,54 @@ class ProgramKerjaAuditController extends Controller
     public function approval($pkaId, $dokId, Request $request)
     {
         $dok = PkaDokumen::findOrFail($dokId);
-        if ($request->action == 'approve') {
-            $dok->status_approval = 'approved';
-            $dok->approved_by = auth()->id();
-            $dok->approved_at = now();
-        } elseif ($request->action == 'reject') {
-            $dok->status_approval = 'rejected';
-            $dok->approved_by = auth()->id();
-            $dok->approved_at = now();
+        
+        if ($request->action == 'reject') {
+            $request->validate([
+                'rejection_reason' => 'required|string|min:10',
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan harus diisi',
+                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
+            ]);
         }
-        $dok->save();
-        return redirect()->back()->with('success', 'Status dokumen berhasil diubah!');
+
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $dok,
+            $request->action,
+            $request->rejection_reason ?? null
+        );
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
+    }
+
+    // Approval keseluruhan PKA
+    public function approvalMain($id, Request $request)
+    {
+        $pka = ProgramKerjaAudit::findOrFail($id);
+        
+        if ($request->action == 'reject') {
+            $request->validate([
+                'rejection_reason' => 'required|string|min:10',
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan harus diisi',
+                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
+            ]);
+        }
+
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $pka,
+            $request->action,
+            $request->rejection_reason ?? null
+        );
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->with('error', $result['message']);
     }
 
     /**
@@ -295,8 +332,14 @@ class ProgramKerjaAuditController extends Controller
 
         $pbCount = $item->prosesBisnis->count();
         if ($pbCount > 0) {
-            $risikoCount  = $item->prosesBisnis->sum(fn($pb) => $pb->risikoList->count());
-            $kontrolCount = $item->prosesBisnis->sum(fn($pb) => $pb->risikoList->sum(fn($r) => $r->kontrolList->count()));
+            $risikoCount = 0;
+            $kontrolCount = 0;
+            foreach ($item->prosesBisnis as $pb) {
+                $risikoCount += $pb->risikoList->count();
+                foreach ($pb->risikoList as $r) {
+                    $kontrolCount += $r->kontrolList->count();
+                }
+            }
             $relations[] = "{$pbCount} Proses Bisnis ({$risikoCount} Risiko, {$kontrolCount} Kontrol)";
         }
 

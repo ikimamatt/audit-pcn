@@ -218,9 +218,22 @@
                     <a href="{{ route('audit.pemantauan.index') }}" class="btn btn-secondary me-2">
                         <i class="mdi mdi-arrow-left me-2"></i>Kembali ke Pemantauan
                     </a>
+                    
+                    @php
+                        // Cek business contact untuk tombol tindak lanjut
+                        $currentUserId = \App\Helpers\AuthHelper::getCurrentUserId();
+                        $isBusinessContact = $rekomendasi->picUsers()
+                            ->where('master_user_id', $currentUserId)
+                            ->wherePivot('pic_type', 'business_contact')
+                            ->exists();
+                        $canAddTindakLanjut = $isBusinessContact || \App\Helpers\AuthHelper::isSuperAdmin();
+                    @endphp
+                    
+                    @if($canAddTindakLanjut)
                     <a href="{{ route('audit.penutup-lha-rekomendasi.tindak-lanjut.form', $rekomendasi->id) }}" class="btn btn-success">
                         <i class="mdi mdi-plus-circle me-2"></i>Tambah Tindak Lanjut
                     </a>
+                    @endif
                 </div>
             </div>
         </div>

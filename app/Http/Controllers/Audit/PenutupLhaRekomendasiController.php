@@ -125,6 +125,10 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function create(Request $request)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk membuat rekomendasi.');
+        }
+        
         $isiLhaId = $request->get('pelaporan_isi_lha_id');
         $nomorSuratTugas = $request->get('nomor_surat_tugas');
         
@@ -189,6 +193,10 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function store(Request $request)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk membuat rekomendasi.');
+        }
+
         $request->validate([
             'pelaporan_isi_lha_id' => 'required|exists:pelaporan_temuan,id',
             'rekomendasi' => 'required|string|max:5000',
@@ -248,6 +256,10 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function edit($id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi.');
+        }
+
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'picUsers.auditee'])->findOrFail($id);
         
         // Ambil semua user dari master_user untuk dipilih sebagai PIC
@@ -269,6 +281,10 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengupdate rekomendasi.');
+        }
+
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
         $request->validate([
             'pelaporan_isi_lha_id' => 'required|exists:pelaporan_temuan,id',
@@ -325,6 +341,10 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function destroy($id)
     {
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus rekomendasi.');
+        }
+
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit.perencanaanAudit'])->findOrFail($id);
         
         // Ambil nomor surat tugas dari temuan sebelum delete
@@ -376,6 +396,17 @@ class PenutupLhaRekomendasiController extends Controller
     public function tindakLanjutForm($rekomendasiId)
     {
         $rekomendasi = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'tindakLanjut'])->findOrFail($rekomendasiId);
+        
+        $currentUserId = \App\Helpers\AuthHelper::getCurrentUserId();
+        $isBusinessContact = $rekomendasi->picUsers()
+            ->where('master_user_id', $currentUserId)
+            ->wherePivot('pic_type', 'business_contact')
+            ->exists();
+            
+        if (!$isBusinessContact && !\App\Helpers\AuthHelper::isSuperAdmin()) {
+            abort(403, 'Anda tidak memiliki akses untuk menginput tindak lanjut. Hanya Business Contact yang berhak.');
+        }
+
         return view('audit.pelaporan.penutup-lha.tindak-lanjut-form', compact('rekomendasi'));
     }
 
@@ -394,6 +425,16 @@ class PenutupLhaRekomendasiController extends Controller
         ]);
         
         $rekomendasi = PenutupLhaRekomendasi::findOrFail($rekomendasiId);
+
+        $currentUserId = \App\Helpers\AuthHelper::getCurrentUserId();
+        $isBusinessContact = $rekomendasi->picUsers()
+            ->where('master_user_id', $currentUserId)
+            ->wherePivot('pic_type', 'business_contact')
+            ->exists();
+            
+        if (!$isBusinessContact && !\App\Helpers\AuthHelper::isSuperAdmin()) {
+            abort(403, 'Anda tidak memiliki akses untuk menyimpan tindak lanjut. Hanya Business Contact yang berhak.');
+        }
         
         // Filter komentar yang tidak kosong
         $validKomentar = array_filter($request->komentar, function($k) { 

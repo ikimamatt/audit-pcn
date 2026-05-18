@@ -21,6 +21,7 @@ class PenutupLhaRekomendasi extends Model
         'komentar',
         'file_eviden',
         'status_tindak_lanjut',
+        'last_notified_at',
         'status_approval',
         'approved_by',
         'approved_at',
@@ -66,5 +67,10 @@ class PenutupLhaRekomendasi extends Model
         return $this->belongsToMany(\App\Models\MasterData\MasterUser::class, 'penutup_lha_rekomendasi_pic', 'penutup_lha_rekomendasi_id', 'master_user_id')
             ->withPivot('pic_type')
             ->withTimestamps();
+    }
+
+    public function notificationLogs()
+    {
+        return $this->hasMany(\App\Models\EmailNotificationLog::class, 'penutup_lha_rekomendasi_id');
     }
 } 

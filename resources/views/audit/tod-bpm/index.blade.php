@@ -455,70 +455,34 @@
                                 </form>
                                 @endcanModifyData
 
-                                @canApproveReject
-                                    @if($item->status_approval == 'pending')
-                                        {{-- Level 1: ASMAN KSPI can approve/reject --}}
-                                        @isAsmanKspi
-                                            <form id="approval-form-{{ $item->id }}" action="{{ route('audit.tod-bpm.approval', $item->id) }}" method="POST" class="m-0" style="display:inline-flex; gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Level 1">
-                                                    <i class="mdi mdi-check"></i>
-                                                </button>
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject Level 1">
-                                                    <i class="mdi mdi-close"></i>
-                                                </button>
-                                            </form>
-                                        @endisAsmanKspi
-                                        {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
-                                        @isKspi
-                                            @php
-                                                $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
-                                            @endphp
-                                            <form id="approval-form-{{ $item->id }}" action="{{ route('audit.tod-bpm.approval', $item->id) }}" method="POST" class="m-0" style="display:inline-flex; gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                @if($hasAsmanKspi)
-                                                    <button type="button" class="btn-act btn-act-approve" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
-                                                        <i class="mdi mdi-check"></i>
-                                                    </button>
-                                                @else
-                                                    <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
-                                                        <i class="mdi mdi-check"></i>
-                                                    </button>
-                                                @endif
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject Level 2">
-                                                    <i class="mdi mdi-close"></i>
-                                                </button>
-                                            </form>
-                                        @endisKspi
-                                    @elseif($item->status_approval == 'approved_level1')
-                                        {{-- Level 2: KSPI can approve/reject after level 1 --}}
-                                        @isKspi
-                                            <form id="approval-form-{{ $item->id }}" action="{{ route('audit.tod-bpm.approval', $item->id) }}" method="POST" class="m-0" style="display:inline-flex; gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Level 2">
-                                                    <i class="mdi mdi-check"></i>
-                                                </button>
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject Level 2">
-                                                    <i class="mdi mdi-close"></i>
-                                                </button>
-                                            </form>
-                                        @endisKspi
-                                    @elseif($item->status_approval == 'rejected_level1')
-                                        {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
-                                        @isKspi
-                                            <form id="approval-form-{{ $item->id }}" action="{{ route('audit.tod-bpm.approval', $item->id) }}" method="POST" class="m-0" style="display:inline-flex; gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject Level 2">
-                                                    <i class="mdi mdi-close"></i>
-                                                </button>
-                                            </form>
-                                        @endisKspi
-                                    @endif
-                                @endcanApproveReject
+                                @php
+                                    $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($item);
+                                    $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($item);
+                                    $canReject      = \App\Helpers\ApprovalHelper::canReject($item);
+                                @endphp
+
+                                @if($canApproveLvl1 || $canApproveLvl2 || $canReject)
+                                    <form id="approval-form-{{ $item->id }}" action="{{ route('audit.tod-bpm.approval', $item->id) }}" method="POST" class="m-0" style="display:inline-flex; gap:5px;">
+                                        @csrf
+                                        <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                        
+                                        @if($canApproveLvl1)
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve (Ketua Tim)">
+                                                <i class="mdi mdi-check"></i>
+                                            </button>
+                                        @elseif($canApproveLvl2)
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Final (Koordinator)">
+                                                <i class="mdi mdi-check-all"></i>
+                                            </button>
+                                        @endif
+
+                                        @if($canReject)
+                                            <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject">
+                                                <i class="mdi mdi-close"></i>
+                                            </button>
+                                        @endif
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

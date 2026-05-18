@@ -87,7 +87,9 @@
                     
                     <div class="mt-4">
                         <a href="{{ route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-secondary">Kembali</a>
+                        @canModifyData
                         <a href="{{ route('audit.pelaporan-hasil-audit.edit', $item->id) }}" class="btn btn-primary">Edit</a>
+                        @endcanModifyData
                     </div>
                 </div>
             </div>

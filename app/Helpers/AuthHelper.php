@@ -3,392 +3,162 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class AuthHelper
 {
-    /**
-     * Check if current user has access to approve/reject
-     * Only ASMAN SPI and KSPI can approve/reject
-     */
-    public static function canApproveReject(): bool
+    // =========================================================
+    // ROLE CHECKERS — 6 Role Baku
+    // =========================================================
+
+    public static function isKspi(): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        // Load akses relationship if not loaded
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        $namaAkses = $user->akses->nama_akses;
-        
-        return in_array($namaAkses, ['ASMAN SPI', 'KSPI']);
+        return self::hasRole('KSPI');
     }
 
-    /**
-     * Check if current user is ASMAN SPI
-     */
     public static function isAsmanSpi(): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        return $user->akses->nama_akses === 'ASMAN SPI';
+        return self::hasRole('ASMAN SPI');
     }
 
-    /**
-     * Check if current user is ASMAN KSPI (backward compatibility)
-     * @deprecated Use isAsmanSpi() instead
-     */
+    /** @deprecated Gunakan isAsmanSpi() */
     public static function isAsmanKspi(): bool
     {
         return self::isAsmanSpi();
     }
 
-    /**
-     * Check if current user is KSPI
-     */
-    public static function isKspi(): bool
-    {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        return $user->akses->nama_akses === 'KSPI';
-    }
-
-    /**
-     * Check if current user is AUDITOR
-     */
     public static function isAuditor(): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
-        $namaAkses = $user->akses->nama_akses;
-        return in_array($namaAkses, ['Auditor', 'AUDITOR']);
+        return self::hasRole('AUDITOR');
     }
 
-    /**
-     * Check if current user can approve at level 1 (ASMAN SPI)
-     * Can approve if status is 'pending'
-     */
-    public static function canApproveLevel1($item): bool
+    public static function isAuditee(): bool
     {
-        if (!self::isAsmanSpi()) {
-            return false;
-        }
-
-        return $item->status_approval === 'pending';
+        return self::hasRole('AUDITEE');
     }
 
-    /**
-     * Check if current user can approve at level 2 (KSPI)
-     * Can approve if status is 'approved_level1' or 'pending' (if no ASMAN SPI user exists)
-     */
-    public static function canApproveLevel2($item): bool
+    public static function isSuperAdmin(): bool
     {
-        if (!self::isKspi()) {
-            return false;
-        }
-
-        // Jika tidak ada user ASMAN SPI, KSPI bisa langsung approve dari pending
-        if (!self::hasAsmanSpiUsers()) {
-            return $item->status_approval === 'pending';
-        }
-
-        // Jika ada user ASMAN SPI, harus menunggu approval level 1
-        return $item->status_approval === 'approved_level1';
+        return self::hasRole('SUPER ADMIN');
     }
 
-    /**
-     * Check if current user can reject at level 1 (ASMAN SPI)
-     * Can reject if status is 'pending'
-     */
-    public static function canRejectLevel1($item): bool
+
+
+    public static function isViewBod(): bool
     {
-        if (!self::isAsmanSpi()) {
-            return false;
-        }
-
-        return $item->status_approval === 'pending';
+        return self::hasRole('VIEW BOD');
     }
 
-    /**
-     * Check if current user can reject at level 2 (KSPI)
-     * Can reject if status is 'pending', 'approved_level1', or 'rejected_level1' (berjenjang)
-     */
-    public static function canRejectLevel2($item): bool
+    /** @deprecated Gunakan isViewBod() */
+    public static function isBod(): bool
     {
-        if (!self::isKspi()) {
-            return false;
-        }
-
-        return in_array($item->status_approval, ['pending', 'approved_level1', 'rejected_level1']);
+        return self::isViewBod();
     }
 
     /**
-     * Check if there are any users with ASMAN SPI access in the database
-     * 
-     * @return bool
+     * Shortcut: apakah user adalah bagian dari tim SPI (bukan AUDITEE atau VIEW BOD)
      */
-    public static function hasAsmanSpiUsers(): bool
+    public static function isSpiTeam(): bool
     {
-        // Cache the result to avoid multiple database queries in a single request
-        static $hasAsmanSpi = null;
-
-        if ($hasAsmanSpi === null) {
-            $asmanSpiAksesId = DB::table('master_akses_user')
-                                ->where('nama_akses', 'ASMAN SPI')
-                                ->value('id');
-
-            if ($asmanSpiAksesId) {
-                $hasAsmanSpi = DB::table('master_user')
-                                ->where('master_akses_user_id', $asmanSpiAksesId)
-                                ->exists();
-            } else {
-                $hasAsmanSpi = false;
-            }
-        }
-        return $hasAsmanSpi;
+        return self::isKspi() || self::isAsmanSpi() || self::isAuditor();
     }
 
+    // =========================================================
+    // DATA ACCESS
+    // =========================================================
+
     /**
-     * Check if there are any users with ASMAN KSPI access in the database (backward compatibility)
-     * @deprecated Use hasAsmanSpiUsers() instead
-     * 
-     * @return bool
+     * Apakah user bisa melihat semua data (bukan AUDITEE)
+     * AUDITEE hanya melihat data unit/divisi mereka sendiri
      */
-    public static function hasAsmanKspiUser(): bool
+    public static function canSeeAllData(): bool
     {
-        return self::hasAsmanSpiUsers();
+        if (!Auth::check()) return false;
+        return !self::isAuditee();
     }
 
     /**
-     * Check if there are any users with ASMAN KSPI access in the database (backward compatibility)
-     * @deprecated Use hasAsmanSpiUsers() instead
-     * 
-     * @return bool
+     * Apakah user bisa membuat, mengedit, atau menghapus data
+     * AUDITEE dan VIEW BOD tidak bisa memodifikasi data
      */
-    public static function hasAsmanKspiUsers(): bool
+    public static function canModifyData(): bool
     {
-        return self::hasAsmanSpiUsers();
+        if (!Auth::check()) return false;
+        return !self::isAuditee() && !self::isViewBod();
     }
 
     /**
-     * Get current user's auditee_id (divisi/cabang)
-     * Returns null if user doesn't have auditee or if user has special access
-     * 
-     * @return int|null
+     * Dapatkan auditee_id user yang sedang login
+     * Null = bisa melihat semua data (non-AUDITEE)
      */
     public static function getUserAuditeeId(): ?int
     {
-        if (!Auth::check()) {
-            return null;
-        }
+        if (!Auth::check()) return null;
+        if (!self::isAuditee()) return null;
 
         $user = Auth::user();
-        
-        // Load akses relationship if not loaded
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return null;
-        }
-
-        $namaAkses = $user->akses->nama_akses;
-        
-        // User dengan akses KSPI, ASMAN SPI, Auditor, BOD, atau Superadmin bisa melihat semua data
-        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
-        if (in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD', 'Superadmin'])) {
-            return null; // null berarti bisa melihat semua
-        }
-
-        // Load auditee relationship if not loaded
-        if (!$user->relationLoaded('auditee')) {
-            $user->load('auditee');
-        }
-
         return $user->master_auditee_id ?? null;
     }
 
     /**
-     * Check if current user can see all data (KSPI, ASMAN SPI, Auditor, BOD, Superadmin)
-     * 
-     * @return bool
+     * Dapatkan role name user yang sedang login
      */
-    public static function canSeeAllData(): bool
+    public static function getRole(): ?string
     {
-        if (!Auth::check()) {
-            return false;
-        }
+        if (!Auth::check()) return null;
 
         $user = Auth::user();
-        
         if (!$user->relationLoaded('akses')) {
             $user->load('akses');
         }
 
-        if (!$user->akses) {
-            return false;
-        }
-
-        $namaAkses = $user->akses->nama_akses;
-        
-        // Support both 'Auditor' and 'AUDITOR' for case-insensitive matching
-        // BOD can also see all data
-        // Superadmin has full access
-        return in_array($namaAkses, ['KSPI', 'ASMAN SPI', 'Auditor', 'AUDITOR', 'BOD', 'Superadmin']);
+        return $user->akses?->nama_akses;
     }
 
     /**
-     * Check if current user is PIC (has role PIC Auditee or is assigned as PIC in any rekomendasi)
-     * 
-     * @return bool
-     */
-    public static function isPic(): bool
-    {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        $namaAkses = $user->akses->nama_akses;
-        
-        // Check if user has PIC Auditee role
-        return in_array($namaAkses, ['PIC Auditee', 'PIC Auditor']);
-    }
-
-    /**
-     * Get current user ID
-     * 
-     * @return int|null
+     * Dapatkan ID user yang sedang login
      */
     public static function getCurrentUserId(): ?int
     {
-        if (!Auth::check()) {
-            return null;
-        }
-
         return Auth::id();
     }
 
+    // =========================================================
+    // APPROVAL SHORTCUTS (Delegasi ke ApprovalHelper)
+    // =========================================================
+
     /**
-     * Check if current user is BOD
-     * 
-     * @return bool
+     * Apakah user saat ini bisa approve/reject APAPUN (SUPER ADMIN atau ketua/koordinator)
+     * @deprecated Gunakan ApprovalHelper::canApproveLevel1() atau canApproveLevel2()
      */
-    public static function isBod(): bool
+    public static function canApproveReject(): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
+        return self::isSuperAdmin() || self::isSpiTeam();
+    }
+
+    /** @deprecated */
+    public static function hasAsmanSpiUsers(): bool { return true; }
+    /** @deprecated */
+    public static function hasAsmanKspiUser(): bool { return true; }
+    /** @deprecated */
+    public static function hasAsmanKspiUsers(): bool { return true; }
+    /** @deprecated */
+    public static function isPic(): bool { return self::isAuditee(); }
+    
+
+
+    // =========================================================
+    // INTERNAL
+    // =========================================================
+
+    private static function hasRole(string $role): bool
+    {
+        if (!Auth::check()) return false;
 
         $user = Auth::user();
-        
         if (!$user->relationLoaded('akses')) {
             $user->load('akses');
         }
 
-        if (!$user->akses) {
-            return false;
-        }
-
-        return $user->akses->nama_akses === 'BOD';
-    }
-
-    /**
-     * Check if current user is Superadmin
-     * Superadmin has full access to everything
-     * 
-     * @return bool
-     */
-    public static function isSuperadmin(): bool
-    {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        $user = Auth::user();
-        
-        if (!$user->relationLoaded('akses')) {
-            $user->load('akses');
-        }
-
-        if (!$user->akses) {
-            return false;
-        }
-
-        return $user->akses->nama_akses === 'Superadmin';
-    }
-
-    /**
-     * Check if current user can create, edit, or delete data
-     * BOD cannot create, edit, or delete
-     * Superadmin can do everything
-     * 
-     * @return bool
-     */
-    public static function canModifyData(): bool
-    {
-        // Superadmin can always modify data
-        if (self::isSuperadmin()) {
-            return true;
-        }
-        
-        return !self::isBod();
+        return $user->akses?->nama_akses === $role;
     }
 }
-

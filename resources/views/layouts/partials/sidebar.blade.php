@@ -430,9 +430,11 @@
                                     <a class="tp-link" href="{{ route('audit.penutup-lha-rekomendasi.index') }}">Penutup
                                         LHA/LHK</a>
                                 </li>
+                                {{--
                                 <li>
-                                    <!-- <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a> -->
+                                    <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a>
                                 </li>
+                                --}}
                             </ul>
                         </div>
                     </li>

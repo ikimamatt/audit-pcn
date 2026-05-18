@@ -53,12 +53,20 @@ class MonitoringTindakLanjutController extends Controller
     
     private function getAuditeeData($currentMonth)
     {
-        // Ambil data auditee yang memiliki perencanaan audit
-        $auditees = MasterAuditee::whereHas('perencanaanAudit', function($query) {
+        $auditeeQuery = MasterAuditee::whereHas('perencanaanAudit', function($query) {
             $query->whereHas('pelaporanHasilAudit', function($q) {
                 $q->where('status_approval', 'approved');
             });
-        })->get();
+        });
+        
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            if ($userAuditeeId !== null) {
+                $auditeeQuery->where('id', $userAuditeeId);
+            }
+        }
+        
+        $auditees = $auditeeQuery->get();
         
         $auditeeData = [];
         $no = 1;
