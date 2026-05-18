@@ -353,7 +353,14 @@ class ProgramKerjaAuditController extends Controller
      */
     public function download($id)
     {
-        $item = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.koordinator', 'perencanaanAudit.ketuaTim', 'risks', 'milestones', 'dokumen'])->findOrFail($id);
+        $item = ProgramKerjaAudit::with([
+            'perencanaanAudit.auditee',
+            'perencanaanAudit.koordinator',
+            'perencanaanAudit.ketuaTim',
+            'prosesBisnis.risikoList',
+            'milestones',
+            'dokumen',
+        ])->findOrFail($id);
 
         $templatePath = base_path('Template Program Kerja Audit.docx');
 
@@ -532,22 +539,67 @@ class ProgramKerjaAuditController extends Controller
             }
             $templateProcessor->setValue('DAFTAR_AUDITOR', $auditorText);
 
-            // Menyiapkan data untuk tabel dinamis (Proses Bisnis & Risk)
-            $prosesBisnis = is_array($item->proses_bisnis) ? $item->proses_bisnis : json_decode($item->proses_bisnis ?? '[]', true) ?? [];
-            $risks = $item->risks;
+            // Menyiapkan data untuk tabel dinamis (Proses Bisnis & Risiko dari hierarki baru)
+            // Struktur baru: pka_proses_bisnis → pka_risiko (one PB bisa banyak risiko)
+            // Tiap baris tabel = 1 risiko; kolom PB di-vMerge jika PB punya >1 risiko
 
-            $pbCount = max(count($prosesBisnis), 1);
-            $mergeStartMarker = '##VMERGE_START##';
-            $mergeContinueMarker = '##VMERGE_CONT##';
+            $pbHierarki = $item->prosesBisnis->sortBy('urutan'); // Collection of PkaProsesBisnis
 
-            $tableData = [];
-            for ($i = 0; $i < $pbCount; $i++) {
-                $tableData[] = [
-                    'NO' => $i + 1,
-                    'PROSES_BISNIS' => isset($prosesBisnis[$i]) ? $prosesBisnis[$i] : '-',
-                    'DESKRIPSI_RISIKO' => ($i == 0) ? $mergeStartMarker : $mergeContinueMarker,
-                ];
+            // Bangun flat rows: [no, pb_name, pb_risiko_count, risiko_text, is_first_of_pb]
+            $flatRows = [];
+            $noGlobal = 1;
+            foreach ($pbHierarki as $pb) {
+                $risikoList = $pb->risikoList->sortBy('urutan');
+                $risikoCount = max($risikoList->count(), 1);
+
+                if ($risikoList->isEmpty()) {
+                    $flatRows[] = [
+                        'NO'               => $noGlobal++,
+                        'PROSES_BISNIS'    => $pb->nama_proses_bisnis ?? '-',
+                        'DESKRIPSI_RISIKO' => '-',
+                        'is_first_of_pb'  => true,
+                        'pb_span'          => 1,
+                    ];
+                } else {
+                    $first = true;
+                    foreach ($risikoList as $risiko) {
+                        $flatRows[] = [
+                            'NO'               => $first ? $noGlobal++ : '',
+                            'PROSES_BISNIS'    => $pb->nama_proses_bisnis ?? '-',
+                            'DESKRIPSI_RISIKO' => $risiko->deskripsi_risiko ?? '-',
+                            'is_first_of_pb'  => $first,
+                            'pb_span'          => $risikoCount,
+                        ];
+                        $first = false;
+                    }
+                }
             }
+
+            // Fallback jika PKA belum punya hierarki
+            if (empty($flatRows)) {
+                $flatRows = [[
+                    'NO'               => 1,
+                    'PROSES_BISNIS'    => '-',
+                    'DESKRIPSI_RISIKO' => '-',
+                    'is_first_of_pb'  => true,
+                    'pb_span'          => 1,
+                ]];
+            }
+
+            // Siapkan data untuk cloneRowAndSetValues
+            // Sel PROSES_BISNIS pada baris non-first diberi prefix marker untuk post-process vMerge
+            $vMergeFirst = '##VMERGE_FIRST##';
+            $vMergeCont  = '##VMERGE_CONT##';
+
+            $tableData = array_map(fn($r) => [
+                'NO'               => (string)($r['NO'] ?? ''),
+                'PROSES_BISNIS'    => ($r['is_first_of_pb'] && $r['pb_span'] > 1)
+                                        ? $vMergeFirst . htmlspecialchars($r['PROSES_BISNIS'])
+                                        : ((!$r['is_first_of_pb'])
+                                            ? $vMergeCont . htmlspecialchars($r['PROSES_BISNIS'])
+                                            : $r['PROSES_BISNIS']),
+                'DESKRIPSI_RISIKO' => $r['DESKRIPSI_RISIKO'],
+            ], $flatRows);
 
             try {
                 $templateProcessor->cloneRowAndSetValues('NO', $tableData);
@@ -555,94 +607,65 @@ class ProgramKerjaAuditController extends Controller
                 \Log::error('CloneRowAndSetValues Error: ' . $e->getMessage());
             }
 
-            // Variabel terpisah untuk tabel Audit Program (baris lanjutan halaman kedua)
-            // Gunakan marker, lalu post-process XML agar tiap proses bisnis jadi paragraf terpisah
+            // Variabel untuk tabel Audit Program (AP) — paragraf per PB
             $apNoMarker = '##AP_NO_DATA##';
             $apPbMarker = '##AP_PB_DATA##';
             $templateProcessor->setValue('AP_NO', $apNoMarker);
             $templateProcessor->setValue('AP_PROSES_BISNIS', $apPbMarker);
 
-            // Post-process XML: merge Risk cells + bangun paragraf risk dgn font yg benar
+            // Post-process XML
             $refClass = new \ReflectionClass(get_class($templateProcessor));
-            $mainPart = $refClass->getProperty('tempDocumentMainPart');
+            $mainPart  = $refClass->getProperty('tempDocumentMainPart');
             $mainPart->setAccessible(true);
             $xml = $mainPart->getValue($templateProcessor);
 
-            $risksForCallback = $risks;
-            
+            $prosesBisnisList = $pbHierarki->pluck('nama_proses_bisnis')->toArray();
+
             $xml = preg_replace_callback(
                 '/<w:tc[^>]*>.*?<\/w:tc>/s',
-                function ($match) use ($mergeStartMarker, $mergeContinueMarker, $risksForCallback, $apNoMarker, $apPbMarker, $prosesBisnis) {
+                function ($match) use ($vMergeFirst, $vMergeCont, $apNoMarker, $apPbMarker, $prosesBisnisList) {
                     $cellXml = $match[0];
 
-                    if (strpos($cellXml, $mergeStartMarker) !== false) {
-                        // Ambil run properties (font) dari template, paksa size 11pt
-                        $rPr = '';
-                        if (preg_match('/<w:rPr>.*?<\/w:rPr>/s', $cellXml, $m)) {
-                            $rPr = $m[0];
-                            // Hapus size lama jika ada, ganti dengan size 11 (22 half-points)
-                            $rPr = preg_replace('/<w:sz[^\/]*\/?>/', '', $rPr);
-                            $rPr = preg_replace('/<w:szCs[^\/]*\/?>/', '', $rPr);
-                            $rPr = str_replace('</w:rPr>', '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>', $rPr);
-                        } else {
-                            $rPr = '<w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>';
-                        }
-
+                    // ── vMerge: sel pertama dari PB multi-risiko ──────────────────
+                    if (strpos($cellXml, $vMergeFirst) !== false) {
                         // Tambahkan vMerge restart ke tcPr
                         if (strpos($cellXml, '<w:tcPr') !== false) {
                             $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge w:val="restart"/>', $cellXml, 1);
                         }
+                        // Hapus marker dari teks
+                        $cellXml = str_replace(htmlspecialchars($vMergeFirst), '', $cellXml);
+                        $cellXml = str_replace($vMergeFirst, '', $cellXml);
 
-                        // Bangun paragraf risk dgn Word native auto-numbering (numId=99)
-                        $riskParagraphs = '';
-                        if ($risksForCallback->count() > 0) {
-                            foreach ($risksForCallback as $idx => $risk) {
-                                $text = htmlspecialchars($risk->deskripsi_resiko);
-                                $riskParagraphs .= '<w:p>'
-                                    . '<w:pPr>'
-                                    . '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="99"/></w:numPr>'
-                                    . '<w:jc w:val="both"/>'
-                                    . '</w:pPr>'
-                                    . '<w:r>' . $rPr . '<w:t>' . $text . '</w:t></w:r>'
-                                    . '</w:p>';
-                            }
-                        } else {
-                            $riskParagraphs = '<w:p><w:r>' . $rPr . '<w:t>-</w:t></w:r></w:p>';
-                        }
-
-                        // Ganti isi sel: ambil dari awal sampai </w:tcPr>, lalu paragraf baru
-                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
-                        if ($tcPrEnd !== false) {
-                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
-                                . $riskParagraphs . '</w:tc>';
-                        } else {
-                            $cellXml = preg_replace('/(<w:tc[^>]*>).*?(<\/w:tc>)/s', '$1' . $riskParagraphs . '$2', $cellXml);
-                        }
-
-                    } elseif (strpos($cellXml, $mergeContinueMarker) !== false) {
-                        // Sel lanjutan: tambah vMerge continue dan kosongkan
+                    // ── vMerge: sel lanjutan dari PB yang sama ────────────────────
+                    } elseif (strpos($cellXml, $vMergeCont) !== false) {
+                        // Tambahkan vMerge continue
                         if (strpos($cellXml, '<w:tcPr') !== false) {
                             $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge/>', $cellXml, 1);
                         }
-                        $cellXml = preg_replace('/<w:p[^\/].*?<\/w:p>/s', '<w:p/>', $cellXml);
-
-                    } elseif (strpos($cellXml, $apNoMarker) !== false) {
-                        // Kosongkan kolom NO karena penomoran sudah include di proses bisnis
+                        // Kosongkan isi sel (wajib untuk vMerge continue di OOXML)
                         $tcPrEnd = strpos($cellXml, '</w:tcPr>');
                         if ($tcPrEnd !== false) {
                             $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
-                                . '<w:p/>' . '</w:tc>';
+                                . '<w:p/></w:tc>';
                         }
 
+                    // ── AP: kosongkan kolom NO ────────────────────────────────────
+                    } elseif (strpos($cellXml, $apNoMarker) !== false) {
+                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
+                        if ($tcPrEnd !== false) {
+                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
+                                . '<w:p/></w:tc>';
+                        }
+
+                    // ── AP: daftar proses bisnis per paragraf ─────────────────────
                     } elseif (strpos($cellXml, $apPbMarker) !== false) {
-                        // Bangun paragraf terpisah untuk tiap proses bisnis dengan nomor dan spacing
                         $rPr = '';
                         if (preg_match('/<w:rPr>.*?<\/w:rPr>/s', $cellXml, $m)) {
                             $rPr = $m[0];
                         }
                         $pbParagraphs = '';
-                        if (count($prosesBisnis) > 0) {
-                            foreach ($prosesBisnis as $i => $pb) {
+                        if (count($prosesBisnisList) > 0) {
+                            foreach ($prosesBisnisList as $i => $pb) {
                                 $text = ($i + 1) . '. ' . htmlspecialchars($pb);
                                 $pbParagraphs .= '<w:p>'
                                     . '<w:pPr><w:spacing w:after="200"/></w:pPr>'
