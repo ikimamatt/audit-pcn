@@ -587,12 +587,20 @@ class ProgramKerjaAuditController extends Controller
             }
 
             // Siapkan data untuk cloneRowAndSetValues
-            // Sel PROSES_BISNIS pada baris non-first diberi prefix marker untuk post-process vMerge
-            $vMergeFirst = '##VMERGE_FIRST##';
-            $vMergeCont  = '##VMERGE_CONT##';
+            // Sel PROSES_BISNIS dan NO pada baris non-first diberi prefix marker untuk post-process vMerge
+            $vMergeFirst   = '##VMERGE_FIRST##';
+            $vMergeCont    = '##VMERGE_CONT##';
+            $noVMergeFirst = '##NO_VMERGE_FIRST##';
+            $noVMergeCont  = '##NO_VMERGE_CONT##';
 
             $tableData = array_map(fn($r) => [
-                'NO'               => (string)($r['NO'] ?? ''),
+                // Kolom NO: vMerge jika PB punya >1 risiko
+                'NO'               => ($r['is_first_of_pb'] && $r['pb_span'] > 1)
+                                        ? $noVMergeFirst . (string)($r['NO'] ?? '')
+                                        : ((!$r['is_first_of_pb'])
+                                            ? $noVMergeCont
+                                            : (string)($r['NO'] ?? '')),
+                // Kolom PROSES_BISNIS: vMerge jika PB punya >1 risiko
                 'PROSES_BISNIS'    => ($r['is_first_of_pb'] && $r['pb_span'] > 1)
                                         ? $vMergeFirst . htmlspecialchars($r['PROSES_BISNIS'])
                                         : ((!$r['is_first_of_pb'])
@@ -623,26 +631,42 @@ class ProgramKerjaAuditController extends Controller
 
             $xml = preg_replace_callback(
                 '/<w:tc[^>]*>.*?<\/w:tc>/s',
-                function ($match) use ($vMergeFirst, $vMergeCont, $apNoMarker, $apPbMarker, $prosesBisnisList) {
+                function ($match) use ($vMergeFirst, $vMergeCont, $noVMergeFirst, $noVMergeCont, $apNoMarker, $apPbMarker, $prosesBisnisList) {
                     $cellXml = $match[0];
 
-                    // ── vMerge: sel pertama dari PB multi-risiko ──────────────────
-                    if (strpos($cellXml, $vMergeFirst) !== false) {
-                        // Tambahkan vMerge restart ke tcPr
+                    // ── vMerge kolom NO: sel pertama dari PB multi-risiko ─────────
+                    if (strpos($cellXml, $noVMergeFirst) !== false) {
                         if (strpos($cellXml, '<w:tcPr') !== false) {
                             $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge w:val="restart"/>', $cellXml, 1);
                         }
-                        // Hapus marker dari teks
-                        $cellXml = str_replace(htmlspecialchars($vMergeFirst), '', $cellXml);
-                        $cellXml = str_replace($vMergeFirst, '', $cellXml);
+                        // Hapus marker, pertahankan angkanya
+                        $cellXml = str_replace(htmlspecialchars($noVMergeFirst), '', $cellXml);
+                        $cellXml = str_replace($noVMergeFirst, '', $cellXml);
 
-                    // ── vMerge: sel lanjutan dari PB yang sama ────────────────────
-                    } elseif (strpos($cellXml, $vMergeCont) !== false) {
-                        // Tambahkan vMerge continue
+                    // ── vMerge kolom NO: sel lanjutan ────────────────────────────
+                    } elseif (strpos($cellXml, $noVMergeCont) !== false) {
                         if (strpos($cellXml, '<w:tcPr') !== false) {
                             $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge/>', $cellXml, 1);
                         }
-                        // Kosongkan isi sel (wajib untuk vMerge continue di OOXML)
+                        $tcPrEnd = strpos($cellXml, '</w:tcPr>');
+                        if ($tcPrEnd !== false) {
+                            $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
+                                . '<w:p/></w:tc>';
+                        }
+
+                    // ── vMerge kolom PROSES_BISNIS: sel pertama ───────────────────
+                    } elseif (strpos($cellXml, $vMergeFirst) !== false) {
+                        if (strpos($cellXml, '<w:tcPr') !== false) {
+                            $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge w:val="restart"/>', $cellXml, 1);
+                        }
+                        $cellXml = str_replace(htmlspecialchars($vMergeFirst), '', $cellXml);
+                        $cellXml = str_replace($vMergeFirst, '', $cellXml);
+
+                    // ── vMerge kolom PROSES_BISNIS: sel lanjutan ─────────────────
+                    } elseif (strpos($cellXml, $vMergeCont) !== false) {
+                        if (strpos($cellXml, '<w:tcPr') !== false) {
+                            $cellXml = preg_replace('/<w:tcPr([^>]*)>/', '<w:tcPr$1><w:vMerge/>', $cellXml, 1);
+                        }
                         $tcPrEnd = strpos($cellXml, '</w:tcPr>');
                         if ($tcPrEnd !== false) {
                             $cellXml = substr($cellXml, 0, $tcPrEnd + strlen('</w:tcPr>'))
