@@ -232,6 +232,7 @@ class ProgramKerjaAuditController extends Controller
                 $risiko = PkaRisiko::create([
                     'pka_proses_bisnis_id' => $pb->id,
                     'deskripsi_risiko'     => $deskripsi,
+                    'level_risiko'         => $risikoData['level_risiko'] ?? null,
                     'penyebab_risiko'      => $risikoData['penyebab_risiko'] ?? null,
                     'dampak_risiko'        => $risikoData['dampak_risiko'] ?? null,
                     'urutan'               => $risikoUrutan + 1,

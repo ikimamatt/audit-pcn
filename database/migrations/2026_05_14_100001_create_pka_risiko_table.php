@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('pka_proses_bisnis_id');
             $table->text('deskripsi_risiko');
+            $table->string('level_risiko')->nullable();
             $table->text('penyebab_risiko')->nullable();
             $table->text('dampak_risiko')->nullable();
             $table->unsignedInteger('urutan')->default(1);

@@ -387,6 +387,11 @@
                                     <span class="fw-semibold" style="font-size:.85rem;color:#92400e;">
                                         Risiko #{{ $rIdx + 1 }}: {{ $risiko->deskripsi_risiko }}
                                     </span>
+                                    @if($risiko->level_risiko)
+                                        <span class="badge {{ $risiko->level_risiko === 'Tinggi' ? 'bg-danger' : ($risiko->level_risiko === 'Sedang' ? 'bg-warning' : 'bg-success') }} ms-auto" style="font-size:0.7rem;">
+                                            {{ $risiko->level_risiko }}
+                                        </span>
+                                    @endif
                                 </div>
                                 <div class="card-body py-2 px-3">
                                     @if($risiko->penyebab_risiko || $risiko->dampak_risiko)

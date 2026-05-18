@@ -192,15 +192,24 @@ $(document).ready(function () {
             </div>
             <div class="card-body py-2 px-3">
                 <div class="row g-2 mb-2">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Deskripsi Risiko <span class="text-danger">*</span></label>
                         <textarea name="${p}[deskripsi_risiko]" class="form-control form-control-sm" rows="2" placeholder="Deskripsi risiko..." required>${data.deskripsi_risiko || ''}</textarea>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm">Level Risiko</label>
+                        <select name="${p}[level_risiko]" class="form-select form-select-sm">
+                            <option value="">-- Pilih Level --</option>
+                            <option value="Rendah" ${data.level_risiko === 'Rendah' ? 'selected' : ''}>Rendah</option>
+                            <option value="Sedang" ${data.level_risiko === 'Sedang' ? 'selected' : ''}>Sedang</option>
+                            <option value="Tinggi" ${data.level_risiko === 'Tinggi' ? 'selected' : ''}>Tinggi</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Penyebab Risiko</label>
                         <textarea name="${p}[penyebab_risiko]" class="form-control form-control-sm" rows="2" placeholder="Penyebab risiko...">${data.penyebab_risiko || ''}</textarea>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Dampak Risiko</label>
                         <textarea name="${p}[dampak_risiko]" class="form-control form-control-sm" rows="2" placeholder="Dampak risiko...">${data.dampak_risiko || ''}</textarea>
                     </div>

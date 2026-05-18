@@ -163,7 +163,7 @@ $(document).ready(function () {
                         <input class="form-check-input risiko-checkbox" type="checkbox"
                                name="pka_risiko_ids[]" value="${risiko.id}"
                                id="${rId}" data-target="kontrol-group-${risiko.id}"
-                               ${isChecked ? 'checked' : ''}>
+                               checked>
                         <label class="form-check-label fw-semibold" for="${rId}">
                             <span class="badge bg-danger-subtle text-danger me-1">R${i+1}</span>
                             ${esc(risiko.deskripsi_risiko)}
@@ -173,13 +173,13 @@ $(document).ready(function () {
                     ${risiko.dampak_risiko ? `<div class="text-muted small ms-4"><strong>Dampak:</strong> ${esc(risiko.dampak_risiko)}</div>` : ''}
                 </div>`;
             if (risiko.kontrol && risiko.kontrol.length > 0) {
-                html += `<div class="kontrol-group px-4 pb-3" id="kontrol-group-${risiko.id}" style="display:${isChecked?'block':'none'};">
+                html += `<div class="kontrol-group px-4 pb-3" id="kontrol-group-${risiko.id}" style="display:block;">
                     <div class="border-start border-2 border-primary ps-3">
                         <p class="text-muted small mb-2 fw-semibold">Pilih Kontrol yang diuji:</p>`;
                 risiko.kontrol.forEach((k, j) => {
                     html += `<div class="form-check mb-1">
                         <input class="form-check-input" type="checkbox" name="pka_kontrol_ids[]"
-                               value="${k.id}" id="kontrol-${k.id}" ${preKontrol.includes(k.id)?'checked':''}>
+                               value="${k.id}" id="kontrol-${k.id}" checked>
                         <label class="form-check-label small" for="kontrol-${k.id}">
                             <span class="badge bg-primary-subtle text-primary me-1">K${j+1}</span>
                             ${esc(k.deskripsi_kontrol)}
