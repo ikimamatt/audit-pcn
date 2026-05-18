@@ -616,6 +616,44 @@ class ProgramKerjaAuditController extends Controller
                 \Log::error('CloneRowAndSetValues Error: ' . $e->getMessage());
             }
 
+            // ── Siapkan Data untuk Tabel Risk Assessment (RA) ──
+            $raTableData = [];
+            foreach ($pbHierarki as $pb) {
+                foreach ($pb->risikoList->sortBy('urutan') as $risiko) {
+                    $kontrolText = '';
+                    if ($risiko->kontrolList->count() > 0) {
+                        $kList = [];
+                        foreach ($risiko->kontrolList->sortBy('urutan') as $kIdx => $kontrol) {
+                            $kList[] = ($kIdx + 1) . '. ' . $kontrol->deskripsi_kontrol;
+                        }
+                        // PhpWord setValue/cloneRowAndSetValues mendukung \n untuk baris baru
+                        $kontrolText = implode("\n", $kList);
+                    } else {
+                        $kontrolText = '-';
+                    }
+
+                    $raTableData[] = [
+                        'RA_RISIKO'  => $risiko->deskripsi_risiko ?? '-',
+                        'RA_LEVEL'   => $risiko->level_risiko ?? '-',
+                        'RA_KONTROL' => $kontrolText,
+                    ];
+                }
+            }
+
+            if (empty($raTableData)) {
+                $raTableData[] = [
+                    'RA_RISIKO'  => '-',
+                    'RA_LEVEL'   => '-',
+                    'RA_KONTROL' => '-',
+                ];
+            }
+
+            try {
+                $templateProcessor->cloneRowAndSetValues('RA_RISIKO', $raTableData);
+            } catch (\Exception $e) {
+                \Log::error('CloneRowAndSetValues Risk Assessment Error: ' . $e->getMessage());
+            }
+
             // Variabel untuk tabel Audit Program (AP) — paragraf per PB
             $apNoMarker = '##AP_NO_DATA##';
             $apPbMarker = '##AP_PB_DATA##';
