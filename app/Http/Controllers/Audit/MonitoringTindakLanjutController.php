@@ -90,15 +90,14 @@ class MonitoringTindakLanjutController extends Controller
             
             // Hitung tindak lanjut target dan real
             $tindakLanjutTarget = $rekomCount; // Target = jumlah rekomendasi
-            $tindakLanjutReal = PenutupLhaTindakLanjut::whereHas('rekomendasi', function($query) use ($auditee) {
-                $query->whereHas('temuan', function($q) use ($auditee) {
+            $tindakLanjutReal = PenutupLhaRekomendasi::where('status_tindak_lanjut', 'closed')
+                ->whereHas('temuan', function($q) use ($auditee) {
                     $q->whereHas('pelaporanHasilAudit', function($q2) use ($auditee) {
                         $q2->whereHas('perencanaanAudit', function($q3) use ($auditee) {
                             $q3->where('auditee_id', $auditee->id);
                         });
                     });
-                });
-            })->count();
+                })->count();
             
             // Hitung sisa
             $sisaTarget = $tindakLanjutTarget - $tindakLanjutReal;
@@ -161,18 +160,17 @@ class MonitoringTindakLanjutController extends Controller
               ->whereYear('target_waktu', $currentMonth->year)
               ->count();
             
-            // Real: jumlah tindak lanjut yang dibuat di bulan tersebut
-            $real = PenutupLhaTindakLanjut::whereHas('rekomendasi', function($query) use ($auditee, $monthNumber, $currentMonth) {
-                $query->whereHas('temuan', function($q) use ($auditee) {
-                    $q->whereHas('pelaporanHasilAudit', function($q2) use ($auditee) {
-                        $q2->whereHas('perencanaanAudit', function($q3) use ($auditee) {
-                            $q3->where('auditee_id', $auditee->id);
-                        });
-                    });
-                });
-            })->whereMonth('created_at', $monthNumber)
-              ->whereYear('created_at', $currentMonth->year)
-              ->count();
+            // Real: jumlah rekomendasi yang statusnya closed di bulan tersebut
+            $real = PenutupLhaRekomendasi::where('status_tindak_lanjut', 'closed')
+              ->whereHas('temuan', function($query) use ($auditee) {
+                  $query->whereHas('pelaporanHasilAudit', function($q) use ($auditee) {
+                      $q->whereHas('perencanaanAudit', function($q2) use ($auditee) {
+                          $q2->where('auditee_id', $auditee->id);
+                      });
+                  });
+              })->whereMonth('real_waktu', $monthNumber)
+                ->whereYear('real_waktu', $currentMonth->year)
+                ->count();
             
             $monthlyData[$monthKey] = [
                 'target' => $target,
@@ -229,25 +227,16 @@ class MonitoringTindakLanjutController extends Controller
     
     private function calculateRealisasiKumulatif($totalData, $selectedYear)
     {
-        // Jika tahun yang dipilih adalah tahun lalu, hitung sampai Desember. Jika tahun ini, sampai bulan ini.
-        $currentMonth = $selectedYear < Carbon::now()->year ? 12 : $this->getCurrentMonthNumber();
-        $months = [
-            'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mei' => 5, 'jun' => 6,
-            'jul' => 7, 'ags' => 8, 'sep' => 9, 'okt' => 10, 'nov' => 11, 'des' => 12
-        ];
+        $totalTarget = $totalData['tindak_lanjut_target'] ?? 0;
+        $totalReal = $totalData['tindak_lanjut_real'] ?? 0;
         
-        $totalTarget = 0;
-        $totalReal = 0;
-        
-        // Hanya hitung sampai bulan yang relevan
-        foreach ($months as $monthKey => $monthNumber) {
-            if ($monthNumber <= $currentMonth) {
-                $totalTarget += $totalData['bulanan'][$monthKey]['target'];
-                $totalReal += $totalData['bulanan'][$monthKey]['real'];
-            }
+        if ($totalTarget > 0) {
+            $percentage = ($totalReal / $totalTarget) * 100;
+            // Format 1 desimal jika ada pecahan, jika bulat maka tidak ada koma
+            return floor($percentage) == $percentage ? number_format($percentage, 0) : number_format($percentage, 1);
         }
         
-        return $totalTarget > 0 ? round(($totalReal / $totalTarget) * 100) : 0;
+        return 0;
     }
     
     private function calculateSemesterData($totalData)

@@ -110,16 +110,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const plannedDateInput = document.getElementById('planned_walkthrough_date');
     const actualDateInput = document.getElementById('actual_walkthrough_date');
 
-    pkaSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const plannedDate = selectedOption.getAttribute('data-planned-date');
-        
-        if (plannedDate) {
-            plannedDateInput.value = plannedDate;
-        } else {
-            plannedDateInput.value = '';
-        }
-    });
+    if (typeof $ !== 'undefined' && ($(pkaSelect).hasClass('select2-search') || $(pkaSelect).hasClass('select2-hidden-accessible'))) {
+        $(pkaSelect).on('change', function() {
+            const selectedOption = $(this).find(':selected');
+            const plannedDate = selectedOption.data('planned-date') || selectedOption.attr('data-planned-date');
+            
+            if (plannedDate) {
+                plannedDateInput.value = plannedDate;
+            } else {
+                plannedDateInput.value = '';
+            }
+        });
+    } else {
+        pkaSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const plannedDate = selectedOption.getAttribute('data-planned-date');
+            
+            if (plannedDate) {
+                plannedDateInput.value = plannedDate;
+            } else {
+                plannedDateInput.value = '';
+            }
+        });
+    }
 });
 </script>
 @endsection 
