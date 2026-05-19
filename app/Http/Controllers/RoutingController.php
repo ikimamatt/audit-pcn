@@ -26,7 +26,12 @@ class RoutingController extends BaseController
      */
     public function index(Request $request)
     {
-        if (Auth::user()) {
+        $user = Auth::user();
+        if ($user) {
+            $role = strtoupper(trim($user->akses?->nama_akses ?? ''));
+            if ($role === 'AUDITEE') {
+                return redirect()->route('audit.pemantauan.index');
+            }
             return redirect()->route('audit.dashboard');
         } else {
             return redirect('login');

@@ -15,10 +15,16 @@ class PelaporanHasilAuditController extends Controller
     {
         $query = PelaporanHasilAudit::with(['perencanaanAudit.auditee', 'temuan.kodeAoi', 'temuan.kodeRisk']);
         
-        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-        if ($userAuditeeId !== null) {
-            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId, $userUnitId) {
+                if ($userAuditeeId !== null) {
+                    $q->where('auditee_id', $userAuditeeId);
+                }
+                if ($userUnitId !== null) {
+                    $q->where('unit_id', $userUnitId);
+                }
             });
         }
         
@@ -38,8 +44,15 @@ class PelaporanHasilAuditController extends Controller
         $data = $query->orderBy('created_at', 'desc')->get();
         
         $suratTugasQuery = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas');
-        if ($userAuditeeId !== null) {
-            $suratTugasQuery->where('auditee_id', $userAuditeeId);
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            if ($userAuditeeId !== null) {
+                $suratTugasQuery->where('auditee_id', $userAuditeeId);
+            }
+            if ($userUnitId !== null) {
+                $suratTugasQuery->where('unit_id', $userUnitId);
+            }
         }
         $suratTugas = $suratTugasQuery->get();
         
@@ -170,7 +183,15 @@ class PelaporanHasilAuditController extends Controller
 
     public function show($id)
     {
-        $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
+        $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk', 'perencanaanAudit'])->findOrFail($id);
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $pa = $item->perencanaanAudit ?? null;
+            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');
+            }
+        }
         return view('audit.pelaporan.show', compact('item'));
     }
 
@@ -476,8 +497,21 @@ class PelaporanHasilAuditController extends Controller
         try {
             $pelaporan = PelaporanHasilAudit::with([
                 'temuan.kodeAoi', 
-                'temuan.kodeRisk'
+                'temuan.kodeRisk',
+                'perencanaanAudit'
             ])->findOrFail($id);
+            
+            if (\App\Helpers\AuthHelper::isAuditee()) {
+                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+                $userUnitId = auth()->user()->master_unit_id ?? null;
+                $pa = $pelaporan->perencanaanAudit ?? null;
+                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'
+                    ], 403);
+                }
+            }
             
             $temuanData = $pelaporan->temuan->map(function($temuan) {
                 return [
@@ -526,7 +560,23 @@ class PelaporanHasilAuditController extends Controller
     public function getTemuanById($id)
     {
         try {
-            $temuan = \App\Models\Audit\PelaporanTemuan::with(['kodeAoi', 'kodeRisk'])->findOrFail($id);
+            $temuan = \App\Models\Audit\PelaporanTemuan::with([
+                'kodeAoi', 
+                'kodeRisk', 
+                'pelaporanHasilAudit.perencanaanAudit'
+            ])->findOrFail($id);
+            
+            if (\App\Helpers\AuthHelper::isAuditee()) {
+                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+                $userUnitId = auth()->user()->master_unit_id ?? null;
+                $pa = $temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'
+                    ], 403);
+                }
+            }
             
             return response()->json([
                 'success' => true,

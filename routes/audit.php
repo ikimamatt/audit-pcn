@@ -17,6 +17,8 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // Pelaporan Hasil Audit — AUDITEE hanya index + show (filter di controller)
         Route::get('pelaporan-hasil-audit', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'index'])->name('pelaporan-hasil-audit.index');
         Route::get('pelaporan-hasil-audit/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'show'])->name('pelaporan-hasil-audit.show')->where('id', '[0-9]+');
+        Route::get('pelaporan-hasil-audit/{id}/temuan', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getTemuanData'])->name('pelaporan-hasil-audit.get-temuan');
+        Route::get('pelaporan-hasil-audit/temuan/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getTemuanById'])->name('pelaporan-hasil-audit.get-temuan-by-id');
     });
 
     // Pemantauan Hasil Audit (AUDITEE + VIEW BOD bisa akses, filter di controller)
@@ -24,6 +26,12 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('pemantauan/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');
         Route::get('pemantauan', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'index'])->name('pemantauan.index');
         Route::get('pemantauan/{id}/tindak-lanjut', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'tindakLanjutIndex'])->name('pemantauan.tindak-lanjut.index');
+
+        // Penutup LHA Rekomendasi (view only)
+        Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
+        Route::get('penutup-lha-rekomendasi/get-iss-data', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
+        Route::get('penutup-lha-rekomendasi', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'index'])->name('penutup-lha-rekomendasi.index');
+        Route::get('penutup-lha-rekomendasi/{penutup_lha_rekomendasi}', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'show'])->name('penutup-lha-rekomendasi.show')->where('penutup_lha_rekomendasi', '[0-9]+');
 
         // Tindak Lanjut Form untuk PIC Business Contact (AUDITEE)
         Route::get('penutup-lha-rekomendasi/{rekomendasi}/tindak-lanjut', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'tindakLanjutForm'])->name('penutup-lha-rekomendasi.tindak-lanjut.form');
@@ -93,16 +101,12 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::post('pelaporan-hasil-audit/{id}/approval', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'approval'])->name('pelaporan-hasil-audit.approval');
         Route::post('pelaporan-hasil-audit/generate-nomor-lhk', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'generateNomorLhk'])->name('pelaporan-hasil-audit.generate-nomor-lhk');
         Route::post('pelaporan-hasil-audit/generate-nomor-iss', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'generateNomorIss'])->name('pelaporan-hasil-audit.generate-nomor-iss');
-        Route::get('pelaporan-hasil-audit/{id}/temuan', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getTemuanData'])->name('pelaporan-hasil-audit.get-temuan');
-        Route::get('pelaporan-hasil-audit/temuan/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getTemuanById'])->name('pelaporan-hasil-audit.get-temuan-by-id');
         Route::put('pelaporan-hasil-audit/temuan/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'updateTemuan'])->name('pelaporan-hasil-audit.update-temuan');
         Route::get('pelaporan-hasil-audit/temuan-for-penutup', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getAllTemuanForPenutup'])->name('pelaporan-hasil-audit.temuan-for-penutup');
         Route::get('test-temuan/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'getTemuanById'])->name('test.temuan');
 
-        // Penutup LHA Rekomendasi
-        Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
-        Route::get('penutup-lha-rekomendasi/get-iss-data', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
-        Route::resource('penutup-lha-rekomendasi', \App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class);
+        // Penutup LHA Rekomendasi (Aksi Modifikasi & Approval hanya SPI)
+        Route::resource('penutup-lha-rekomendasi', \App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class)->except(['index', 'show']);
         Route::post('penutup-lha-rekomendasi/{id}/approval', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
         Route::get('penutup-lha-tindak-lanjut/{id}/edit', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'editTindakLanjut'])->name('penutup-lha-tindak-lanjut.edit');
         Route::put('penutup-lha-tindak-lanjut/{id}', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'updateTindakLanjut'])->name('penutup-lha-tindak-lanjut.update');
