@@ -84,5 +84,8 @@ class DatabaseSeeder extends Seeder
             PelaporanHasilAuditSeeder::class,
             PelaporanTemuanSeeder::class,
         ]);
+
+        // ── Dashboard Analytical Dummy Data ───────────────────────
+        $this->call(DashboardDummySeeder::class);
     }
 }

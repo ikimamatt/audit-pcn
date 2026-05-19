@@ -330,7 +330,7 @@
                                 <h5 class="mb-2">REALISASI KUMULATIF TAHUN {{ $selectedYear }}</h5>
                                 <div class="bg-warning text-white p-4 rounded shadow-sm">
                                     <h2 class="mb-0 fw-bold">{{ $realisasiKumulatif }}%</h2>
-                                    <small class="text-white-50">Total Kumulatif Berjalan</small>
+                                    <small class="text-white-50">Target: {{ $totalData['tindak_lanjut_target'] }} | Realisasi: {{ $totalData['tindak_lanjut_real'] }}</small>
                                 </div>
                             </div>
                         </div>

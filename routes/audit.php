@@ -121,7 +121,8 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // Exit Meeting Chart (dashboard)
         Route::get('exit-meeting/pie', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'pie'])->name('exit-meeting.pie');
-        Route::get('dashboard', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'chart'])->name('exit-meeting.dashboard');
+        Route::get('dashboard', [\App\Http\Controllers\Audit\DashboardAnalitikController::class, 'index'])->name('dashboard');
+        Route::get('dashboard/aging-detail', [\App\Http\Controllers\Audit\DashboardAnalitikController::class, 'agingDetail'])->name('dashboard.aging-detail');
     });
 });
 
