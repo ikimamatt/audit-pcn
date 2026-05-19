@@ -53,7 +53,7 @@ class AuthenticatedSessionController extends Controller
                 case 'Auditee':
                     return redirect()->intended(RouteServiceProvider::HOME); // Dashboard
                 case 'BOD':
-                    return redirect()->intended(route('audit.exit-meeting.chart'));
+                    return redirect()->intended(route('audit.exit-meeting.dashboard'));
                 default:
                     return redirect()->intended(RouteServiceProvider::HOME);
             }

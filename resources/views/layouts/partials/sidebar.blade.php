@@ -42,7 +42,7 @@
                     <div class="collapse" id="sidebarDashboards">
                         <ul class="nav-second-level">
                             <li>
-                                <a href="{{ route('audit.exit-meeting.chart') }}" class="tp-link">Analytical</a>
+                                <a href="{{ route('audit.exit-meeting.dashboard') }}" class="tp-link">Analytical</a>
                             </li>
                             <li>
                                 <a href="{{ route('audit.dashboard-pkpt.index') }}" class="tp-link">Dashboard PKPT</a>

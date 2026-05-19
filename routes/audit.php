@@ -16,7 +16,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
     Route::middleware(['auth', 'role:KSPI,ASMAN SPI,AUDITOR,AUDITEE,SUPER ADMIN,VIEW BOD'])->group(function () {
         // Pelaporan Hasil Audit — AUDITEE hanya index + show (filter di controller)
         Route::get('pelaporan-hasil-audit', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'index'])->name('pelaporan-hasil-audit.index');
-        Route::get('pelaporan-hasil-audit/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'show'])->name('pelaporan-hasil-audit.show');
+        Route::get('pelaporan-hasil-audit/{id}', [\App\Http\Controllers\Audit\PelaporanHasilAuditController::class, 'show'])->name('pelaporan-hasil-audit.show')->where('id', '[0-9]+');
     });
 
     // Pemantauan Hasil Audit (AUDITEE + VIEW BOD bisa akses, filter di controller)
@@ -24,7 +24,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('pemantauan/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');
         Route::get('pemantauan', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'index'])->name('pemantauan.index');
         Route::get('pemantauan/{id}/tindak-lanjut', [\App\Http\Controllers\Audit\PemantauanAuditController::class, 'tindakLanjutIndex'])->name('pemantauan.tindak-lanjut.index');
-        
+
         // Tindak Lanjut Form untuk PIC Business Contact (AUDITEE)
         Route::get('penutup-lha-rekomendasi/{rekomendasi}/tindak-lanjut', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'tindakLanjutForm'])->name('penutup-lha-rekomendasi.tindak-lanjut.form');
         Route::post('penutup-lha-rekomendasi/{rekomendasi}/tindak-lanjut', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'storeTindakLanjut'])->name('penutup-lha-rekomendasi.tindak-lanjut.store');
@@ -101,9 +101,9 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // Penutup LHA Rekomendasi
         Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
+        Route::get('penutup-lha-rekomendasi/get-iss-data', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
         Route::resource('penutup-lha-rekomendasi', \App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class);
         Route::post('penutup-lha-rekomendasi/{id}/approval', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
-        Route::get('penutup-lha-rekomendasi/get-iss-data', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
         Route::get('penutup-lha-tindak-lanjut/{id}/edit', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'editTindakLanjut'])->name('penutup-lha-tindak-lanjut.edit');
         Route::put('penutup-lha-tindak-lanjut/{id}', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'updateTindakLanjut'])->name('penutup-lha-tindak-lanjut.update');
         Route::delete('penutup-lha-tindak-lanjut/{id}', [\App\Http\Controllers\Audit\PenutupLhaRekomendasiController::class, 'destroyTindakLanjut'])->name('penutup-lha-tindak-lanjut.destroy');
@@ -121,7 +121,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // Exit Meeting Chart (dashboard)
         Route::get('exit-meeting/pie', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'pie'])->name('exit-meeting.pie');
-        Route::get('exit-meeting/chart', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'chart'])->name('exit-meeting.chart');
+        Route::get('dashboard', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'chart'])->name('exit-meeting.dashboard');
     });
 });
 
