@@ -238,48 +238,34 @@
                                     </button>
                                 </form>
                                 @endcanModifyData
-                                @canApproveReject
-                                    @if($statusApproval == 'pending')
-                                        @isAsmanSpi
-                                            <form id="approval-form-{{ $ra->id }}" action="{{ route('audit.exit-meeting.approval', $ra->id) }}" method="POST" class="m-0" style="display:inline-flex;gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $ra->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $ra->id }})" title="Approve Level 1"><i class="mdi mdi-check"></i></button>
-                                                <button type="button" class="btn-act btn-act-reject"  onclick="rejectData({{ $ra->id }})"  title="Reject Level 1"><i class="mdi mdi-close"></i></button>
-                                            </form>
-                                        @endisAsmanSpi
-                                        @isKspi
-                                            @php $hasAsmanSpi = \App\Helpers\AuthHelper::hasAsmanSpiUsers(); @endphp
-                                            <form id="approval-form-{{ $ra->id }}" action="{{ route('audit.exit-meeting.approval', $ra->id) }}" method="POST" class="m-0" style="display:inline-flex;gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $ra->id }}" value="">
-                                                @if($hasAsmanSpi)
-                                                    <button type="button" class="btn-act btn-act-approve" onclick="approveDataPending({{ $ra->id }})" title="Butuh Approve ASMAN SPI dulu"><i class="mdi mdi-check"></i></button>
-                                                @else
-                                                    <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $ra->id }})" title="Approve"><i class="mdi mdi-check"></i></button>
-                                                @endif
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $ra->id }})" title="Reject Level 2"><i class="mdi mdi-close"></i></button>
-                                            </form>
-                                        @endisKspi
-                                    @elseif($statusApproval == 'approved_level1')
-                                        @isKspi
-                                            <form id="approval-form-{{ $ra->id }}" action="{{ route('audit.exit-meeting.approval', $ra->id) }}" method="POST" class="m-0" style="display:inline-flex;gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $ra->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $ra->id }})" title="Approve Level 2"><i class="mdi mdi-check"></i></button>
-                                                <button type="button" class="btn-act btn-act-reject"  onclick="rejectData({{ $ra->id }})"  title="Reject Level 2"><i class="mdi mdi-close"></i></button>
-                                            </form>
-                                        @endisKspi
-                                    @elseif($statusApproval == 'rejected_level1')
-                                        @isKspi
-                                            <form id="approval-form-{{ $ra->id }}" action="{{ route('audit.exit-meeting.approval', $ra->id) }}" method="POST" class="m-0" style="display:inline-flex;gap:5px;">
-                                                @csrf
-                                                <input type="hidden" name="action" id="action-{{ $ra->id }}" value="">
-                                                <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $ra->id }})" title="Reject Level 2"><i class="mdi mdi-close"></i></button>
-                                            </form>
-                                        @endisKspi
-                                    @endif
-                                @endcanApproveReject
+                                @php
+                                    $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($ra);
+                                    $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($ra);
+                                    $canReject      = \App\Helpers\ApprovalHelper::canReject($ra);
+                                @endphp
+
+                                @if($canApproveLvl1 || $canApproveLvl2 || $canReject)
+                                    <form id="approval-form-{{ $ra->id }}" action="{{ route('audit.exit-meeting.approval', $ra->id) }}" method="POST" class="m-0" style="display:inline-flex;gap:5px;">
+                                        @csrf
+                                        <input type="hidden" name="action" id="action-{{ $ra->id }}" value="">
+                                        
+                                        @if($canApproveLvl1)
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $ra->id }})" title="Approve (Ketua Tim)">
+                                                <i class="mdi mdi-check"></i>
+                                            </button>
+                                        @elseif($canApproveLvl2)
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $ra->id }})" title="Approve Final (Koordinator)">
+                                                <i class="mdi mdi-check-all"></i>
+                                            </button>
+                                        @endif
+
+                                        @if($canReject)
+                                            <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $ra->id }})" title="Reject">
+                                                <i class="mdi mdi-close"></i>
+                                            </button>
+                                        @endif
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

@@ -33,6 +33,16 @@ class ProgressTindakLanjutController extends Controller
             });
         }
         
+        // Jika user adalah AUDITEE, timpa filter auditee dengan auditee_id miliknya
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            if ($userAuditeeId !== null) {
+                $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
+                    $q->where('auditee_id', $userAuditeeId);
+                });
+            }
+        }
+        
         // Filter by status
         if ($selectedStatus != 'all') {
             $query->where('status_tindak_lanjut', $selectedStatus);

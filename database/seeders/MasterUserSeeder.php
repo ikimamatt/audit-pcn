@@ -28,7 +28,7 @@ class MasterUserSeeder extends Seeder
         // ========================================
         // SUPERADMIN USER (HIDDEN - NOT VISIBLE IN MASTER USER VIEW)
         // ========================================
-        $superadminAksesId = $aksesMap['SUPERADMIN'] ?? null;
+        $superadminAksesId = $aksesMap['SUPER ADMIN'] ?? null;
         $spiDivisiId       = $divisiMap['spi'] ?? null;
         $firstUnitId       = $unitMap->first(); // fallback unit default
 

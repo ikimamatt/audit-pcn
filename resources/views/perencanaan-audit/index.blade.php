@@ -251,6 +251,7 @@
                         <th>Auditee</th>
                         <th>Unit</th>
                         <th>Tanggal PKA</th>
+                        <th>Status</th>
                         <th style="width:120px;">Aksi</th>
                     </tr>
                 </thead>
@@ -299,6 +300,19 @@
                                 <i class="mdi mdi-calendar-outline" style="color:#9ca3af;"></i>
                                 {{ $item->tanggal_pka ? \Carbon\Carbon::parse($item->tanggal_pka)->format('d M Y') : '-' }}
                             </div>
+                        </td>
+
+                        {{-- Status Approval --}}
+                        <td>
+                            @if($item->status_approval == 'approved')
+                                <span class="badge" style="background:#d1fae5;color:#065f46;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;"><i class="mdi mdi-check-circle me-1"></i>Approved (Final)</span>
+                            @elseif($item->status_approval == 'approved_level1')
+                                <span class="badge" style="background:#cff4fc;color:#055160;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;"><i class="mdi mdi-check me-1"></i>Approved Lvl 1</span>
+                            @elseif($item->status_approval == 'rejected' || $item->status_approval == 'rejected_level1')
+                                <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;"><i class="mdi mdi-close-circle me-1"></i>Rejected</span>
+                            @else
+                                <span class="badge" style="background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;"><i class="mdi mdi-clock-outline me-1"></i>Pending</span>
+                            @endif
                         </td>
 
                         {{-- Aksi --}}

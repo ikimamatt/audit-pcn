@@ -123,18 +123,18 @@ $(document).ready(function () {
                     return;
                 }
                 const usePreselect = (pid == originalPid);
-                renderHierarki(data.risiko, usePreselect ? selectedRisikoIds : [], usePreselect ? selectedKontrolIds : []);
+                renderHierarki(data.risiko, usePreselect, usePreselect ? selectedRisikoIds : [], usePreselect ? selectedKontrolIds : []);
             })
             .catch(() => {
                 hierarkiContainer.innerHTML = `<div class="alert alert-danger">Gagal memuat data risiko.</div>`;
             });
     }
 
-    function renderHierarki(risikoList, preRisiko, preKontrol) {
+    function renderHierarki(risikoList, usePreselect, preRisiko, preKontrol) {
         let html = `<div class="list-group">`;
         risikoList.forEach((risiko, i) => {
             const rId = `risiko-${risiko.id}`;
-            const isChecked = preRisiko.includes(risiko.id);
+            const isChecked = usePreselect ? preRisiko.includes(risiko.id) : true;
             html += `<div class="list-group-item p-0 mb-2 border rounded">
                 <div class="p-3">
                     <div class="form-check">
@@ -155,9 +155,10 @@ $(document).ready(function () {
                     <div class="border-start border-2 border-primary ps-3">
                         <p class="text-muted small mb-2 fw-semibold">Pilih Kontrol yang diuji:</p>`;
                 risiko.kontrol.forEach((k, j) => {
+                    const isKontrolChecked = usePreselect ? preKontrol.includes(k.id) : true;
                     html += `<div class="form-check mb-1">
                         <input class="form-check-input" type="checkbox" name="pka_kontrol_ids[]"
-                               value="${k.id}" id="kontrol-${k.id}" ${preKontrol.includes(k.id)?'checked':''}>
+                               value="${k.id}" id="kontrol-${k.id}" ${isKontrolChecked?'checked':''}>
                         <label class="form-check-label small" for="kontrol-${k.id}">
                             <span class="badge bg-primary-subtle text-primary me-1">K${j+1}</span>
                             ${esc(k.deskripsi_kontrol)}

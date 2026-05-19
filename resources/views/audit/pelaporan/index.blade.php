@@ -356,77 +356,43 @@
                                             </a>
                                             @endcanModifyData
                                             
-                                            @canApproveReject
-                                                @if($item->status_approval == 'pending')
-                                                    {{-- Level 1: ASMAN KSPI can approve/reject --}}
-                                                    @isAsmanKspi
-                                                        <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
-                                                            @csrf
-                                                            <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
-                                                                <i class="mdi mdi-check me-1"></i> Approve Level 1
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-secondary mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
-                                                                <i class="mdi mdi-close me-1"></i> Reject Level 1
-                                                            </button>
-                                                            <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                        </form>
-                                                    @endisAsmanKspi
-                                                    {{-- Level 2: KSPI can approve/reject from pending (if no ASMAN KSPI user exists) --}}
-                                                    @isKspi
-                                                        @php
-                                                            $hasAsmanKspi = \App\Helpers\AuthHelper::hasAsmanKspiUsers();
-                                                        @endphp
-                                                        <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
-                                                            @csrf
-                                                            @if($hasAsmanKspi)
-                                                                <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveDataPending({{ $item->id }})" title="Data harus diapprove oleh ASMAN KSPI terlebih dahulu">
-                                                                    <i class="mdi mdi-check me-1"></i> Approve Level 2
-                                                                </button>
-                                                            @else
-                                                                <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})" title="Approve langsung (tidak ada ASMAN KSPI)">
-                                                                    <i class="mdi mdi-check me-1"></i> Approve
-                                                                </button>
-                                                            @endif
-                                                            <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
-                                                                <i class="mdi mdi-close me-1"></i> Reject Level 2
-                                                            </button>
-                                                            <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                        </form>
-                                                    @endisKspi
-                                                @elseif($item->status_approval == 'approved_level1')
-                                                    {{-- Level 2: KSPI can approve/reject after level 1 --}}
-                                                    @isKspi
-                                                        <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
-                                                            @csrf
-                                                            <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
-                                                                <i class="mdi mdi-check me-1"></i> Approve Level 2
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-secondary mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
-                                                                <i class="mdi mdi-close me-1"></i> Reject Level 2
-                                                            </button>
-                                                            <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                        </form>
-                                                    @endisKspi
-                                                @elseif($item->status_approval == 'rejected_level1')
-                                                    {{-- Level 2: KSPI can reject after ASMAN KSPI reject (berjenjang) --}}
-                                                    @isKspi
-                                                        <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
-                                                            @csrf
-                                                            <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
-                                                                <i class="mdi mdi-close me-1"></i> Reject Level 2
-                                                            </button>
-                                                            <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
-                                                        </form>
-                                                    @endisKspi
-                                                @endif
-                                            @endcanApproveReject
+                                            @php
+                                                $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($item);
+                                                $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($item);
+                                                $canReject      = \App\Helpers\ApprovalHelper::canReject($item);
+                                            @endphp
+
+                                            @if($canApproveLvl1 || $canApproveLvl2 || $canReject)
+                                                <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                    @csrf
+                                                    <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
+                                                    
+                                                    @if($canApproveLvl1)
+                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
+                                                            <i class="mdi mdi-check me-1"></i> Approve
+                                                        </button>
+                                                    @elseif($canApproveLvl2)
+                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
+                                                            <i class="mdi mdi-check-all me-1"></i> Approve Final
+                                                        </button>
+                                                    @endif
+
+                                                    @if($canReject)
+                                                        <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
+                                                            <i class="mdi mdi-close me-1"></i> Reject
+                                                        </button>
+                                                    @endif
+                                                </form>
+                                            @endif
                                             
+                                            @canModifyData
                                             <button type="button" 
                                                     class="btn btn-outline-danger btn-sm btn-custom" 
                                                     title="Hapus"
                                                     onclick="deleteData({{ $item->id }})">
                                                 <i class="mdi mdi-delete me-1"></i>Hapus
                                             </button>
+                                            @endcanModifyData
                                         </div>
                                     </td>
                                 </tr>

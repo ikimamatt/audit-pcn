@@ -62,6 +62,7 @@
                                 'risiko' => $pb->risikoList->map(function($r) {
                                     return [
                                         'deskripsi_risiko' => $r->deskripsi_risiko,
+                                        'level_risiko'     => $r->level_risiko,
                                         'penyebab_risiko'  => $r->penyebab_risiko,
                                         'dampak_risiko'    => $r->dampak_risiko,
                                         'kontrolList'      => $r->kontrolList->map(fn($k) => ['deskripsi_kontrol' => $k->deskripsi_kontrol])->values()->toArray(),
@@ -146,7 +147,7 @@
                         </div>
                     </div>
 
-                    <!-- Upload Dokumen -->
+                    {{-- Upload Dokumen PKA (DISABLED)
                     <div class="mb-3">
                         <label class="form-label">Upload Dokumen PKA (Tambah Baru)</label>
                         <input type="file" name="dokumen[]" class="form-control" multiple>
@@ -163,6 +164,7 @@
                         </div>
                         @endif
                     </div>
+                    --}}
 
                     <div class="mb-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Update</button>
@@ -210,15 +212,26 @@ $(document).ready(function () {
             </div>
             <div class="card-body py-2 px-3">
                 <div class="row g-2 mb-2">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Deskripsi Risiko <span class="text-danger">*</span></label>
                         <textarea name="${p}[deskripsi_risiko]" class="form-control form-control-sm" rows="2" placeholder="Deskripsi risiko..." required>${data.deskripsi_risiko || ''}</textarea>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm">Level Risiko</label>
+                        <select name="${p}[level_risiko]" class="form-select form-select-sm">
+                            <option value="">-- Pilih Level --</option>
+                            <option value="low" ${data.level_risiko === 'low' ? 'selected' : ''}>Low</option>
+                            <option value="low to moderate" ${data.level_risiko === 'low to moderate' ? 'selected' : ''}>Low to Moderate</option>
+                            <option value="moderate" ${data.level_risiko === 'moderate' ? 'selected' : ''}>Moderate</option>
+                            <option value="moderate to high" ${data.level_risiko === 'moderate to high' ? 'selected' : ''}>Moderate to High</option>
+                            <option value="high" ${data.level_risiko === 'high' ? 'selected' : ''}>High</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Penyebab Risiko</label>
                         <textarea name="${p}[penyebab_risiko]" class="form-control form-control-sm" rows="2" placeholder="Penyebab risiko...">${data.penyebab_risiko || ''}</textarea>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label form-label-sm">Dampak Risiko</label>
                         <textarea name="${p}[dampak_risiko]" class="form-control form-control-sm" rows="2" placeholder="Dampak risiko...">${data.dampak_risiko || ''}</textarea>
                     </div>

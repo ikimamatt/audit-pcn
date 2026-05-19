@@ -164,23 +164,38 @@
 }
 
 /* ===== MILESTONE ===== */
-.milestone-list { list-style: none; padding: 0; margin: 0; }
+.milestone-list { 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
 .milestone-list li {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f3f9;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e8edf5;
+    border-radius: 12px;
+    background: #fafbfd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s;
 }
-.milestone-list li:last-child { border-bottom: none; }
+.milestone-list li:hover {
+    background: #fff;
+    border-color: #d1d5db;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
 .ms-dot {
     width: 10px; height: 10px;
     border-radius: 50%;
-    background: #2d6a9f;
+    background: #16a34a;
     flex-shrink: 0;
     margin-top: 5px;
 }
-.ms-name { font-size: 0.85rem; font-weight: 600; color: #1f2937; margin-bottom: 2px; }
+.ms-name { font-size: 0.85rem; font-weight: 600; color: #1f2937; margin-bottom: 6px; line-height: 1.3; }
 .ms-date { font-size: 0.78rem; color: #6b7280; display: flex; align-items: center; gap: 5px; }
 
 /* ===== DOKUMEN TABLE ===== */
@@ -253,6 +268,92 @@
         <a href="{{ route('audit.pka.index') }}" class="btn-back">
             <i class="mdi mdi-arrow-left"></i> Kembali
         </a>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+{{-- ===== APPROVAL KESELURUHAN PKA ===== --}}
+<div class="section-card">
+    <div class="section-header">
+        <div class="s-icon" style="background:#f0fdf4;">
+            <i class="mdi mdi-check-decagram" style="color:#16a34a;"></i>
+        </div>
+        <h6>Status Persetujuan Program Kerja Audit</h6>
+        <span class="ms-auto">
+            @if($item->status_approval == 'approved')
+                <span class="badge" style="background:#d1fae5;color:#065f46;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:20px;">
+                    <i class="mdi mdi-check-circle me-1"></i>Approved (Final)
+                </span>
+            @elseif($item->status_approval == 'approved_level1')
+                <span class="badge" style="background:#cff4fc;color:#055160;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:20px;">
+                    <i class="mdi mdi-check me-1"></i>Approved Lvl 1
+                </span>
+            @elseif(in_array($item->status_approval, ['rejected', 'rejected_level1']))
+                <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:20px;">
+                    <i class="mdi mdi-close-circle me-1"></i>Rejected
+                </span>
+            @else
+                <span class="badge" style="background:#fef3c7;color:#92400e;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:20px;">
+                    <i class="mdi mdi-clock-outline me-1"></i>Pending
+                </span>
+            @endif
+        </span>
+    </div>
+    <div class="section-body">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <p class="mb-1 text-muted" style="font-size:0.85rem;">Persetujuan dokumen ini dilakukan secara berjenjang oleh <strong>Ketua Tim</strong> (Level 1) dan <strong>Koordinator</strong> (Level 2).</p>
+                
+                @if(in_array($item->status_approval, ['rejected', 'rejected_level1']))
+                    <div class="alert alert-danger mt-2 mb-0" style="font-size:0.85rem; padding:10px;">
+                        <strong>Alasan Penolakan:</strong><br>
+                        {{ $item->rejection_reason_level2 ?? $item->rejection_reason_level1 ?? '-' }}
+                    </div>
+                @endif
+            </div>
+            <div class="col-md-5 text-end">
+                @canApproveReject
+                    @php
+                        $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($item);
+                        $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($item);
+                    @endphp
+
+                    @if($canApproveLvl1 || $canApproveLvl2)
+                        <form action="{{ route('audit.pka.approval-main', $item->id) }}" method="POST" id="approval-main-form" class="d-inline">
+                            @csrf
+                            <input type="hidden" name="action" id="action-main" value="">
+                            
+                            @if($canApproveLvl1)
+                                <button type="button" class="btn btn-success" onclick="approveMainData()">
+                                    <i class="mdi mdi-check-circle me-1"></i> Approve (Ketua)
+                                </button>
+                            @elseif($canApproveLvl2)
+                                <button type="button" class="btn btn-success" onclick="approveMainData()">
+                                    <i class="mdi mdi-check-all me-1"></i> Approve Final (Koordinator)
+                                </button>
+                            @endif
+
+                            <button type="button" class="btn btn-danger ms-2" onclick="rejectMainData()">
+                                <i class="mdi mdi-close-circle me-1"></i> Reject
+                            </button>
+                        </form>
+                    @endif
+                @endcanApproveReject
+            </div>
+        </div>
     </div>
 </div>
 
@@ -374,8 +475,7 @@
                 </h2>
                 <div id="pbCollapse{{ $pb->id }}"
                      class="accordion-collapse collapse {{ $pbIdx === 0 ? 'show' : '' }}"
-                     aria-labelledby="pbHead{{ $pb->id }}"
-                     data-bs-parent="#accordionPb">
+                     aria-labelledby="pbHead{{ $pb->id }}">
                     <div class="accordion-body p-3">
 
                         @if($pb->risikoList->count() > 0)
@@ -387,6 +487,24 @@
                                     <span class="fw-semibold" style="font-size:.85rem;color:#92400e;">
                                         Risiko #{{ $rIdx + 1 }}: {{ $risiko->deskripsi_risiko }}
                                     </span>
+                                    @if($risiko->level_risiko)
+                                        @php
+                                            $riskLvl = strtolower($risiko->level_risiko);
+                                            $badgeClass = 'bg-secondary';
+                                            if($riskLvl === 'high') $badgeClass = 'bg-danger';
+                                            elseif($riskLvl === 'moderate to high') $badgeClass = 'bg-danger';
+                                            elseif($riskLvl === 'moderate') $badgeClass = 'bg-warning';
+                                            elseif($riskLvl === 'low to moderate') $badgeClass = 'bg-info';
+                                            elseif($riskLvl === 'low') $badgeClass = 'bg-success';
+                                            // Fallback untuk data lama
+                                            elseif($riskLvl === 'tinggi') $badgeClass = 'bg-danger';
+                                            elseif($riskLvl === 'sedang') $badgeClass = 'bg-warning';
+                                            elseif($riskLvl === 'rendah') $badgeClass = 'bg-success';
+                                        @endphp
+                                        <span class="badge {{ $badgeClass }} ms-auto" style="font-size:0.7rem;">
+                                            {{ ucwords($risiko->level_risiko) }}
+                                        </span>
+                                    @endif
                                 </div>
                                 <div class="card-body py-2 px-3">
                                     @if($risiko->penyebab_risiko || $risiko->dampak_risiko)
@@ -550,7 +668,8 @@
 </div>
 @endif
 
-{{-- ===== DOKUMEN PKA ===== --}}
+{{--
+===== DOKUMEN PKA (DISABLED) =====
 <div class="section-card">
     <div class="section-header">
         <div class="s-icon" style="background:#f5f3ff;">
@@ -598,20 +717,33 @@
                                    class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:.78rem;">
                                     <i class="mdi mdi-eye me-1"></i>Lihat
                                 </a>
-                                @if($dok->status_approval == 'pending')
-                                    @canApproveReject
+                                @php
+                                    $canApproveDokLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($dok);
+                                    $canApproveDokLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($dok);
+                                    $canRejectDok      = \App\Helpers\ApprovalHelper::canReject($dok);
+                                @endphp
+
+                                @if($canApproveDokLvl1 || $canApproveDokLvl2 || $canRejectDok)
                                     <form action="{{ route('audit.pka.approval', [$item->id, $dok->id]) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <button type="submit" name="action" value="approve"
-                                            class="btn btn-sm btn-success" style="border-radius:8px;font-size:.78rem;">
-                                            <i class="mdi mdi-check me-1"></i>Approve
-                                        </button>
-                                        <button type="submit" name="action" value="reject"
-                                            class="btn btn-sm btn-danger ms-1" style="border-radius:8px;font-size:.78rem;">
-                                            <i class="mdi mdi-close me-1"></i>Reject
-                                        </button>
+                                        @if($canApproveDokLvl1)
+                                            <button type="submit" name="action" value="approve"
+                                                class="btn btn-sm btn-success" style="border-radius:8px;font-size:.78rem;">
+                                                <i class="mdi mdi-check me-1"></i>Approve (Ketua)
+                                            </button>
+                                        @elseif($canApproveDokLvl2)
+                                            <button type="submit" name="action" value="approve"
+                                                class="btn btn-sm btn-success" style="border-radius:8px;font-size:.78rem;">
+                                                <i class="mdi mdi-check-all me-1"></i>Approve Final
+                                            </button>
+                                        @endif
+                                        
+                                        @if($canRejectDok)
+                                            <button type="button" class="btn btn-sm btn-danger ms-1" style="border-radius:8px;font-size:.78rem;" onclick="rejectDokumen({{ $item->id }}, {{ $dok->id }})">
+                                                <i class="mdi mdi-close me-1"></i>Reject
+                                            </button>
+                                        @endif
                                     </form>
-                                    @endcanApproveReject
                                 @endif
                             </div>
                         </td>
@@ -625,5 +757,124 @@
         @endif
     </div>
 </div>
+--}}
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function approveMainData() {
+    Swal.fire({
+        title: 'Approve Program Kerja Audit?',
+        text: 'Anda yakin ingin memberikan persetujuan pada Program Kerja Audit ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Approve!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('action-main').value = 'approve';
+            document.getElementById('approval-main-form').submit();
+        }
+    });
+}
+
+function rejectMainData() {
+    Swal.fire({
+        title: 'Reject Program Kerja Audit',
+        text: 'Masukkan alasan penolakan (minimal 10 karakter):',
+        icon: 'warning',
+        input: 'textarea',
+        inputPlaceholder: 'Ketik alasan penolakan di sini...',
+        inputAttributes: {
+            'aria-label': 'Alasan penolakan',
+            'minlength': 10,
+            'required': true
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Reject!',
+        cancelButtonText: 'Batal',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Alasan penolakan harus diisi!';
+            }
+            if (value.length < 10) {
+                return 'Alasan penolakan minimal 10 karakter!';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('action-main').value = 'reject';
+            
+            // Tambahkan input hidden untuk alasan
+            const form = document.getElementById('approval-main-form');
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'rejection_reason';
+            reasonInput.value = result.value;
+            form.appendChild(reasonInput);
+            
+            form.submit();
+        }
+    });
+}
+
+function rejectDokumen(pkaId, dokId) {
+    Swal.fire({
+        title: 'Reject Dokumen PKA',
+        text: 'Masukkan alasan penolakan (minimal 10 karakter):',
+        icon: 'warning',
+        input: 'textarea',
+        inputPlaceholder: 'Ketik alasan penolakan di sini...',
+        inputAttributes: {
+            'aria-label': 'Alasan penolakan',
+            'minlength': 10,
+            'required': true
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Reject!',
+        cancelButtonText: 'Batal',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Alasan penolakan harus diisi!';
+            }
+            if (value.length < 10) {
+                return 'Alasan penolakan minimal 10 karakter!';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create and submit form dynamically
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/audit/pka/${pkaId}/dokumen/${dokId}/approval`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'reject';
+            form.appendChild(actionInput);
+            
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'rejection_reason';
+            reasonInput.value = result.value;
+            form.appendChild(reasonInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
 @endsection

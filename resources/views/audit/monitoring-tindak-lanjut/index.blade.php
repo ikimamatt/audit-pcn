@@ -1,5 +1,18 @@
 @extends('layouts.base')
 
+@php
+/** 
+ * @var array $auditeeData 
+ * @var array $totalData 
+ * @var array $semesterData 
+ * @var int[] $years 
+ * @var int $selectedYear 
+ * @var int|float $realisasiKumulatif 
+ * @var string $currentMonthName 
+ */
+@endphp
+
+
 @section('title', 'Dashboard Monitoring Tindak Lanjut')
 
 @section('content')

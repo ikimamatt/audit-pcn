@@ -19,6 +19,7 @@ class ProgramKerjaAuditSeeder extends Seeder
             'risiko' => [
                 [
                     'deskripsi_risiko' => 'Risiko ketidakpatuhan terhadap regulasi',
+                    'level_risiko'     => 'Tinggi',
                     'penyebab_risiko'  => 'Perubahan regulasi yang tidak diikuti dengan baik oleh unit kerja',
                     'dampak_risiko'    => 'Sanksi dari regulator dan kerugian finansial perusahaan',
                     'kontrol'          => [
@@ -28,6 +29,7 @@ class ProgramKerjaAuditSeeder extends Seeder
                 ],
                 [
                     'deskripsi_risiko' => 'Risiko inefisiensi perencanaan anggaran',
+                    'level_risiko'     => 'Sedang',
                     'penyebab_risiko'  => 'Estimasi biaya tidak akurat dan kurangnya data historis',
                     'dampak_risiko'    => 'Pembengkakan anggaran dan gagal mencapai target keuangan',
                     'kontrol'          => [
@@ -42,6 +44,7 @@ class ProgramKerjaAuditSeeder extends Seeder
             'risiko' => [
                 [
                     'deskripsi_risiko' => 'Risiko inefisiensi operasional',
+                    'level_risiko'     => 'Rendah',
                     'penyebab_risiko'  => 'Proses bisnis yang tidak optimal dan duplikasi pekerjaan',
                     'dampak_risiko'    => 'Peningkatan biaya operasional dan penurunan produktivitas',
                     'kontrol'          => [
@@ -51,6 +54,7 @@ class ProgramKerjaAuditSeeder extends Seeder
                 ],
                 [
                     'deskripsi_risiko' => 'Risiko kegagalan teknologi',
+                    'level_risiko'     => 'Tinggi',
                     'penyebab_risiko'  => 'Sistem IT yang tidak handal dan kurangnya pemeliharaan',
                     'dampak_risiko'    => 'Gangguan layanan dan kehilangan data operasional',
                     'kontrol'          => [
@@ -129,6 +133,7 @@ class ProgramKerjaAuditSeeder extends Seeder
                     $risikoId = DB::table('pka_risiko')->insertGetId([
                         'pka_proses_bisnis_id' => $pbId,
                         'deskripsi_risiko'     => $risikoData['deskripsi_risiko'],
+                        'level_risiko'         => $risikoData['level_risiko'] ?? null,
                         'penyebab_risiko'      => $risikoData['penyebab_risiko'],
                         'dampak_risiko'        => $risikoData['dampak_risiko'],
                         'urutan'               => $risikoUrutan + 1,

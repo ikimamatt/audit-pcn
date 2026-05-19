@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register custom middleware
         $middleware->alias([
             'check.activity' => \App\Http\Middleware\CheckUserActivity::class,
+            'role'           => \App\Http\Middleware\CheckRole::class,
         ]);
         
         // Apply middleware to web routes

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Audit;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ReminderRekomendasiMail;
+use App\Models\EmailNotificationLog;
 use App\Models\PenutupLhaRekomendasi;
 use App\Models\Audit\PerencanaanAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use App\Helpers\AuthHelper;
 
 class PemantauanAuditController extends Controller
@@ -19,10 +22,11 @@ class PemantauanAuditController extends Controller
         // Ambil semua perencanaan audit yang memiliki rekomendasi
         $query = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
-        // Jika user tidak bisa melihat semua data, filter hanya rekomendasi dimana user tersebut adalah PIC
-        if (!$canSeeAllData && $currentUserId) {
-            $query->whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi.picUsers', function($q) use ($currentUserId) {
-                $q->where('master_user_id', $currentUserId);
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee mereka
+        if (\App\Helpers\AuthHelper::isAuditee() && $currentUserId) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
             });
         }
         
@@ -52,9 +56,10 @@ class PemantauanAuditController extends Controller
                     $q->where('perencanaan_audit_id', $perencanaan->id);
                 });
                 
-                if (!$canSeeAllData && $currentUserId) {
-                    $rekomendasiQuery->whereHas('picUsers', function($q) use ($currentUserId) {
-                        $q->where('master_user_id', $currentUserId);
+                if (\App\Helpers\AuthHelper::isAuditee()) {
+                    $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+                    $rekomendasiQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
+                        $q->where('auditee_id', $userAuditeeId);
                     });
                 }
                 
@@ -83,9 +88,10 @@ class PemantauanAuditController extends Controller
         // Ambil daftar jenis audit untuk filter dropdown (dengan filter PIC jika perlu)
         $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
-        if (!$canSeeAllData && $currentUserId) {
-            $jenisAuditQuery->whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi.picUsers', function($q) use ($currentUserId) {
-                $q->where('master_user_id', $currentUserId);
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $jenisAuditQuery->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
             });
         }
         
@@ -123,10 +129,11 @@ class PemantauanAuditController extends Controller
             });
         }
         
-        // Jika user tidak bisa melihat semua data, filter hanya rekomendasi dimana user tersebut adalah PIC
-        if (!$canSeeAllData && $currentUserId) {
-            $query->whereHas('picUsers', function($q) use ($currentUserId) {
-                $q->where('master_user_id', $currentUserId);
+        // Jika user adalah AUDITEE, filter berdasarkan auditee_id mereka
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
+                $q->where('auditee_id', $userAuditeeId);
             });
         }
         
@@ -144,7 +151,9 @@ class PemantauanAuditController extends Controller
             $perencanaanAudit = PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas)->first();
         }
         
-        return view('audit.pemantauan.index', compact('data', 'nomorSuratTugas', 'perencanaanAudit'));
+        $canSendReminder = \App\Helpers\AuthHelper::isSpiTeam() || \App\Helpers\AuthHelper::isSuperAdmin();
+
+        return view('audit.pemantauan.index', compact('data', 'nomorSuratTugas', 'perencanaanAudit', 'canSendReminder'));
     }
 
     public function edit($id)
@@ -157,12 +166,8 @@ class PemantauanAuditController extends Controller
             'picUsers'
         ])->findOrFail($id);
         
-        // Jika user tidak bisa melihat semua data, pastikan user tersebut adalah PIC dari rekomendasi ini
-        if (!$canSeeAllData && $currentUserId) {
-            $isUserPic = $item->picUsers()->where('master_user_id', $currentUserId)->exists();
-            if (!$isUserPic) {
-                abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi ini.');
-            }
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi ini.');
         }
         
         return view('audit.pemantauan.edit', compact('item'));
@@ -178,12 +183,8 @@ class PemantauanAuditController extends Controller
             'picUsers'
         ])->findOrFail($id);
         
-        // Jika user tidak bisa melihat semua data, pastikan user tersebut adalah PIC dari rekomendasi ini
-        if (!$canSeeAllData && $currentUserId) {
-            $isRelated = $item->picUsers()->where('master_user_id', $currentUserId)->exists();
-            if (!$isRelated) {
-                abort(403, 'Anda tidak memiliki akses untuk mengupdate rekomendasi ini.');
-            }
+        if (!\App\Helpers\AuthHelper::canModifyData()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengupdate rekomendasi ini.');
         }
         
         $request->validate([
@@ -217,31 +218,19 @@ class PemantauanAuditController extends Controller
     {
         $currentUserId = AuthHelper::getCurrentUserId();
         $user = Auth::user();
+        $rekomendasi = PenutupLhaRekomendasi::findOrFail($id);
         
-        // Check if user can update status: AUDITOR, ASMAN SPI, KSPI, atau PIC APPROVAL 2
-        $canUpdateStatus = false;
-        
-        if ($user && $user->akses) {
-            $namaAkses = $user->akses->nama_akses;
+        $isPicApproval1 = $rekomendasi->picUsers()
+            ->where('master_user_id', $currentUserId)
+            ->wherePivot('pic_type', 'approval_1_spi')
+            ->exists();
             
-            // AUDITOR, ASMAN SPI, KSPI bisa update status
-            if (in_array($namaAkses, ['AUDITOR', 'Auditor', 'ASMAN SPI', 'KSPI'])) {
-                $canUpdateStatus = true;
-            }
-        }
-        
-        // Check if user is PIC APPROVAL 2 untuk rekomendasi ini
-        if (!$canUpdateStatus && $currentUserId) {
-            $rekomendasi = PenutupLhaRekomendasi::findOrFail($id);
-            $isPicApproval2 = $rekomendasi->picUsers()
-                ->where('master_user_id', $currentUserId)
-                ->wherePivot('pic_type', 'approval_2_spi')
-                ->exists();
-            
-            if ($isPicApproval2) {
-                $canUpdateStatus = true;
-            }
-        }
+        $isPicApproval2 = $rekomendasi->picUsers()
+            ->where('master_user_id', $currentUserId)
+            ->wherePivot('pic_type', 'approval_2_spi')
+            ->exists();
+
+        $canUpdateStatus = $isPicApproval1 || $isPicApproval2 || \App\Helpers\AuthHelper::isSuperAdmin();
         
         if (!$canUpdateStatus) {
             return response()->json([
@@ -274,5 +263,103 @@ class PemantauanAuditController extends Controller
             'message' => 'Status tindak lanjut berhasil diupdate!',
             'new_status' => $request->status_tindak_lanjut
         ]);
+    }
+
+    /**
+     * Kirim email pengingat ke semua PIC rekomendasi (manual trigger).
+     * Mengirim ke: business_contact (auditee) + approval_1_spi + approval_2_spi
+     */
+    public function sendReminder(Request $request, $id)
+    {
+        $currentUser = Auth::user();
+
+        // Hanya SPI yang boleh kirim reminder manual
+        $namaAkses = optional(optional($currentUser)->akses)->nama_akses ?? '';
+        if (! in_array($namaAkses, [
+            'AUDITOR', 'Auditor',
+            'ASMAN SPI',
+            'KSPI',
+            'SUPERADMIN', 'Superadmin', 'superadmin',
+            'SUPER ADMIN', 'Super Admin',
+        ])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk mengirim pengingat.'
+            ], 403);
+        }
+
+        $rekomendasi = PenutupLhaRekomendasi::with([
+            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
+            'picUsers',
+        ])->findOrFail($id);
+
+        // Ambil semua PIC yang memiliki email
+        $pics = $rekomendasi->picUsers()->whereNotNull('email')->get();
+
+        if ($pics->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada PIC dengan email terdaftar untuk rekomendasi ini.'
+            ], 422);
+        }
+
+        $sentTo  = [];
+        $failed  = [];
+
+        foreach ($pics as $pic) {
+            try {
+                Mail::to($pic->email, $pic->nama)
+                    ->send(new ReminderRekomendasiMail($rekomendasi, $pic, 'manual'));
+
+                // Catat log berhasil
+                EmailNotificationLog::create([
+                    'penutup_lha_rekomendasi_id' => $rekomendasi->id,
+                    'master_user_id'             => $pic->id,
+                    'trigger_type'               => 'manual',
+                    'sent_by'                    => $currentUser->id,
+                    'status'                     => 'sent',
+                    'sent_at'                    => now(),
+                ]);
+
+                $sentTo[] = $pic->nama;
+            } catch (\Throwable $e) {
+                // Catat log gagal
+                EmailNotificationLog::create([
+                    'penutup_lha_rekomendasi_id' => $rekomendasi->id,
+                    'master_user_id'             => $pic->id,
+                    'trigger_type'               => 'manual',
+                    'sent_by'                    => $currentUser->id,
+                    'status'                     => 'failed',
+                    'error_message'              => $e->getMessage(),
+                    'sent_at'                    => now(),
+                ]);
+
+                $failed[] = $pic->nama;
+            }
+        }
+
+        // Update timestamp notifikasi terakhir
+        $rekomendasi->update(['last_notified_at' => now()]);
+
+        if (! empty($sentTo) && empty($failed)) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Email pengingat berhasil dikirim ke ' . count($sentTo) . ' PIC.',
+                'sent_to'  => $sentTo,
+            ]);
+        } elseif (! empty($sentTo) && ! empty($failed)) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Sebagian email terkirim. Berhasil: ' . count($sentTo) . ', Gagal: ' . count($failed),
+                'sent_to'  => $sentTo,
+                'failed'   => $failed,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semua email gagal terkirim. Silakan periksa konfigurasi mail.',
+                'failed'  => $failed,
+            ], 500);
+        }
     }
 } 
