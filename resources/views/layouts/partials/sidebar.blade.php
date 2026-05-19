@@ -61,6 +61,12 @@
                         </ul>
                     </div>
                 </li>
+                <li>
+                    <a href="{{ route('audit.persetujuan.index') }}" class="tp-link">
+                        <i data-feather="check-circle" class="text-warning"></i>
+                        <span> Persetujuan Dokumen </span>
+                    </a>
+                </li>
                 @endif
                 {{--
                 <li class="menu-title">Pages</li> --}}

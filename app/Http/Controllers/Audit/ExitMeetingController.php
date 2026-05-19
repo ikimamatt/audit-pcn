@@ -18,6 +18,11 @@ class ExitMeetingController extends Controller
             'perencanaanAudit.programKerjaAudit.milestones'
         ]);
 
+        // Filter by specific ID from details page
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
         // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {
@@ -30,7 +35,7 @@ class ExitMeetingController extends Controller
             $selectedMonth = Carbon::parse($request->bulan);
             $q->whereHas('perencanaanAudit', function ($subQ) use ($selectedMonth) {
                 $subQ->whereYear('tanggal_audit_mulai', $selectedMonth->year)
-                    ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
+                     ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
             });
         });
 

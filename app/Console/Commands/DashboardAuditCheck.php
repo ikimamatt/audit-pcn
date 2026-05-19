@@ -30,7 +30,10 @@ class DashboardAuditCheck extends Command
         // KPI 2: Terealisasi
         // =====================================================
         $this->line("\n=== KPI 2: Terealisasi (Entry Meeting + Fallback) ===");
-        $emIds = DB::table('entry_meeting')->distinct()->pluck('perencanaan_audit_id');
+        $emIds = DB::table('entry_meeting')
+            ->join('program_kerja_audit as pka', 'entry_meeting.program_kerja_audit_id', '=', 'pka.id')
+            ->distinct()
+            ->pluck('pka.perencanaan_audit_id');
         $fromEM = $emIds->count();
         $fromFallback = DB::table('realisasi_audits')
             ->whereNotIn('perencanaan_audit_id', $emIds)
@@ -85,14 +88,14 @@ class DashboardAuditCheck extends Command
         $this->line("  Dashboard Shows: Selesai:13, On Progress:11, Belum:14");
 
         // =====================================================
-        // Tren Penyelesaian Audit (Line Chart)
+        // Tren Penyelesaian Rekomendasi Audit (Line Chart)
         // =====================================================
-        $this->line("\n=== Tren Penyelesaian per Bulan ===");
-        $tren = DB::table('realisasi_audits')
-            ->where('status', 'selesai')
-            ->whereNotNull('tanggal_selesai')
-            ->select(DB::raw('MONTH(tanggal_selesai) as bln'), DB::raw('count(*) as total'))
-            ->groupBy(DB::raw('MONTH(tanggal_selesai)'))
+        $this->line("\n=== Tren Penyelesaian Rekomendasi per Bulan ===");
+        $tren = DB::table('penutup_lha_rekomendasi')
+            ->where('status_tindak_lanjut', 'closed')
+            ->whereNotNull('real_waktu')
+            ->select(DB::raw('MONTH(real_waktu) as bln'), DB::raw('count(*) as total'))
+            ->groupBy(DB::raw('MONTH(real_waktu)'))
             ->orderBy('bln')
             ->pluck('total', 'bln')
             ->toArray();

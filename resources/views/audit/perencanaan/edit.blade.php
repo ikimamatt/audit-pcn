@@ -103,7 +103,7 @@
                                             data-nama="{{ $auditor->nama }}" 
                                             data-nip="{{ $auditor->nip }}"
                                             {{ (is_numeric($aud) && $aud == $auditor->id) || $aud == $auditor->id ? 'selected' : '' }}>
-                                            {{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses->nama_akses ?? '-' }})
+                                            {{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses ? (str_contains(strtoupper($auditor->akses->nama_akses), 'VIEW BOD') ? 'VIEW BOD/BOC' : $auditor->akses->nama_akses) : '-' }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -198,7 +198,7 @@
         // Buat select dropdown dengan opsi auditor
         var selectHtml = '<select name="auditor[]" class="form-select auditor-select" required><option value="">Pilih Auditor</option>';
         @foreach($auditors as $auditor)
-            selectHtml += '<option value="{{ $auditor->id }}" data-nama="{{ $auditor->nama }}" data-nip="{{ $auditor->nip }}">{{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses->nama_akses ?? "-" }})</option>';
+            selectHtml += '<option value="{{ $auditor->id }}" data-nama="{{ $auditor->nama }}" data-nip="{{ $auditor->nip }}">{{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses ? (str_contains(strtoupper($auditor->akses->nama_akses), "VIEW BOD") ? "VIEW BOD/BOC" : $auditor->akses->nama_akses) : "-" }})</option>';
         @endforeach
         selectHtml += '</select>';
         

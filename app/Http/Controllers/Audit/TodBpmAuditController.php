@@ -22,6 +22,13 @@ class TodBpmAuditController extends Controller
     {
         $data = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko.kontrolList', 'pkaKontrol'])->get();
 
+        // Filter by specific ID from details page
+        if ($request->filled('id')) {
+            $data = $data->filter(function($item) use ($request) {
+                return $item->id == $request->id;
+            });
+        }
+
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {
             $data = $data->filter(fn($item) =>

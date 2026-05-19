@@ -211,7 +211,7 @@
                                     @foreach($aksesUsers as $akses)
                                         <option value="{{ $akses->id }}" 
                                                 {{ old('master_akses_user_id', $masterUser->master_akses_user_id) == $akses->id ? 'selected' : '' }}>
-                                            {{ $akses->nama_akses }}
+                                            {{ str_contains(strtoupper($akses->nama_akses), 'VIEW BOD') ? 'VIEW BOD/BOC' : $akses->nama_akses }}
                                         </option>
                                     @endforeach
                                 </select>
