@@ -322,7 +322,7 @@
                         <th>Tgl Surat Tugas</th>
                         <th>Jenis Audit</th>
                         <th>Auditee</th>
-                        <th>Auditor</th>
+                        <th>Petugas</th>
                         <th>Ruang Lingkup</th>
                         <th>Periode</th>
                         <th>Tanggal Audit</th>
@@ -369,23 +369,52 @@
                                 </div>
                             </td>
 
-                            {{-- Auditor --}}
-                            <td>
-                                @if(is_array($item->auditor) && count($item->auditor) > 0)
-                                    <div style="max-width:180px;">
-                                        @foreach($item->auditor as $aud)
-                                            <span class="badge-auditor">
-                                                <i class="mdi mdi-account-outline me-1"></i>{{ $aud }}
-                                            </span>
+                            {{-- Petugas --}}
+                            <td style="min-width: 180px; max-width: 240px;">
+                                <div class="d-flex flex-column gap-1">
+                                    {{-- Koordinator --}}
+                                    @if($item->koordinator)
+                                        <div class="rounded px-2 py-1 border" style="background:#f8f9fa; font-size:0.72rem; line-height:1.4;">
+                                            <div class="fw-semibold text-muted" style="font-size:0.68rem; text-transform:uppercase; letter-spacing:.03em;">
+                                                <i class="mdi mdi-tag-outline me-1"></i>Koordinator
+                                            </div>
+                                            <div class="text-dark fw-bold" style="word-break:break-word;">
+                                                <i class="mdi mdi-account-star-outline me-1"></i>{{ $item->koordinator->nama ?? '-' }}
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Ketua Tim --}}
+                                    @if($item->ketuaTim)
+                                        <div class="rounded px-2 py-1 border" style="background:#f8f9fa; font-size:0.72rem; line-height:1.4;">
+                                            <div class="fw-semibold text-muted" style="font-size:0.68rem; text-transform:uppercase; letter-spacing:.03em;">
+                                                <i class="mdi mdi-tag-outline me-1"></i>Ketua Tim
+                                            </div>
+                                            <div class="text-dark fw-bold" style="word-break:break-word;">
+                                                <i class="mdi mdi-account-tie-outline me-1"></i>{{ $item->ketuaTim->nama ?? '-' }}
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Auditor --}}
+                                    @if(!empty($item->auditor) && (is_array($item->auditor) ? count($item->auditor) > 0 : true))
+                                        @php $auditors = is_array($item->auditor) ? $item->auditor : [$item->auditor]; @endphp
+                                        @foreach($auditors as $aud)
+                                            <div class="rounded px-2 py-1 border" style="background:#f8f9fa; font-size:0.72rem; line-height:1.4;">
+                                                <div class="fw-semibold text-muted" style="font-size:0.68rem; text-transform:uppercase; letter-spacing:.03em;">
+                                                    <i class="mdi mdi-tag-outline me-1"></i>Auditor
+                                                </div>
+                                                <div class="text-dark fw-bold" style="word-break:break-word;">
+                                                    <i class="mdi mdi-account-outline me-1"></i>{{ $aud }}
+                                                </div>
+                                            </div>
                                         @endforeach
-                                    </div>
-                                @elseif(!empty($item->auditor))
-                                    <span class="badge-auditor">
-                                        <i class="mdi mdi-account-outline me-1"></i>{{ $item->auditor }}
-                                    </span>
-                                @else
-                                    <span class="text-muted" style="font-size:.8rem;">-</span>
-                                @endif
+                                    @endif
+                                    
+                                    @if(!$item->koordinator && !$item->ketuaTim && empty($item->auditor))
+                                        <span class="text-muted" style="font-size:.8rem;">-</span>
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- Ruang Lingkup --}}
