@@ -18,6 +18,13 @@ class WalkthroughAuditController extends Controller
         // Simple approach - get all data and filter in memory
         $data = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit.perencanaanAudit'])->get();
 
+        // Filter by specific ID from details page
+        if ($request->filled('id')) {
+            $data = $data->filter(function($item) use ($request) {
+                return $item->id == $request->id;
+            });
+        }
+
         // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {

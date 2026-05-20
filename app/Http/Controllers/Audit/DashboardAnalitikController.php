@@ -78,17 +78,21 @@ class DashboardAnalitikController extends Controller
         $totalTl = array_sum($rekomendasiStatus);
         $percentClosed = $totalTl > 0 ? round(($rekomendasiClosed / $totalTl) * 100, 1) : 0;
         
-        // 2. Data for Section 1: Tren Penyelesaian Audit (Bulanan)
+        // 2. Data for Section 1: Tren Penyelesaian Rekomendasi Audit (Bulanan)
         $trenBulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
         $trenSelesai = array_fill(0, 12, 0);
 
-        $realisasiSelesai = RealisasiAudit::whereIn('perencanaan_audit_id', $planIds)
-            ->where('status', 'selesai')
-            ->whereNotNull('tanggal_selesai')
+        $rekomendasiSelesai = DB::table('penutup_lha_rekomendasi as plr')
+            ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->where('plr.status_tindak_lanjut', 'closed')
+            ->whereNotNull('plr.real_waktu')
+            ->select('plr.real_waktu')
             ->get();
 
-        foreach($realisasiSelesai as $r) {
-            $monthIndex = Carbon::parse($r->tanggal_selesai)->month - 1; // 0-11
+        foreach($rekomendasiSelesai as $r) {
+            $monthIndex = Carbon::parse($r->real_waktu)->month - 1; // 0-11
             $trenSelesai[$monthIndex]++;
         }
         

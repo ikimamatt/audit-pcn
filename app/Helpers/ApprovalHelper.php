@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ApprovalHelper
 {
@@ -24,6 +25,7 @@ class ApprovalHelper
                 'tod_bpm_audit',
                 'toe_audit',
                 'pelaporan_hasil_audit',
+                'realisasi_audits',
             ];
 
             if (in_array($table, $directTables)) {
@@ -217,13 +219,20 @@ class ApprovalHelper
 
             // Level 2: Koordinator (atau SUPER ADMIN dari approved_level1)
             if (($isKoordinator || $isSuperAdmin) && $status === 'approved_level1') {
-                $updated = DB::table($tableName)->where('id', $itemId)->update([
+                $updateData = [
                     'status_approval'    => 'approved',
                     'approved_by_level2' => $userId,
                     'approved_at_level2' => now(),
-                    'approved_by'        => $userId, // backward compat
-                    'approved_at'        => now(),   // backward compat
-                ]);
+                ];
+
+                if (Schema::hasColumn($tableName, 'approved_by')) {
+                    $updateData['approved_by'] = $userId;
+                }
+                if (Schema::hasColumn($tableName, 'approved_at')) {
+                    $updateData['approved_at'] = now();
+                }
+
+                $updated = DB::table($tableName)->where('id', $itemId)->update($updateData);
 
                 if ($updated === false) {
                     return ['success' => false, 'message' => 'Gagal menyimpan approval Level 2.'];

@@ -248,8 +248,8 @@
             <div class="col-xl-8">
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3 class="chart-title">Tren Penyelesaian Audit</h3>
-                        <p class="chart-subtitle">Jumlah audit yang berhasil diselesaikan sepanjang bulan berjalan
+                        <h3 class="chart-title">Tren Penyelesaian Rekomendasi Audit</h3>
+                        <p class="chart-subtitle">Jumlah rekomendasi audit yang telah selesai ditindaklanjuti sepanjang bulan berjalan
                         </p>
                     </div>
                     <div id="chart-tren" class="echart-container"></div>
@@ -397,7 +397,7 @@
                 },
                 series: [
                     {
-                        name: 'Audit Selesai',
+                        name: 'Rekomendasi Selesai',
                         type: 'line',
                         data: trenSelesai,
                         smooth: true,

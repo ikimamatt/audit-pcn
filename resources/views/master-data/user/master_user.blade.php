@@ -35,7 +35,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $row->nama }}</td>
                             <td>{{ $row->nip }}</td>
-                            <td>{{ $row->akses->nama_akses ?? '-' }}</td>
+                            <td>{{ $row->akses ? (str_contains(strtoupper($row->akses->nama_akses), 'VIEW BOD') ? 'VIEW BOD/BOC' : $row->akses->nama_akses) : '-' }}</td>
                         </tr>
                     @endforeach
                     </tbody>

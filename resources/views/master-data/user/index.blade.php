@@ -75,7 +75,7 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ $item->akses->nama_akses ?? '-' }}</td>
+                                    <td>{{ $item->akses ? (str_contains(strtoupper($item->akses->nama_akses), 'VIEW BOD') ? 'VIEW BOD/BOC' : $item->akses->nama_akses) : '-' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('master.user.edit', $item->id) }}" 

@@ -127,6 +127,10 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('exit-meeting/pie', [\App\Http\Controllers\Audit\ExitMeetingController::class, 'pie'])->name('exit-meeting.pie');
         Route::get('dashboard', [\App\Http\Controllers\Audit\DashboardAnalitikController::class, 'index'])->name('dashboard');
         Route::get('dashboard/aging-detail', [\App\Http\Controllers\Audit\DashboardAnalitikController::class, 'agingDetail'])->name('dashboard.aging-detail');
+
+        // Persetujuan Dokumen
+        Route::get('persetujuan', [\App\Http\Controllers\Audit\PersetujuanController::class, 'index'])->name('persetujuan.index');
+        Route::post('persetujuan/proses', [\App\Http\Controllers\Audit\PersetujuanController::class, 'proses'])->name('persetujuan.proses');
     });
 });
 
