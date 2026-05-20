@@ -30,9 +30,10 @@
 
                 @php
                     $userAkses = auth()->user()->akses->nama_akses ?? '';
-                    $isAuditee = $userAkses === 'Auditee';
+                    $isAuditee = strtoupper(trim($userAkses)) === 'AUDITEE';
                 @endphp
 
+                @if(!$isAuditee)
                 <li>
                     <a href="#sidebarDashboards" data-bs-toggle="collapse">
                         <i data-feather="home"></i>
@@ -60,6 +61,7 @@
                         </ul>
                     </div>
                 </li>
+                @endif
                 {{--
                 <li class="menu-title">Pages</li> --}}
 
@@ -394,36 +396,36 @@
                             </ul>
                         </div>
                     </li>
-
-                    <li>
-                        <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse">
-                            <i data-feather="file-text"></i>
-                            <span> Pelaporan Hasil Audit </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarPelaporanHasilAudit">
-                            <ul class="nav-second-level">
-                                <li>
-                                    <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}"> Judul
-                                        LHA/LHK </a>
-                                </li>
-                                <!-- <li>
-                                    <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}">Tabel Temuan Audit</a>
-                                </li> -->
-
-                                <li>
-                                    <a class="tp-link" href="{{ route('audit.penutup-lha-rekomendasi.index') }}">Penutup
-                                        LHA/LHK</a>
-                                </li>
-                                {{--
-                                <li>
-                                    <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a>
-                                </li>
-                                --}}
-                            </ul>
-                        </div>
-                    </li>
                 @endif
+
+                <li>
+                    <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse">
+                        <i data-feather="file-text"></i>
+                        <span> Pelaporan Hasil Audit </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarPelaporanHasilAudit">
+                        <ul class="nav-second-level">
+                            <li>
+                                <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}"> Judul
+                                    LHA/LHK </a>
+                            </li>
+                            <!-- <li>
+                                <a class="tp-link" href="{{ route('audit.pelaporan-hasil-audit.index') }}">Tabel Temuan Audit</a>
+                            </li> -->
+
+                            <li>
+                                <a class="tp-link" href="{{ route('audit.penutup-lha-rekomendasi.index') }}">Penutup
+                                    LHA/LHK</a>
+                            </li>
+                            {{--
+                            <li>
+                                <a class="tp-link" href="{{ route('audit.unggah-dokumen.index') }}">Daftar Upload Dokumen</a>
+                            </li>
+                            --}}
+                        </ul>
+                    </div>
+                </li>
 
                 <!--  -->
 

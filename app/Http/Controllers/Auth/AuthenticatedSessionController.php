@@ -44,16 +44,16 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         if ($user && $user->akses) {
-            switch ($user->akses->nama_akses) {
+            $role = strtoupper(trim($user->akses->nama_akses));
+            switch ($role) {
                 case 'KSPI':
-                case 'Auditor':
+                case 'ASMAN SPI':
+                case 'AUDITOR':
+                case 'SUPER ADMIN':
+                case 'VIEW BOD':
                     return redirect()->intended(RouteServiceProvider::HOME);
-                case 'PIC Auditee':
-                    return redirect()->intended('/audit/pemantauan-hasil-audit/tindak-lanjut'); // Assuming this route exists
-                case 'Auditee':
-                    return redirect()->intended(RouteServiceProvider::HOME); // Dashboard
-                case 'BOD':
-                    return redirect()->intended(route('audit.dashboard'));
+                case 'AUDITEE':
+                    return redirect()->intended(route('audit.pemantauan.index'));
                 default:
                     return redirect()->intended(RouteServiceProvider::HOME);
             }

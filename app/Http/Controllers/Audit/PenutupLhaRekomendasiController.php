@@ -22,6 +22,18 @@ class PenutupLhaRekomendasiController extends Controller
             ->whereHas('pelaporanHasilAudit.temuan', function($q) {
                 $q->where('status_approval', 'approved');
             });
+            
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            if ($userAuditeeId !== null) {
+                $query->where('auditee_id', $userAuditeeId);
+            }
+            if ($userUnitId !== null) {
+                $query->where('unit_id', $userUnitId);
+            }
+        }
         
         // Filter berdasarkan jenis audit
         if ($request->filled('jenis_audit')) {
@@ -64,9 +76,22 @@ class PenutupLhaRekomendasiController extends Controller
             ->values();
         
         // Ambil daftar jenis audit untuk filter dropdown
-        $jenisAuditList = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan', function($q) {
+        $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan', function($q) {
                 $q->where('status_approval', 'approved');
-            })
+            });
+            
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            if ($userAuditeeId !== null) {
+                $jenisAuditQuery->where('auditee_id', $userAuditeeId);
+            }
+            if ($userUnitId !== null) {
+                $jenisAuditQuery->where('unit_id', $userUnitId);
+            }
+        }
+        
+        $jenisAuditList = $jenisAuditQuery
             ->distinct()
             ->pluck('jenis_audit')
             ->sort()
@@ -95,6 +120,20 @@ class PenutupLhaRekomendasiController extends Controller
             });
         }
         
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId, $userUnitId) {
+                if ($userAuditeeId !== null) {
+                    $q->where('auditee_id', $userAuditeeId);
+                }
+                if ($userUnitId !== null) {
+                    $q->where('unit_id', $userUnitId);
+                }
+            });
+        }
+        
         // Apply filters
         if ($isiLhaId) {
             $query->where('pelaporan_isi_lha_id', $isiLhaId);
@@ -117,7 +156,21 @@ class PenutupLhaRekomendasiController extends Controller
         // Ambil info perencanaan audit untuk ditampilkan
         $perencanaanAudit = null;
         if ($nomorSuratTugas) {
-            $perencanaanAudit = \App\Models\Audit\PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas)->first();
+            $paQuery = \App\Models\Audit\PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas);
+            if (\App\Helpers\AuthHelper::isAuditee()) {
+                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+                $userUnitId = auth()->user()->master_unit_id ?? null;
+                if ($userAuditeeId !== null) {
+                    $paQuery->where('auditee_id', $userAuditeeId);
+                }
+                if ($userUnitId !== null) {
+                    $paQuery->where('unit_id', $userUnitId);
+                }
+            }
+            $perencanaanAudit = $paQuery->first();
+            if (\App\Helpers\AuthHelper::isAuditee() && !$perencanaanAudit) {
+                abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');
+            }
         }
         
         return view('audit.pelaporan.penutup-lha.index', compact('data', 'isiLhaId', 'nomorSuratTugas', 'perencanaanAudit'));
@@ -174,6 +227,20 @@ class PenutupLhaRekomendasiController extends Controller
         if ($nomorSuratTugas) {
             $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($nomorSuratTugas) {
                 $q->where('nomor_surat_tugas', $nomorSuratTugas);
+            });
+        }
+        
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId, $userUnitId) {
+                if ($userAuditeeId !== null) {
+                    $q->where('auditee_id', $userAuditeeId);
+                }
+                if ($userUnitId !== null) {
+                    $q->where('unit_id', $userUnitId);
+                }
             });
         }
         
@@ -361,7 +428,15 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function show($id)
     {
-        $item = PenutupLhaRekomendasi::with(['approvedBy', 'temuan.pelaporanHasilAudit'])->findOrFail($id);
+        $item = PenutupLhaRekomendasi::with(['approvedBy', 'temuan.pelaporanHasilAudit.perencanaanAudit'])->findOrFail($id);
+        if (\App\Helpers\AuthHelper::isAuditee()) {
+            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $pa = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                abort(403, 'Anda tidak memiliki akses untuk melihat rekomendasi ini.');
+            }
+        }
         return view('audit.pelaporan.penutup-lha.show', compact('item'));
     }
 

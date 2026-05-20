@@ -17,7 +17,7 @@ Route::get('/check-session', function () {
 
 Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('', [RoutingController::class, 'index'])->name('root');
-    Route::get('/home', fn() => redirect()->route('audit.dashboard'))->name('home');
+    Route::get('/home', [RoutingController::class, 'index'])->name('home');
 
     // Specific routes for master data and audit - MUST BE BEFORE CATCH-ALL ROUTES
     Route::get('tables/master_kode_aoi', [RoutingController::class, 'masterKodeAoi']);

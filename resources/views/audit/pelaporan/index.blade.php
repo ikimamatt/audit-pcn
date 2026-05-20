@@ -539,6 +539,7 @@
     @vite([ 'resources/js/pages/datatable.init.js'])
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+const canModifyData = @json(\App\Helpers\AuthHelper::canModifyData());
 $(document).ready(function() {
     console.log('Document ready, initializing DataTable...');
     
@@ -591,6 +592,9 @@ $(document).ready(function() {
 
 function showIssModal(id, nomorLhaLhk) {
     console.log('showIssModal called with:', { id, nomorLhaLhk });
+    
+    // Store current audit ID
+    $('#issModal').data('current-audit-id', id);
     
     // Show loading state
     $('#modalLhaLhkTitle').text(nomorLhaLhk);
@@ -711,11 +715,13 @@ function showIssModal(id, nomorLhaLhk) {
                             <div class="field-value">${temuan.penyebab || '-'}</div>
                         </div>
                         
+                        ${canModifyData ? `
                         <div class="text-end mt-3">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="editIss(${temuan.id})">
                                 <i class="mdi mdi-pencil me-1"></i>Edit ISS
                             </button>
                         </div>
+                        ` : ''}
                     </div>
                 `;
             });
