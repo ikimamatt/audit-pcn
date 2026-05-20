@@ -379,7 +379,7 @@
                                                 <i class="mdi mdi-tag-outline me-1"></i>Koordinator
                                             </div>
                                             <div class="text-dark fw-bold" style="word-break:break-word;">
-                                                <i class="mdi mdi-account-star-outline me-1"></i>{{ $item->koordinator->nama ?? '-' }}
+                                                <i class="mdi mdi-account-star-outline me-1"></i>{{ $item->koordinator->nama ?? '-' }}{{ $item->koordinator->nip ? ' - NIP: ' . $item->koordinator->nip : '' }}
                                             </div>
                                         </div>
                                     @endif
@@ -391,7 +391,7 @@
                                                 <i class="mdi mdi-tag-outline me-1"></i>Ketua Tim
                                             </div>
                                             <div class="text-dark fw-bold" style="word-break:break-word;">
-                                                <i class="mdi mdi-account-tie-outline me-1"></i>{{ $item->ketuaTim->nama ?? '-' }}
+                                                <i class="mdi mdi-account-tie-outline me-1"></i>{{ $item->ketuaTim->nama ?? '-' }}{{ $item->ketuaTim->nip ? ' - NIP: ' . $item->ketuaTim->nip : '' }}
                                             </div>
                                         </div>
                                     @endif
