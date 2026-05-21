@@ -143,6 +143,7 @@ class ToeAuditController extends Controller
             'perencanaanAudit',
             'pkaRisiko',
             'pkaKontrol',
+            'evaluasi',
         ])->findOrFail($id);
 
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
@@ -170,6 +171,7 @@ class ToeAuditController extends Controller
             'pka_kontrol_ids'        => 'nullable|array',
             'pka_kontrol_ids.*'      => 'exists:pka_kontrol,id',
             'file_kka_toe'           => 'nullable|file|mimes:pdf|max:5120',
+            'hasil_evaluasi'         => 'required|string|in:Efektif,Tidak Efektif,Efektif Sebagian',
         ]);
 
         DB::transaction(function () use ($request, $item) {
@@ -215,6 +217,14 @@ class ToeAuditController extends Controller
                         'updated_at'     => now(),
                     ]);
                 }
+            }
+
+            // Sync/Update Hasil Evaluasi
+            $firstEv = $item->evaluasi()->first();
+            if ($firstEv) {
+                $firstEv->update(['hasil_evaluasi' => $request->hasil_evaluasi]);
+            } else {
+                $item->evaluasi()->create(['hasil_evaluasi' => $request->hasil_evaluasi]);
             }
         });
 

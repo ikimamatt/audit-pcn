@@ -425,14 +425,14 @@
                             @php $ev = $item->evaluasi->first(); @endphp
                             @if($ev)
                                 @php
-                                    $evClass = match($ev->hasil_evaluasi) {
-                                        'Sesuai'      => 'bg-success-subtle text-success',
-                                        'Tidak Sesuai' => 'bg-danger-subtle text-danger',
+                                    $evClass = match(strtolower($ev->hasil_evaluasi)) {
+                                        'cukup', 'sesuai'      => 'bg-success-subtle text-success',
+                                        'tidak cukup', 'tidak sesuai' => 'bg-danger-subtle text-danger',
                                         default       => 'bg-secondary-subtle text-secondary',
                                     };
-                                    $evIcon = match($ev->hasil_evaluasi) {
-                                        'Sesuai'      => 'mdi-check-circle-outline',
-                                        'Tidak Sesuai' => 'mdi-close-circle-outline',
+                                    $evIcon = match(strtolower($ev->hasil_evaluasi)) {
+                                        'cukup', 'sesuai'      => 'mdi-check-circle-outline',
+                                        'tidak cukup', 'tidak sesuai' => 'mdi-close-circle-outline',
                                         default       => 'mdi-help-circle-outline',
                                     };
                                 @endphp

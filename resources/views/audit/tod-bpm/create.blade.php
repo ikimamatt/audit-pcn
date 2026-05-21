@@ -85,8 +85,8 @@
                         <label for="hasil_evaluasi" class="form-label">Hasil Evaluasi TOD <span class="text-danger">*</span></label>
                         <select name="hasil_evaluasi" id="hasil_evaluasi" class="form-control" required>
                             <option value="">Pilih Hasil Evaluasi</option>
-                            <option value="Sesuai" {{ old('hasil_evaluasi') == 'Sesuai' ? 'selected' : '' }}>Sesuai</option>
-                            <option value="Tidak Sesuai" {{ old('hasil_evaluasi') == 'Tidak Sesuai' ? 'selected' : '' }}>Tidak Sesuai</option>
+                            <option value="Cukup" {{ old('hasil_evaluasi') == 'Cukup' ? 'selected' : '' }}>Cukup</option>
+                            <option value="Tidak Cukup" {{ old('hasil_evaluasi') == 'Tidak Cukup' ? 'selected' : '' }}>Tidak Cukup</option>
                         </select>
                     </div>
 

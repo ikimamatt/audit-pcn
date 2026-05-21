@@ -22,7 +22,7 @@ class ProgramKerjaAuditController extends Controller
      */
     public function index()
     {
-        $data = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.unit', 'risks', 'milestones', 'dokumen'])->get();
+        $data = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.area', 'risks', 'milestones', 'dokumen'])->get();
         return view('perencanaan-audit.index', compact('data'));
     }
 

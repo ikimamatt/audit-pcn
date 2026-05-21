@@ -7,7 +7,7 @@ use App\Http\Controllers\MasterData\MasterAuditeeController;
 use App\Http\Controllers\MasterData\MasterUserController;
 use App\Http\Controllers\MasterData\MasterAksesUserController;
 use App\Http\Controllers\MasterData\MasterJenisAuditController;
-use App\Http\Controllers\MasterData\MasterUnitController;
+use App\Http\Controllers\MasterData\MasterAreaController;
 
 // Master Data Routes — hanya KSPI, ASMAN SPI, dan SUPER ADMIN
 Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
@@ -42,8 +42,8 @@ Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
             ->names('jenis-audit')
             ->parameters(['jenis-audit' => 'masterJenisAudit']);
 
-        // Unit
-        Route::resource('unit', MasterUnitController::class)
-            ->names('unit')
-            ->parameters(['unit' => 'masterUnit']);
+        // Area
+        Route::resource('area', MasterAreaController::class)
+            ->names('area')
+            ->parameters(['area' => 'masterArea']);
     });

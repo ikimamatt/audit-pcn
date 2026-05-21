@@ -160,12 +160,12 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label kpi-label mb-2" style="font-size:0.75rem;">Unit Kerja</label>
-                                <select name="unit_id" class="form-select">
+                                <label class="form-label kpi-label mb-2" style="font-size:0.75rem;">Area Kerja</label>
+                                <select name="area_id" class="form-select">
                                     <option value="">Semua</option>
-                                    @foreach($masterUnit as $unit)
-                                        <option value="{{ $unit->id }}" {{ $unitId == $unit->id ? 'selected' : '' }}>
-                                            {{ $unit->nama_unit }}</option>
+                                    @foreach($masterArea as $area)
+                                        <option value="{{ $area->id }}" {{ $areaId == $area->id ? 'selected' : '' }}>
+                                            {{ $area->nama_area }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -336,14 +336,14 @@
             <button onclick="closeAgingModal()" style="border:none;background:#f1f5f9;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;color:#64748b;display:flex;align-items:center;justify-content:center;">&times;</button>
         </div>
         <div style="padding:0 24px 8px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px;">
-            <input id="aging-modal-search" type="text" placeholder="Cari divisi atau unit..." oninput="filterAgingTable()" style="margin:12px 0;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;color:#334155;outline:none;width:260px;"/>
+            <input id="aging-modal-search" type="text" placeholder="Cari divisi atau area..." oninput="filterAgingTable()" style="margin:12px 0;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;color:#334155;outline:none;width:260px;"/>
         </div>
         <div style="overflow-y:auto;max-height:calc(85vh - 160px);">
             <table id="aging-modal-table" style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
                     <tr style="background:#f8fafc;position:sticky;top:0;">
                         <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">Divisi</th>
-                        <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">Unit</th>
+                        <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">Area</th>
                         <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">No. Surat Tugas</th>
                         <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">Status</th>
                         <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e2e8f0;">Target</th>
@@ -453,7 +453,7 @@
                             html += `<table style="font-size:11px;border-collapse:collapse;width:100%;">
                                 <tr style="color:#94a3b8;">
                                     <th style="text-align:left;padding:2px 6px 2px 0;font-weight:500;">Divisi</th>
-                                    <th style="text-align:left;padding:2px 6px 2px 0;font-weight:500;">Unit</th>
+                                    <th style="text-align:left;padding:2px 6px 2px 0;font-weight:500;">Area</th>
                                     <th style="text-align:right;padding:2px 0;font-weight:500;">Terlambat</th>
                                 </tr>`;
                             details.forEach(d => {

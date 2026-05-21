@@ -44,7 +44,7 @@ class DashboardDummySeeder extends Seeder
                 'auditee_id' => $auditeeId,
                 'jenis_audit_id' => 1,
                 'jenis_audit' => 'RBA',
-                'unit_id' => 1,
+                'area_id' => 1,
                 'koordinator_id' => 1,
                 'ketua_tim_id' => 1,
                 'auditor' => json_encode([1]),

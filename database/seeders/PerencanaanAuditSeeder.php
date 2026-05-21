@@ -11,9 +11,9 @@ class PerencanaanAuditSeeder extends Seeder
     {
         $tahun = date('Y');
 
-        // Ambil unit id secara dinamis (berdasarkan kode_unit)
-        $unitMap       = DB::table('master_unit')->pluck('id', 'kode_unit');
-        $defaultUnitId = $unitMap->first(); // fallback ke unit pertama
+        // Ambil area id secara dinamis (berdasarkan kd_area)
+        $areaMap       = DB::table('master_area')->pluck('id', 'kd_area');
+        $defaultAreaId = $areaMap->first(); // fallback ke area pertama
 
         DB::table('perencanaan_audit')->insert([
             [
@@ -22,7 +22,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Operasional',
                 'auditor'              => json_encode(['Auditor 1 - NIP: 123456789']),
                 'auditee_id'           => 1,
-                'unit_id'              => $unitMap['U001'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['02'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Sistem Keuangan', 'Sistem SDM']),
                 'tanggal_audit_mulai'  => '2024-07-10',
                 'tanggal_audit_sampai' => '2024-07-15',
@@ -38,7 +38,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Operasional',
                 'auditor'              => json_encode(['Auditor 2 - NIP: 987654321']),
                 'auditee_id'           => 2,
-                'unit_id'              => $unitMap['U002'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['03'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Sistem Operasional', 'Sistem IT']),
                 'tanggal_audit_mulai'  => '2024-07-20',
                 'tanggal_audit_sampai' => '2024-07-25',
@@ -54,7 +54,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Khusus',
                 'auditor'              => json_encode(['Auditor 3 - NIP: 456789123']),
                 'auditee_id'           => 3,
-                'unit_id'              => $unitMap['U003'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['04'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Investigasi Khusus', 'Pemeriksaan Khusus']),
                 'tanggal_audit_mulai'  => '2024-08-01',
                 'tanggal_audit_sampai' => '2024-08-05',
@@ -70,7 +70,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Konsultasi',
                 'auditor'              => json_encode(['Konsultan 1 - NIP: 789123456']),
                 'auditee_id'           => 4,
-                'unit_id'              => $unitMap['U004'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['05'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Konsultasi Sistem', 'Konsultasi Proses']),
                 'tanggal_audit_mulai'  => '2024-08-10',
                 'tanggal_audit_sampai' => '2024-08-15',
@@ -86,7 +86,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Operasional',
                 'auditor'              => json_encode(['Auditor 4 - NIP: 321654987', 'Auditor 5 - NIP: 654987321']),
                 'auditee_id'           => 5,
-                'unit_id'              => $unitMap['U005'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['06'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Sistem Keamanan', 'Sistem Monitoring', 'Sistem Pelaporan']),
                 'tanggal_audit_mulai'  => '2024-08-20',
                 'tanggal_audit_sampai' => '2024-08-30',
@@ -102,7 +102,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Kepatuhan',
                 'auditor'              => json_encode(['Auditor 6 - NIP: 147258369']),
                 'auditee_id'           => 1,
-                'unit_id'              => $unitMap['U006'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['07'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Kepatuhan Regulasi', 'Sistem Pengendalian']),
                 'tanggal_audit_mulai'  => '2024-09-01',
                 'tanggal_audit_sampai' => '2024-09-10',
@@ -118,7 +118,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Sistem Informasi',
                 'auditor'              => json_encode(['Auditor 7 - NIP: 963852741', 'Auditor 8 - NIP: 852963741']),
                 'auditee_id'           => 2,
-                'unit_id'              => $unitMap['U007'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['08'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Sistem IT', 'Keamanan Data', 'Infrastruktur']),
                 'tanggal_audit_mulai'  => '2024-09-15',
                 'tanggal_audit_sampai' => '2024-09-25',
@@ -134,7 +134,7 @@ class PerencanaanAuditSeeder extends Seeder
                 'jenis_audit'          => 'Audit Keuangan',
                 'auditor'              => json_encode(['Auditor 9 - NIP: 741852963']),
                 'auditee_id'           => 3,
-                'unit_id'              => $unitMap['U008'] ?? $defaultUnitId,
+                'area_id'              => $areaMap['10'] ?? $defaultAreaId,
                 'ruang_lingkup'        => json_encode(['Laporan Keuangan', 'Sistem Akuntansi', 'Pengendalian Internal']),
                 'tanggal_audit_mulai'  => '2024-10-01',
                 'tanggal_audit_sampai' => '2024-10-15',

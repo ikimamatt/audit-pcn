@@ -10,7 +10,7 @@ use App\Models\Audit\PelaporanTemuan;
 use App\Models\PenutupLhaRekomendasi;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterKodeRisk;
-use App\Models\MasterData\MasterUnit;
+use App\Models\MasterData\MasterArea;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -21,17 +21,17 @@ class DashboardAnalitikController extends Controller
         $startDate = $request->start_date;
         $endDate = $request->end_date;
         $divisiId = $request->divisi_id;
-        $unitId = $request->unit_id;
+        $areaId = $request->area_id;
 
         $masterDivisi = MasterAuditee::select('id', 'divisi')->orderBy('divisi')->get();
-        $masterUnit = MasterUnit::select('id', 'nama_unit')->orderBy('nama_unit')->get();
+        $masterArea = MasterArea::select('id', 'nama_area')->orderBy('nama_area')->get();
 
         // 1. KPI Summary Cards
         $queryPlan = PerencanaanAudit::query();
         if($startDate) $queryPlan->whereDate('tanggal_audit_mulai', '>=', $startDate);
         if($endDate) $queryPlan->whereDate('tanggal_audit_sampai', '<=', $endDate);
         if($divisiId) $queryPlan->where('auditee_id', $divisiId);
-        if($unitId) $queryPlan->where('unit_id', $unitId);
+        if($areaId) $queryPlan->where('area_id', $areaId);
 
         $totalDirencanakan = $queryPlan->count();
         $planIds = $queryPlan->pluck('id')->toArray();
@@ -119,7 +119,7 @@ class DashboardAnalitikController extends Controller
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
-            ->leftJoin('master_unit as mu', 'pa.unit_id', '=', 'mu.id')
+            ->leftJoin('master_area as ma_area', 'pa.area_id', '=', 'ma_area.id')
             ->whereIn('pha.perencanaan_audit_id', $planIds)
             ->where(function($q) {
                 $q->whereIn('plr.status_tindak_lanjut', ['open', 'on_progress'])
@@ -131,7 +131,7 @@ class DashboardAnalitikController extends Controller
                 'plr.status_tindak_lanjut',
                 'plr.rekomendasi',
                 'ma.divisi',
-                'mu.nama_unit as unit'
+                'ma_area.nama_area as unit'
             )
             ->get();
 
@@ -291,11 +291,11 @@ class DashboardAnalitikController extends Controller
 
         return view('audit.dashboard.analitik', compact(
             'masterDivisi',
-            'masterUnit',
+            'masterArea',
             'startDate',
             'endDate',
             'divisiId',
-            'unitId',
+            'areaId',
 
             'totalDirencanakan',
             'totalTerealisasi',
@@ -345,7 +345,7 @@ class DashboardAnalitikController extends Controller
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
-            ->leftJoin('master_unit as mu', 'pa.unit_id', '=', 'mu.id')
+            ->leftJoin('master_area as ma_area', 'pa.area_id', '=', 'ma_area.id')
             ->whereIn('plr.status_tindak_lanjut', ['open', 'on_progress'])
             ->whereNotNull('plr.target_waktu')
             ->select(
@@ -354,7 +354,7 @@ class DashboardAnalitikController extends Controller
                 'plr.target_waktu',
                 'plr.status_tindak_lanjut',
                 'ma.divisi',
-                'mu.nama_unit as unit',
+                'ma_area.nama_area as unit',
                 'pa.nomor_surat_tugas'
             )
             ->get();

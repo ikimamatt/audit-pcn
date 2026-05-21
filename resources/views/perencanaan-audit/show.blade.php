@@ -759,122 +759,163 @@
 </div>
 --}}
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
 <script>
 function approveMainData() {
-    Swal.fire({
-        title: 'Approve Program Kerja Audit?',
-        text: 'Anda yakin ingin memberikan persetujuan pada Program Kerja Audit ini?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#16a34a',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Ya, Approve!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Approve Program Kerja Audit?',
+            text: 'Anda yakin ingin memberikan persetujuan pada Program Kerja Audit ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Approve!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('action-main').value = 'approve';
+                document.getElementById('approval-main-form').submit();
+            }
+        });
+    } else {
+        if (confirm('Anda yakin ingin memberikan persetujuan pada Program Kerja Audit ini?')) {
             document.getElementById('action-main').value = 'approve';
             document.getElementById('approval-main-form').submit();
         }
-    });
+    }
 }
 
 function rejectMainData() {
-    Swal.fire({
-        title: 'Reject Program Kerja Audit',
-        text: 'Masukkan alasan penolakan (minimal 10 karakter):',
-        icon: 'warning',
-        input: 'textarea',
-        inputPlaceholder: 'Ketik alasan penolakan di sini...',
-        inputAttributes: {
-            'aria-label': 'Alasan penolakan',
-            'minlength': 10,
-            'required': true
-        },
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Ya, Reject!',
-        cancelButtonText: 'Batal',
-        inputValidator: (value) => {
-            if (!value) {
-                return 'Alasan penolakan harus diisi!';
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Reject Program Kerja Audit',
+            text: 'Masukkan alasan penolakan (minimal 10 karakter):',
+            icon: 'warning',
+            input: 'textarea',
+            inputPlaceholder: 'Ketik alasan penolakan di sini...',
+            inputAttributes: {
+                'aria-label': 'Alasan penolakan',
+                'minlength': 10,
+                'required': true
+            },
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Reject!',
+            cancelButtonText: 'Batal',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Alasan penolakan harus diisi!';
+                }
+                if (value.length < 10) {
+                    return 'Alasan penolakan minimal 10 karakter!';
+                }
             }
-            if (value.length < 10) {
-                return 'Alasan penolakan minimal 10 karakter!';
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('action-main').value = 'reject';
+                
+                // Tambahkan input hidden untuk alasan
+                const form = document.getElementById('approval-main-form');
+                const reasonInput = document.createElement('input');
+                reasonInput.type = 'hidden';
+                reasonInput.name = 'rejection_reason';
+                reasonInput.value = result.value;
+                form.appendChild(reasonInput);
+                
+                form.submit();
             }
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
+        });
+    } else {
+        const reason = prompt('Masukkan alasan penolakan (minimal 10 karakter):');
+        if (reason !== null) {
+            const trimmedReason = reason.trim();
+            if (!trimmedReason || trimmedReason.length < 10) {
+                alert('Alasan penolakan minimal 10 karakter dan harus diisi!');
+                return;
+            }
             document.getElementById('action-main').value = 'reject';
-            
-            // Tambahkan input hidden untuk alasan
             const form = document.getElementById('approval-main-form');
             const reasonInput = document.createElement('input');
             reasonInput.type = 'hidden';
             reasonInput.name = 'rejection_reason';
-            reasonInput.value = result.value;
+            reasonInput.value = trimmedReason;
             form.appendChild(reasonInput);
-            
             form.submit();
         }
-    });
+    }
 }
 
 function rejectDokumen(pkaId, dokId) {
-    Swal.fire({
-        title: 'Reject Dokumen PKA',
-        text: 'Masukkan alasan penolakan (minimal 10 karakter):',
-        icon: 'warning',
-        input: 'textarea',
-        inputPlaceholder: 'Ketik alasan penolakan di sini...',
-        inputAttributes: {
-            'aria-label': 'Alasan penolakan',
-            'minlength': 10,
-            'required': true
-        },
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Ya, Reject!',
-        cancelButtonText: 'Batal',
-        inputValidator: (value) => {
-            if (!value) {
-                return 'Alasan penolakan harus diisi!';
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Reject Dokumen PKA',
+            text: 'Masukkan alasan penolakan (minimal 10 karakter):',
+            icon: 'warning',
+            input: 'textarea',
+            inputPlaceholder: 'Ketik alasan penolakan di sini...',
+            inputAttributes: {
+                'aria-label': 'Alasan penolakan',
+                'minlength': 10,
+                'required': true
+            },
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Ya, Reject!',
+            cancelButtonText: 'Batal',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Alasan penolakan harus diisi!';
+                }
+                if (value.length < 10) {
+                    return 'Alasan penolakan minimal 10 karakter!';
+                }
             }
-            if (value.length < 10) {
-                return 'Alasan penolakan minimal 10 karakter!';
+        }).then((result) => {
+            if (result.isConfirmed) {
+                submitRejectDokumen(pkaId, dokId, result.value);
             }
+        });
+    } else {
+        const reason = prompt('Masukkan alasan penolakan (minimal 10 karakter):');
+        if (reason !== null) {
+            const trimmedReason = reason.trim();
+            if (!trimmedReason || trimmedReason.length < 10) {
+                alert('Alasan penolakan minimal 10 karakter dan harus diisi!');
+                return;
+            }
+            submitRejectDokumen(pkaId, dokId, trimmedReason);
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Create and submit form dynamically
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/audit/pka/${pkaId}/dokumen/${dokId}/approval`;
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
+    }
+}
 
-            const actionInput = document.createElement('input');
-            actionInput.type = 'hidden';
-            actionInput.name = 'action';
-            actionInput.value = 'reject';
-            form.appendChild(actionInput);
-            
-            const reasonInput = document.createElement('input');
-            reasonInput.type = 'hidden';
-            reasonInput.name = 'rejection_reason';
-            reasonInput.value = result.value;
-            form.appendChild(reasonInput);
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+function submitRejectDokumen(pkaId, dokId, reason) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/audit/pka/${pkaId}/dokumen/${dokId}/approval`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = '{{ csrf_token() }}';
+    form.appendChild(csrfToken);
+
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'reject';
+    form.appendChild(actionInput);
+    
+    const reasonInput = document.createElement('input');
+    reasonInput.type = 'hidden';
+    reasonInput.name = 'rejection_reason';
+    reasonInput.value = reason;
+    form.appendChild(reasonInput);
+    
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
 @endsection

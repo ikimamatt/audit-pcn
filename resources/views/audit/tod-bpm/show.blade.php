@@ -66,7 +66,11 @@
                                 <td class="text-muted">Hasil Evaluasi</td>
                                 <td>
                                     @foreach($item->evaluasi as $ev)
-                                        <span class="badge {{ $ev->hasil_evaluasi === 'Sesuai' ? 'bg-success' : 'bg-danger' }}">
+                                        @php
+                                            $lowerEv = strtolower($ev->hasil_evaluasi);
+                                            $evBg = ($lowerEv === 'sesuai' || $lowerEv === 'cukup') ? 'bg-success' : 'bg-danger';
+                                        @endphp
+                                        <span class="badge {{ $evBg }}">
                                             {{ $ev->hasil_evaluasi }}
                                         </span>
                                     @endforeach

@@ -17,13 +17,13 @@ class PelaporanHasilAuditController extends Controller
         
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $userUnitId = auth()->user()->master_area_id ?? null;
             $query->whereHas('perencanaanAudit', function ($q) use ($userAuditeeId, $userUnitId) {
                 if ($userAuditeeId !== null) {
                     $q->where('auditee_id', $userAuditeeId);
                 }
                 if ($userUnitId !== null) {
-                    $q->where('unit_id', $userUnitId);
+                    $q->where('area_id', $userUnitId);
                 }
             });
         }
@@ -46,12 +46,12 @@ class PelaporanHasilAuditController extends Controller
         $suratTugasQuery = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas');
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $userUnitId = auth()->user()->master_area_id ?? null;
             if ($userAuditeeId !== null) {
                 $suratTugasQuery->where('auditee_id', $userAuditeeId);
             }
             if ($userUnitId !== null) {
-                $suratTugasQuery->where('unit_id', $userUnitId);
+                $suratTugasQuery->where('area_id', $userUnitId);
             }
         }
         $suratTugas = $suratTugasQuery->get();
@@ -186,9 +186,9 @@ class PelaporanHasilAuditController extends Controller
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk', 'perencanaanAudit'])->findOrFail($id);
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_unit_id ?? null;
+            $userUnitId = auth()->user()->master_area_id ?? null;
             $pa = $item->perencanaanAudit ?? null;
-            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
                 abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');
             }
         }
@@ -503,9 +503,9 @@ class PelaporanHasilAuditController extends Controller
             
             if (\App\Helpers\AuthHelper::isAuditee()) {
                 $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                $userUnitId = auth()->user()->master_unit_id ?? null;
+                $userUnitId = auth()->user()->master_area_id ?? null;
                 $pa = $pelaporan->perencanaanAudit ?? null;
-                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'
@@ -568,9 +568,9 @@ class PelaporanHasilAuditController extends Controller
             
             if (\App\Helpers\AuthHelper::isAuditee()) {
                 $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                $userUnitId = auth()->user()->master_unit_id ?? null;
+                $userUnitId = auth()->user()->master_area_id ?? null;
                 $pa = $temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
-                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->unit_id != $userUnitId)) {
+                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'

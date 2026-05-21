@@ -60,8 +60,109 @@
                                     <dt class="col-sm-4">Eviden:</dt>
                                     <dd class="col-sm-8">{{ Str::limit($rekomendasi->eviden_rekomendasi, 100) }}</dd>
                                     
-                                    <dt class="col-sm-4">PIC:</dt>
-                                    <dd class="col-sm-8">{{ $rekomendasi->pic_rekomendasi }}</dd>
+                                    @php
+                                        $picItems = [];
+                                        if (isset($rekomendasi->picUsers) && $rekomendasi->picUsers->count() > 0) {
+                                            foreach ($rekomendasi->picUsers as $user) {
+                                                $typeLabel = 'PIC';
+                                                $typeClass = 'bg-secondary-subtle text-secondary';
+                                                $icon = 'mdi-account';
+                                                if ($user->pivot->pic_type === 'business_contact') {
+                                                    $typeLabel = 'Business Contact';
+                                                    $typeClass = 'bg-primary-subtle text-primary';
+                                                    $icon = 'mdi-account-tie';
+                                                } elseif ($user->pivot->pic_type === 'approval_1_spi') {
+                                                    $typeLabel = 'Approval 1 SPI';
+                                                    $typeClass = 'bg-warning-subtle text-warning';
+                                                    $icon = 'mdi-account-check';
+                                                } elseif ($user->pivot->pic_type === 'approval_2_spi') {
+                                                    $typeLabel = 'Approval 2 SPI';
+                                                    $typeClass = 'bg-success-subtle text-success';
+                                                    $icon = 'mdi-shield-check';
+                                                }
+                                                $picItems[] = [
+                                                    'role' => $typeLabel,
+                                                    'class' => $typeClass,
+                                                    'icon' => $icon,
+                                                    'name' => ucwords(strtolower($user->nama)),
+                                                    'dept' => $user->auditee->divisi ?? $user->jabatan ?? '-'
+                                                ];
+                                            }
+                                        } elseif ($rekomendasi->pic_rekomendasi) {
+                                            if (strpos($rekomendasi->pic_rekomendasi, ':') !== false) {
+                                                $parts = explode('|', $rekomendasi->pic_rekomendasi);
+                                                foreach ($parts as $part) {
+                                                    $subParts = explode(':', trim($part), 2);
+                                                    if (count($subParts) == 2) {
+                                                        $role = trim($subParts[0]);
+                                                        $personDetails = explode('-', trim($subParts[1]), 2);
+                                                        $name = trim($personDetails[0]);
+                                                        $dept = isset($personDetails[1]) ? trim($personDetails[1]) : '-';
+                                                        
+                                                        $typeClass = 'bg-secondary-subtle text-secondary';
+                                                        $icon = 'mdi-account';
+                                                        if (stripos($role, 'BUSINESS CONTACT') !== false) {
+                                                            $role = 'Business Contact';
+                                                            $typeClass = 'bg-primary-subtle text-primary';
+                                                            $icon = 'mdi-account-tie';
+                                                        } elseif (stripos($role, 'APPROVAL 1') !== false || stripos($role, 'APPROVAL_1') !== false) {
+                                                            $role = 'Approval 1 SPI';
+                                                            $typeClass = 'bg-warning-subtle text-warning';
+                                                            $icon = 'mdi-account-check';
+                                                        } elseif (stripos($role, 'APPROVAL 2') !== false || stripos($role, 'APPROVAL_2') !== false) {
+                                                            $role = 'Approval 2 SPI';
+                                                            $typeClass = 'bg-success-subtle text-success';
+                                                            $icon = 'mdi-shield-check';
+                                                        }
+
+                                                        $picItems[] = [
+                                                            'role' => $role,
+                                                            'class' => $typeClass,
+                                                            'icon' => $icon,
+                                                            'name' => ucwords(strtolower($name)),
+                                                            'dept' => ucwords(strtolower($dept))
+                                                        ];
+                                                    }
+                                                }
+                                            } else {
+                                                $picItems[] = [
+                                                    'role' => 'PIC',
+                                                    'class' => 'bg-secondary-subtle text-secondary',
+                                                    'icon' => 'mdi-account',
+                                                    'name' => $rekomendasi->pic_rekomendasi,
+                                                    'dept' => '-'
+                                                ];
+                                            }
+                                        }
+                                    @endphp
+                                    <dt class="col-sm-4 align-self-start mt-2">PIC:</dt>
+                                    <dd class="col-sm-8">
+                                        @if(count($picItems) > 0)
+                                            <div class="row g-2 mt-0">
+                                                @foreach($picItems as $pic)
+                                                    <div class="col-12">
+                                                        <div class="card mb-0 shadow-none border pic-card" style="border-color: rgba(0,0,0,0.08) !important; border-radius: 12px; background: #fafbfe;">
+                                                            <div class="card-body p-2 d-flex align-items-center gap-2">
+                                                                <div class="avatar flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle {{ $pic['class'] }}" style="width: 32px; height: 32px;">
+                                                                    <i class="mdi {{ $pic['icon'] }} fs-14"></i>
+                                                                </div>
+                                                                <div class="flex-grow-1 min-width-0">
+                                                                    <span class="badge {{ $pic['class'] }} mb-0.5 px-1.5 py-0.2 rounded" style="font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">{{ $pic['role'] }}</span>
+                                                                    <h6 class="mb-0.5 text-dark fw-bold text-wrap" style="font-size: 0.8rem; word-break: break-word; white-space: normal; line-height: 1.3;" title="{{ $pic['name'] }}">{{ $pic['name'] }}</h6>
+                                                                    <p class="text-muted mb-0 d-flex align-items-start" style="font-size: 0.7rem;" title="{{ $pic['dept'] }}">
+                                                                        <i class="mdi mdi-office-building-outline me-1 flex-shrink-0" style="margin-top: 2px;"></i>
+                                                                        <span class="text-wrap" style="word-break: break-word; white-space: normal; line-height: 1.2;">{{ $pic['dept'] }}</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </dd>
                                     
                                     <dt class="col-sm-4">Target Waktu:</dt>
                                     <dd class="col-sm-8">
@@ -293,6 +394,16 @@ document.addEventListener('DOMContentLoaded', function() {
 .komentar-field textarea {
     resize: vertical;
     min-height: 80px;
+}
+
+.pic-card {
+    transition: all 0.2s ease-in-out;
+}
+.pic-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+    border-color: rgba(0,0,0,0.15) !important;
+    background: #ffffff !important;
 }
 </style>
 @endsection 

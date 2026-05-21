@@ -156,12 +156,12 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="master_auditee_id" class="form-label">Divisi <span class="text-danger">*</span></label>
+                                <label for="master_auditee_id" class="form-label">Bidang <span class="text-danger">*</span></label>
                                 <select class="form-select @error('master_auditee_id') is-invalid @enderror" 
                                         id="master_auditee_id" 
                                         name="master_auditee_id" 
                                         required>
-                                    <option value="">Pilih Divisi</option>
+                                    <option value="">Pilih Bidang</option>
                                     @foreach($auditees as $auditee)
                                         <option value="{{ $auditee->id }}" {{ old('master_auditee_id') == $auditee->id ? 'selected' : '' }}>
                                             {{ $auditee->divisi }}
@@ -178,19 +178,19 @@
                         
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="master_unit_id" class="form-label">Unit <span class="text-danger">*</span></label>
-                                <select class="form-select @error('master_unit_id') is-invalid @enderror" 
-                                        id="master_unit_id" 
-                                        name="master_unit_id"
+                                <label for="master_area_id" class="form-label">Area <span class="text-danger">*</span></label>
+                                <select class="form-select @error('master_area_id') is-invalid @enderror" 
+                                        id="master_area_id" 
+                                        name="master_area_id"
                                         required>
-                                    <option value="">Pilih Unit</option>
-                                    @foreach($units as $unit)
-                                        <option value="{{ $unit->id }}" {{ old('master_unit_id') == $unit->id ? 'selected' : '' }}>
-                                            [{{ $unit->kode_unit }}] {{ $unit->nama_unit }}
+                                    <option value="">Pilih Area</option>
+                                    @foreach($areas as $area)
+                                        <option value="{{ $area->id }}" {{ old('master_area_id') == $area->id ? 'selected' : '' }}>
+                                            [{{ $area->kd_area }}{{ $area->region ? ' - ' . $area->region->nama_region : '' }}] {{ $area->nama_area }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('master_unit_id')
+                                @error('master_area_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
