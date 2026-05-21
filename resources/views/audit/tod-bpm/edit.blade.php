@@ -88,6 +88,17 @@
                         <small class="text-muted">PDF, maks. 5MB — Kosongkan jika tidak ingin mengganti</small>
                     </div>
 
+                    {{-- Hasil Evaluasi --}}
+                    <div class="mb-3">
+                        <label for="hasil_evaluasi" class="form-label">Hasil Evaluasi TOD <span class="text-danger">*</span></label>
+                        <select name="hasil_evaluasi" id="hasil_evaluasi" class="form-control" required>
+                            @php $firstEv = $item->evaluasi->first(); $evVal = $firstEv ? $firstEv->hasil_evaluasi : ''; @endphp
+                            <option value="">Pilih Hasil Evaluasi</option>
+                            <option value="Cukup" {{ old('hasil_evaluasi', $evVal) == 'Cukup' ? 'selected' : '' }}>Cukup</option>
+                            <option value="Tidak Cukup" {{ old('hasil_evaluasi', $evVal) == 'Tidak Cukup' ? 'selected' : '' }}>Tidak Cukup</option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ route('audit.tod-bpm.index') }}" class="btn btn-secondary">Batal</a>
                 </form>

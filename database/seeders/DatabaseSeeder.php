@@ -25,13 +25,15 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Tapeli',
-            'email' => 'demo@user.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password'),
-            'remember_token' => Str::random(10),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'demo@user.com'],
+            [
+                'name' => 'Tapeli',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'remember_token' => Str::random(10),
+            ]
+        );
 
         // ========================================
         // MASTER DATA SEEDERS
@@ -43,7 +45,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MasterKodeRiskSeeder::class);
         $this->call(MasterAuditeeSeeder::class);
         $this->call(MasterAksesUserSeeder::class);
-        $this->call(MasterUnitSeeder::class);
+        // $this->call(MasterUnitSeeder::class); // master_unit is deprecated and replaced by master_area which is pre-populated
         $this->call(MasterUserSeeder::class);
         $this->call(MasterJenisAuditSeeder::class);
 

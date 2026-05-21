@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Master Unit'])
+@extends('layouts.vertical', ['title' => 'Master Area'])
 
 @section('css')
     @vite([
@@ -15,10 +15,10 @@
                 <ol class="breadcrumb m-0">
                     <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
                     <li class="breadcrumb-item">Master Data</li>
-                    <li class="breadcrumb-item active">Unit</li>
+                    <li class="breadcrumb-item active">Area</li>
                 </ol>
             </div>
-            <h4 class="page-title">Master Unit</h4>
+            <h4 class="page-title">Master Area</h4>
         </div>
     </div>
 </div>
@@ -29,8 +29,8 @@
             <div class="card-body">
                 <div class="row mb-2">
                     <div class="col-sm-5">
-                        <a href="{{ route('master.unit.create') }}" class="btn btn-primary mb-2">
-                            <i class="mdi mdi-plus-circle me-2"></i> Tambah Unit
+                        <a href="{{ route('master.area.create') }}" class="btn btn-primary mb-2">
+                            <i class="mdi mdi-plus-circle me-2"></i> Tambah Area
                         </a>
                     </div>
                 </div>
@@ -42,8 +42,9 @@
                         <thead class="table-light">
                             <tr>
                                 <th>No</th>
-                                <th>Kode Unit</th>
-                                <th>Nama Unit</th>
+                                <th>Region</th>
+                                <th>Kode Area</th>
+                                <th>Nama Area</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -51,16 +52,23 @@
                             @forelse($data as $index => $item)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td><span class="badge bg-secondary">{{ $item->kode_unit }}</span></td>
-                                    <td>{{ $item->nama_unit }}</td>
+                                    <td>
+                                        @if($item->region)
+                                            <span class="badge bg-info text-dark">[{{ $item->kd_region }}] {{ $item->region->nama_region }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ $item->kd_area }}</span></td>
+                                    <td>{{ $item->nama_area }}</td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            <a href="{{ route('master.unit.edit', $item->id) }}"
+                                            <a href="{{ route('master.area.edit', $item->id) }}"
                                                class="btn btn-warning btn-sm text-white shadow-sm"
                                                title="Edit">
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
-                                            <form action="{{ route('master.unit.destroy', $item->id) }}"
+                                            <form action="{{ route('master.area.destroy', $item->id) }}"
                                                   method="POST"
                                                   class="delete-form m-0">
                                                 @csrf
@@ -76,7 +84,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center">Tidak ada data</td>
+                                    <td colspan="5" class="text-center">Tidak ada data</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -97,8 +105,8 @@
                 e.preventDefault();
                 const form = btn.closest('form');
                 Swal.fire({
-                    title: 'Hapus Unit?',
-                    text: 'Yakin ingin menghapus data unit ini?',
+                    title: 'Hapus Area?',
+                    text: 'Yakin ingin menghapus data area ini?',
                     icon: 'warning',
                     confirmButtonText: 'Ya, Hapus',
                     cancelButtonText: 'Batal',

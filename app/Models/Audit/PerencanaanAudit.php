@@ -45,9 +45,9 @@ class PerencanaanAudit extends Model
         return $this->belongsTo(\App\Models\MasterData\MasterJenisAudit::class, 'jenis_audit_id');
     }
 
-    public function unit()
+    public function area()
     {
-        return $this->belongsTo(\App\Models\MasterData\MasterUnit::class, 'unit_id');
+        return $this->belongsTo(\App\Models\MasterData\MasterArea::class, 'area_id');
     }
 
     public function koordinator()

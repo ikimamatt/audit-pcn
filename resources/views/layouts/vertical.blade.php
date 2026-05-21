@@ -134,44 +134,56 @@
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+<!-- SweetAlert2 - loaded early so all scripts below can use Swal -->
+<script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
+
 @yield('script')
-<!-- Session Timeout Handler -->
+
+<!-- Session Timeout Handler (needs Swal, must be after sweetalert2) -->
 <script src="{{ asset('js/session-timeout.js') }}"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const logoutLink = document.getElementById('logout-link');
         if (logoutLink) {
             logoutLink.addEventListener('click', function (e) {
                 e.preventDefault();
-                Swal.fire({
-                    title: 'Konfirmasi Logout',
-                    text: 'Apakah Anda yakin ingin keluar?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Logout!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // If confirmed, submit the logout form
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = '{{ route('logout') }}';
-                        form.style.display = 'none';
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const csrfInput = document.createElement('input');
-                        csrfInput.setAttribute('type', 'hidden');
-                        csrfInput.setAttribute('name', '_token');
-                        csrfInput.setAttribute('value', csrfToken);
-                        form.appendChild(csrfInput);
-                        document.body.appendChild(form);
-                        form.submit();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Konfirmasi Logout',
+                        text: 'Apakah Anda yakin ingin keluar?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, Logout!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            submitLogout();
+                        }
+                    });
+                } else {
+                    if (confirm('Apakah Anda yakin ingin keluar?')) {
+                        submitLogout();
                     }
-                });
+                }
             });
+        }
+
+        function submitLogout() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('logout') }}';
+            form.style.display = 'none';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.setAttribute('type', 'hidden');
+            csrfInput.setAttribute('name', '_token');
+            csrfInput.setAttribute('value', csrfToken);
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
         }
     });
 </script>

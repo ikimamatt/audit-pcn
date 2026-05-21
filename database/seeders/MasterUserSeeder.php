@@ -20,9 +20,9 @@ class MasterUserSeeder extends Seeder
             return [strtoupper(trim($item->nama_akses)) => $item->id];
         });
 
-        // Ambil mapping unit ke id (by kode_unit)
-        $unitMap = DB::table('master_unit')->get()->mapWithKeys(function ($item) {
-            return [strtoupper(trim($item->kode_unit)) => $item->id];
+        // Ambil mapping area ke id (by kd_area)
+        $areaMap = DB::table('master_area')->get()->mapWithKeys(function ($item) {
+            return [strtoupper(trim($item->kd_area)) => $item->id];
         });
 
         // ========================================
@@ -30,7 +30,7 @@ class MasterUserSeeder extends Seeder
         // ========================================
         $superadminAksesId = $aksesMap['SUPER ADMIN'] ?? null;
         $spiDivisiId       = $divisiMap['spi'] ?? null;
-        $firstUnitId       = $unitMap->first(); // fallback unit default
+        $firstAreaId       = $areaMap->first(); // fallback area default
 
         if ($superadminAksesId && $spiDivisiId) {
             DB::table('master_user')->updateOrInsert(
@@ -44,7 +44,7 @@ class MasterUserSeeder extends Seeder
                     'no_telpon'            => '000000000000',
                     'jabatan'              => 'System Administrator',
                     'master_auditee_id'    => $spiDivisiId,
-                    'master_unit_id'       => $firstUnitId,
+                    'master_area_id'       => $firstAreaId,
                     'master_akses_user_id' => $superadminAksesId,
                     'created_at'           => now(),
                     'updated_at'           => now(),
@@ -325,10 +325,7 @@ class MasterUserSeeder extends Seeder
         ];
 
         // Data dummy tambahan (untuk testing/development - opsional)
-        $dummyUsers = [
-            // Tambahan user untuk testing jika diperlukan
-            // Bisa dikosongkan jika hanya ingin menggunakan data asli dari gambar
-        ];
+        $dummyUsers = [];
 
         // Gabungkan semua user
         $allUsers = array_merge($usersFromImage, $dummyUsers);
@@ -364,9 +361,9 @@ class MasterUserSeeder extends Seeder
                 'no_telpon'            => $user['no_telpon'] ?? null,
                 'jabatan'              => $user['jabatan'] ?? null,
                 'master_auditee_id'    => $divisiMap[$divisiKey],
-                'master_unit_id'       => isset($user['unit_kode'])
-                                            ? ($unitMap[strtoupper($user['unit_kode'])] ?? $firstUnitId)
-                                            : $firstUnitId,
+                'master_area_id'       => isset($user['area_kode'])
+                                            ? ($areaMap[strtoupper($user['area_kode'])] ?? $firstAreaId)
+                                            : $firstAreaId,
                 'master_akses_user_id' => $aksesMap[$aksesKey],
                 'created_at'           => now(),
                 'updated_at'           => now(),

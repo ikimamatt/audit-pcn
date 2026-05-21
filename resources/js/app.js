@@ -138,7 +138,7 @@ class App {
         }
     }
 
-    initControls = function () {
+    initControls() {
 
         //  Full Screen Controls
         $('[data-toggle="fullscreen"]').on("click", function (e) {

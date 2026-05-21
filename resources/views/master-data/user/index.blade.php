@@ -50,8 +50,8 @@
                                 <th>Email</th>
                                 <th>No. Telpon</th>
                                 <th>Jabatan</th>
-                                <th>Divisi</th>
-                                <th>Unit</th>
+                                <th>Bidang</th>
+                                <th>Area</th>
                                 <th>Akses</th>
                                 <th>Aksi</th>
                             </tr>
@@ -68,9 +68,9 @@
                                     <td>{{ $item->jabatan ?? '-' }}</td>
                                     <td>{{ $item->auditee->divisi ?? '-' }}</td>
                                     <td>
-                                        @if($item->unit)
-                                            <span class="badge bg-secondary">{{ $item->unit->kode_unit }}</span>
-                                            {{ $item->unit->nama_unit }}
+                                        @if($item->area)
+                                            <span class="badge bg-secondary">{{ $item->area->kd_area }}</span>
+                                            {{ $item->area->nama_area }}
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

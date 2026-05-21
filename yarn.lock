@@ -839,6 +839,11 @@
   dependencies:
     "svg.js" "^2.6.5"
 
+"sweetalert2@^11.26.24":
+  "integrity" "sha512-SLgukW4wicewpW5VOukSXY5Z6DL/z7HCOK2ODSjmQPiSphCN8gJAmh9npoceXOtBRNoDN0xIz+zHYthtfiHmjg=="
+  "resolved" "https://registry.npmjs.org/sweetalert2/-/sweetalert2-11.26.24.tgz"
+  "version" "11.26.24"
+
 "swiper@^8.0.7":
   "integrity" "sha512-VwO/KU3i9IV2Sf+W2NqyzwWob4yX9Qdedq6vBtS0rFqJ6Fa5iLUJwxQkuD4I38w0WDJwmFl8ojkdcRFPHWD+2g=="
   "resolved" "https://registry.npmjs.org/swiper/-/swiper-8.4.7.tgz"

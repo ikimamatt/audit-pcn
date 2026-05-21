@@ -78,6 +78,18 @@
                         <small class="text-muted">PDF, maks. 5MB — Kosongkan jika tidak ingin mengganti</small>
                     </div>
 
+                    {{-- Hasil Evaluasi --}}
+                    <div class="mb-3">
+                        <label for="hasil_evaluasi" class="form-label">Evaluasi Pengendalian <span class="text-danger">*</span></label>
+                        <select name="hasil_evaluasi" id="hasil_evaluasi" class="form-control" required>
+                            @php $firstEv = $item->evaluasi->first(); $evVal = $firstEv ? $firstEv->hasil_evaluasi : ''; @endphp
+                            <option value="">Pilih Hasil Evaluasi</option>
+                            <option value="Efektif" {{ old('hasil_evaluasi', $evVal) == 'Efektif' ? 'selected' : '' }}>Efektif</option>
+                            <option value="Tidak Efektif" {{ old('hasil_evaluasi', $evVal) == 'Tidak Efektif' ? 'selected' : '' }}>Tidak Efektif</option>
+                            <option value="Efektif Sebagian" {{ old('hasil_evaluasi', $evVal) == 'Efektif Sebagian' ? 'selected' : '' }}>Efektif Sebagian</option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ route('audit.toe.index') }}" class="btn btn-secondary">Batal</a>
                 </form>

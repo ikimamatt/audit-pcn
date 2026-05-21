@@ -249,7 +249,7 @@
                         <th>No PKA</th>
                         <th>Judul PKA</th>
                         <th>Auditee</th>
-                        <th>Unit</th>
+                        <th>Area</th>
                         <th>Tanggal PKA</th>
                         <th>Status</th>
                         <th style="width:120px;">Aksi</th>
@@ -286,11 +286,11 @@
                             </div>
                         </td>
 
-                        {{-- Unit --}}
+                        {{-- Area --}}
                         <td>
                             <div class="auditee-chip">
                                 <span class="dot" style="background:linear-gradient(135deg,#7c3aed,#a855f7);"></span>
-                                {{ $item->perencanaanAudit->unit->nama_unit ?? '-' }}
+                                {{ $item->perencanaanAudit->area->nama_area ?? '-' }}
                             </div>
                         </td>
 

@@ -7,7 +7,7 @@ use App\Models\Audit\PerencanaanAudit;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterUser;
 use App\Models\MasterData\MasterJenisAudit;
-use App\Models\MasterData\MasterUnit;
+use App\Models\MasterData\MasterArea;
 use Illuminate\Http\Request;
 
 class PerencanaanAuditController extends Controller
@@ -22,10 +22,10 @@ class PerencanaanAuditController extends Controller
     {
         $auditees   = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
-        $units      = MasterUnit::orderBy('kode_unit')->get();
+        $areas      = MasterArea::with('region')->orderBy('kd_area')->get();
         $auditors   = MasterUser::with('akses')->orderBy('nama')->get();
         
-        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'units'));
+        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'areas'));
     }
 
     public function store(Request $request)
@@ -34,7 +34,7 @@ class PerencanaanAuditController extends Controller
             'tanggal_surat_tugas'  => 'required|date',
             'nomor_surat_tugas'    => 'required|string|max:255',
             'jenis_audit_id'       => 'required|exists:master_jenis_audit,id',
-            'unit_id'              => 'nullable|exists:master_unit,id',
+            'area_id'              => 'nullable|exists:master_area,id',
             'auditor'              => 'nullable|array',
             'auditor.*'            => 'nullable|exists:master_user,id',
             'auditee'              => 'required|exists:master_auditee,id',
@@ -73,7 +73,7 @@ class PerencanaanAuditController extends Controller
             'jenis_audit'          => $jenisAudit ? $jenisAudit->nama_jenis_audit : null,
             'auditor'              => $auditorData,
             'auditee_id'           => $request->auditee,
-            'unit_id'              => $request->unit_id ?: null,
+            'area_id'              => $request->area_id ?: null,
             'ruang_lingkup'        => $request->ruang_lingkup,
             'tanggal_audit_mulai'  => $request->tanggal_audit_mulai,
             'tanggal_audit_sampai' => $request->tanggal_audit_sampai,
@@ -102,7 +102,7 @@ class PerencanaanAuditController extends Controller
         
         $auditees    = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
-        $units       = MasterUnit::orderBy('kode_unit')->get();
+        $areas       = MasterArea::with('region')->orderBy('kd_area')->get();
         $auditors    = MasterUser::with('akses')->orderBy('nama')->get();
         
         // Mencocokkan auditor lama dengan user baru berdasarkan NIP
@@ -121,7 +121,7 @@ class PerencanaanAuditController extends Controller
         }
         $item->matched_auditor_ids = $matchedAuditorIds;
         
-        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits', 'units'));
+        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits', 'areas'));
     }
 
     public function update(Request $request, $id)
@@ -132,7 +132,7 @@ class PerencanaanAuditController extends Controller
             'tanggal_surat_tugas'  => 'required|date',
             'nomor_surat_tugas'    => 'required|string|max:255',
             'jenis_audit_id'       => 'required|exists:master_jenis_audit,id',
-            'unit_id'              => 'nullable|exists:master_unit,id',
+            'area_id'              => 'nullable|exists:master_area,id',
             'auditor'              => 'nullable|array',
             'auditor.*'            => 'nullable|exists:master_user,id',
             'auditee'              => 'required|exists:master_auditee,id',
@@ -171,7 +171,7 @@ class PerencanaanAuditController extends Controller
             'jenis_audit'          => $jenisAudit ? $jenisAudit->nama_jenis_audit : null,
             'auditor'              => $auditorData,
             'auditee_id'           => $request->auditee,
-            'unit_id'              => $request->unit_id ?: null,
+            'area_id'              => $request->area_id ?: null,
             'ruang_lingkup'        => $request->ruang_lingkup,
             'tanggal_audit_mulai'  => $request->tanggal_audit_mulai,
             'tanggal_audit_sampai' => $request->tanggal_audit_sampai,

@@ -100,10 +100,9 @@ class TodBpmAuditSeeder extends Seeder
                 }
             }
 
-            // ── Evaluasi ───────────────────────────────────────────────────
             $evaluasiData[] = [
                 'tod_bpm_audit_id' => $todId,
-                'hasil_evaluasi'   => ['Sesuai', 'Tidak Sesuai'][array_rand(['Sesuai', 'Tidak Sesuai'])],
+                'hasil_evaluasi'   => ['Cukup', 'Tidak Cukup'][array_rand(['Cukup', 'Tidak Cukup'])],
                 'created_at'       => now(),
                 'updated_at'       => now(),
             ];

@@ -51,12 +51,12 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Unit <span class="text-danger">*</span></label>
-                        <select name="unit_id" id="unit_id" class="form-select select2-search" required>
-                            <option value="">Pilih Unit</option>
-                            @foreach($units as $unit)
-                                <option value="{{ $unit->id }}" {{ old('unit_id', $item->unit_id) == $unit->id ? 'selected' : '' }}>
-                                    [{{ $unit->kode_unit }}] {{ $unit->nama_unit }}
+                        <label class="form-label">Area <span class="text-danger">*</span></label>
+                        <select name="area_id" id="area_id" class="form-select select2-search" required>
+                            <option value="">Pilih Area</option>
+                            @foreach($areas as $area)
+                                <option value="{{ $area->id }}" {{ old('area_id', $item->area_id) == $area->id ? 'selected' : '' }}>
+                                    [{{ $area->kd_area }}{{ $area->region ? ' - ' . $area->region->nama_region : '' }}] {{ $area->nama_area }}
                                 </option>
                             @endforeach
                         </select>

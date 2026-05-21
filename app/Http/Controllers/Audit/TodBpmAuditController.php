@@ -78,7 +78,7 @@ class TodBpmAuditController extends Controller
             'pka_kontrol_ids'      => 'nullable|array',
             'pka_kontrol_ids.*'    => 'exists:pka_kontrol,id',
             'file_kka_tod'         => 'nullable|file|mimes:pdf|max:5120',
-            'hasil_evaluasi'       => 'required|string|in:Sesuai,Tidak Sesuai',
+            'hasil_evaluasi'       => 'required|string|in:Cukup,Tidak Cukup',
         ]);
 
         // Ambil file BPM dari walkthrough
@@ -173,6 +173,7 @@ class TodBpmAuditController extends Controller
             'perencanaanAudit',
             'pkaRisiko',
             'pkaKontrol',
+            'evaluasi',
         ])->findOrFail($id);
 
         $suratTugas  = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
@@ -209,6 +210,7 @@ class TodBpmAuditController extends Controller
             'pka_kontrol_ids'      => 'nullable|array',
             'pka_kontrol_ids.*'    => 'exists:pka_kontrol,id',
             'file_kka_tod'         => 'nullable|file|mimes:pdf|max:5120',
+            'hasil_evaluasi'       => 'required|string|in:Cukup,Tidak Cukup',
         ]);
 
         DB::transaction(function () use ($request, $item) {
@@ -260,6 +262,14 @@ class TodBpmAuditController extends Controller
                         'updated_at'       => now(),
                     ]);
                 }
+            }
+
+            // Sync/Update Hasil Evaluasi
+            $firstEv = $item->evaluasi()->first();
+            if ($firstEv) {
+                $firstEv->update(['hasil_evaluasi' => $request->hasil_evaluasi]);
+            } else {
+                $item->evaluasi()->create(['hasil_evaluasi' => $request->hasil_evaluasi]);
             }
         });
 
