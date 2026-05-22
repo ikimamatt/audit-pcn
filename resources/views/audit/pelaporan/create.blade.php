@@ -206,70 +206,13 @@
     </div>
 </template>
 
-<!-- Modal untuk Edit ISS -->
-<div class="modal fade" id="editIssModal" tabindex="-1" aria-labelledby="editIssModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editIssModalLabel">Edit Detail ISS</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editIssForm">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Hasil Temuan <span class="text-danger">*</span></label>
-                            <textarea name="edit_hasil_temuan" id="edit_hasil_temuan" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Permasalahan <span class="text-danger">*</span></label>
-                            <textarea name="edit_permasalahan" id="edit_permasalahan" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Kriteria <span class="text-danger">*</span></label>
-                            <textarea name="edit_kriteria" id="edit_kriteria" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Signifikansi <span class="text-danger">*</span></label>
-                            <select name="edit_signifikan" id="edit_signifikan" class="form-select" required>
-                                <option value="">Pilih Signifikansi</option>
-                                <option value="Tinggi">Tinggi</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Rendah">Rendah</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Dampak yang Terjadi</label>
-                            <textarea name="edit_dampak_terjadi" id="edit_dampak_terjadi" class="form-control" rows="3"></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Dampak Potensial</label>
-                            <textarea name="edit_dampak_potensi" id="edit_dampak_potensi" class="form-control" rows="3"></textarea>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label">Penyebab <span class="text-danger">*</span></label>
-                            <textarea name="edit_penyebab" id="edit_penyebab" class="form-control" rows="4" placeholder="Jelaskan penyebab dari permasalahan yang ditemukan (People, Process, Policy, System, Eksternal)" required></textarea>
-                            <small class="form-text text-muted">
-                                <strong>Petunjuk:</strong> Jelaskan penyebab dari berbagai aspek seperti People (SDM), Process (Proses), Policy (Kebijakan), System (Sistem), dan Eksternal (Faktor luar).
-                            </small>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveIssChanges">Simpan Perubahan</button>
-            </div>
-        </div>
-    </div>
-</div>
+
 @endsection
 
 @section('script')
 <script>
 $(document).ready(function() {
     let issIndex = 0;
-    let currentEditingIndex = -1;
 
     // Auto-set Kode SPI berdasarkan jenis audit yang dipilih
     $('#jenis_audit_id').change(function() {
@@ -351,11 +294,6 @@ $(document).ready(function() {
                 generateIssNumber(index);
             }
         });
-        
-        // Edit ISS button
-        container.find('.expand-iss-detail-btn').click(function() {
-            openEditIssModal(index);
-        });
     }
 
     // Generate ISS Number
@@ -393,44 +331,6 @@ $(document).ready(function() {
         });
     }
 
-    // Open Edit ISS Modal
-    function openEditIssModal(index) {
-        currentEditingIndex = index;
-        const container = $(`[data-iss-index="${index}"]`);
-        
-        // Populate modal with current values
-        $('#edit_hasil_temuan').val(container.find('textarea[name="hasil_temuan[]"]').val());
-        $('#edit_permasalahan').val(container.find('textarea[name="permasalahan[]"]').val());
-        $('#edit_kriteria').val(container.find('textarea[name="kriteria[]"]').val());
-        $('#edit_signifikan').val(container.find('select[name="signifikan[]"]').val());
-        $('#edit_dampak_terjadi').val(container.find('textarea[name="dampak_terjadi[]"]').val());
-        $('#edit_dampak_potensi').val(container.find('textarea[name="dampak_potensi[]"]').val());
-        $('#edit_penyebab').val(container.find('textarea[name="penyebab[]"]').val());
-        
-        $('#editIssModal').modal('show');
-    }
-
-    // Save ISS Changes
-    $('#saveIssChanges').click(function() {
-        if (currentEditingIndex === -1) return;
-        
-        const container = $(`[data-iss-index="${currentEditingIndex}"]`);
-        
-        // Update form fields with modal values
-        container.find('textarea[name="hasil_temuan[]"]').val($('#edit_hasil_temuan').val());
-        container.find('textarea[name="permasalahan[]"]').val($('#edit_permasalahan').val());
-        container.find('textarea[name="kriteria[]"]').val($('#edit_kriteria').val());
-        container.find('select[name="signifikan[]"]').val($('#edit_signifikan').val());
-        container.find('textarea[name="dampak_terjadi[]"]').val($('#edit_dampak_terjadi').val());
-        container.find('textarea[name="dampak_potensi[]"]').val($('#edit_dampak_potensi').val());
-        container.find('textarea[name="penyebab[]"]').val($('#edit_penyebab').val());
-        
-        $('#editIssModal').modal('hide');
-        currentEditingIndex = -1;
-        
-        // Show success message
-        alert('Detail ISS berhasil diperbarui!');
-    });
 
     // Add first ISS item by default
     $('#add-iss-btn').click();
