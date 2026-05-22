@@ -204,7 +204,7 @@
                                 <th width="50" class="text-center">No</th>
                                 <th width="180">Surat Tugas</th>
                                 <th width="150">Auditee / Divisi</th>
-                                <th width="200">Jenis Dokumen</th>
+                                <th width="200">Jenis</th>
                                 <th>Keterangan / Judul</th>
                                 <th width="180" class="text-center">Tingkat Approval</th>
                                 <th width="130" class="text-center">Tanggal Pengajuan</th>

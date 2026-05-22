@@ -6,69 +6,256 @@
         'node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css',
      ])
     <style>
+        /* Modern High-Contrast Corporate Theme Variables */
+        :root {
+            --corp-navy-dark: #0f172a;
+            --corp-navy-primary: #1e3a8a;
+            --corp-navy-light: #2563eb;
+            --corp-navy-subtle: #eff6ff;
+            
+            --corp-sage-dark: #166534;
+            --corp-sage-primary: #15803d;
+            --corp-sage-subtle: #f0fdf4;
+            
+            --corp-amber-dark: #9a3412;
+            --corp-amber-primary: #d97706;
+            --corp-amber-subtle: #fffbeb;
+            
+            --corp-danger-dark: #991b1b;
+            --corp-danger-primary: #dc2626;
+            --corp-danger-subtle: #fef2f2;
+            
+            --corp-neutral-light: #f8fafc;
+            --corp-neutral-border: #e2e8f0;
+            --corp-neutral-text: #334155;
+            --corp-neutral-text-muted: #64748b;
+        }
+
+        /* Base Card Styling */
+        .card {
+            border: 1px solid var(--corp-neutral-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            background-color: #ffffff;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            background-color: var(--corp-neutral-light) !important;
+            border-bottom: 1px solid var(--corp-neutral-border);
+            padding: 1.25rem 1.5rem;
+            border-top-left-radius: 12px !important;
+            border-top-right-radius: 12px !important;
+        }
+
+        /* High-Contrast Corporate Buttons (No Gradients) */
         .btn-custom {
-            transition: all 0.3s ease;
-            border-radius: 20px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
-        
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-        
+
         .btn-primary {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border: none;
-            transition: all 0.3s ease;
+            background-color: var(--corp-navy-primary) !important;
+            color: #ffffff !important;
+            border: 1px solid var(--corp-navy-primary) !important;
+            box-shadow: 0 2px 4px rgba(30, 58, 138, 0.15) !important;
         }
-        
+
         .btn-primary:hover {
-            background: linear-gradient(45deg, #0056b3, #004085);
+            background-color: var(--corp-navy-dark) !important;
+            border-color: var(--corp-navy-dark) !important;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+            box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
         }
-        
+
+        .btn-secondary {
+            background-color: #ffffff !important;
+            color: var(--corp-neutral-text) !important;
+            border: 1px solid var(--corp-neutral-border) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-primary {
+            color: var(--corp-navy-primary) !important;
+            border-color: var(--corp-navy-primary) !important;
+            background-color: transparent !important;
+        }
+
         .btn-outline-primary:hover {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border-color: #007bff;
+            background-color: var(--corp-navy-subtle) !important;
             transform: translateY(-1px);
         }
-        
+
+        .btn-outline-success {
+            color: var(--corp-sage-primary) !important;
+            border-color: var(--corp-sage-primary) !important;
+            background-color: transparent !important;
+        }
+
         .btn-outline-success:hover {
-            background: linear-gradient(45deg, #28a745, #1e7e34);
-            border-color: #28a745;
+            background-color: var(--corp-sage-subtle) !important;
             transform: translateY(-1px);
         }
-        
-        .btn-outline-warning:hover {
-            background: linear-gradient(45deg, #ffc107, #e0a800);
-            border-color: #ffc107;
-            transform: translateY(-1px);
+
+        .btn-outline-danger {
+            color: var(--corp-danger-primary) !important;
+            border-color: var(--corp-danger-primary) !important;
+            background-color: transparent !important;
         }
-        
+
         .btn-outline-danger:hover {
-            background: linear-gradient(45deg, #dc3545, #c82333);
-            border-color: #dc3545;
+            background-color: var(--corp-danger-subtle) !important;
             transform: translateY(-1px);
         }
-        
+
+        .btn-outline-info {
+            color: var(--corp-navy-light) !important;
+            border-color: var(--corp-navy-light) !important;
+            background-color: transparent !important;
+        }
+
+        .btn-outline-info:hover {
+            background-color: var(--corp-navy-subtle) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--corp-neutral-border);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: var(--corp-navy-dark) !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            color: var(--corp-neutral-text);
+            font-size: 13px;
+            border-bottom: 1px solid var(--corp-neutral-border);
+        }
+
+        .table-hover tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
         .table-hover tbody tr:hover {
-            background-color: rgba(0,123,255,0.05);
-            transform: scale(1.01);
+            background-color: #f8fafc !important;
+        }
+
+        /* Solid Color Badge Styles (No Gradients) */
+        .badge {
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-size: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge.bg-success, .iss-status.bg-success {
+            background-color: var(--corp-sage-subtle) !important;
+            color: var(--corp-sage-dark) !important;
+            border: 1px solid rgba(22, 101, 52, 0.2) !important;
+        }
+
+        .badge.bg-info, .iss-status.bg-info {
+            background-color: var(--corp-navy-subtle) !important;
+            color: var(--corp-navy-dark) !important;
+            border: 1px solid rgba(30, 58, 138, 0.2) !important;
+        }
+
+        .badge.bg-warning, .iss-status.bg-warning {
+            background-color: var(--corp-amber-subtle) !important;
+            color: var(--corp-amber-dark) !important;
+            border: 1px solid rgba(154, 52, 18, 0.2) !important;
+        }
+
+        .badge.bg-danger, .iss-status.bg-danger {
+            background-color: var(--corp-danger-subtle) !important;
+            color: var(--corp-danger-dark) !important;
+            border: 1px solid rgba(153, 27, 27, 0.2) !important;
+        }
+
+        .badge.bg-secondary, .iss-status.bg-secondary {
+            background-color: #f1f5f9 !important;
+            color: var(--corp-neutral-text-muted) !important;
+            border: 1px solid rgba(100, 116, 139, 0.2) !important;
+        }
+
+        .badge.bg-primary, .iss-status.bg-primary {
+            background-color: var(--corp-navy-subtle) !important;
+            color: var(--corp-navy-primary) !important;
+            border: 1px solid rgba(30, 58, 138, 0.2) !important;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--corp-neutral-border);
+            padding: 8px 12px;
+            font-size: 13px;
+            color: var(--corp-neutral-text);
+            background-color: #ffffff;
             transition: all 0.2s ease;
         }
 
-        .status-badge {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 12px;
+        .form-control:focus, .form-select:focus {
+            border-color: var(--corp-navy-light);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
+        .form-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--corp-neutral-text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        /* Modern ISS Circular Count Badge */
         .iss-count-badge {
-            background: linear-gradient(45deg, #6c757d, #495057);
-            color: white;
+            background-color: var(--corp-navy-subtle);
+            color: var(--corp-navy-primary);
+            border: 1px solid rgba(30, 58, 138, 0.2);
             border-radius: 50%;
             width: 28px;
             height: 28px;
@@ -76,216 +263,411 @@
             align-items: center;
             justify-content: center;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .iss-count-badge:hover {
             transform: scale(1.1);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            background: linear-gradient(45deg, #007bff, #0056b3);
+            background-color: var(--corp-navy-primary);
+            color: #ffffff;
+            border-color: var(--corp-navy-primary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
+        /* Premium Modal Styling */
+        .modal-content {
+            border: 1px solid var(--corp-neutral-border) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15) !important;
+        }
+
+        .modal-header {
+            background-color: var(--corp-navy-dark) !important;
+            color: #ffffff !important;
+            border-bottom: 1px solid var(--corp-neutral-border) !important;
+            padding: 1.25rem 1.5rem !important;
+        }
+
+        .modal-header .modal-title {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1) grayscale(1) brightness(2);
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-header .btn-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 2rem !important;
+            background-color: #ffffff;
+        }
+
+        .modal-footer {
+            background-color: var(--corp-neutral-light) !important;
+            border-top: 1px solid var(--corp-neutral-border) !important;
+            padding: 1rem 2rem !important;
+        }
+
+        /* ISS Item Card Layout inside Modal */
         .iss-item {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f8f9fa;
+            border: 1px solid var(--corp-neutral-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: var(--corp-neutral-light);
+            transition: all 0.2s ease;
         }
 
-        .iss-item:last-child {
-            margin-bottom: 0;
+        .iss-item:hover {
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
         }
 
         .iss-header {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            color: white;
-            padding: 10px 15px;
-            margin: -15px -15px 15px -15px;
-            border-radius: 8px 8px 0 0;
+            background-color: var(--corp-navy-dark) !important;
+            color: #ffffff !important;
+            padding: 10px 18px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 10px 10px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .iss-number {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .iss-status {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.2);
-        }
-
-        .field-label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 5px;
-        }
-
-        .field-value {
-            color: #212529;
-            margin-bottom: 15px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 6px;
         }
 
         .field-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.25rem;
+        }
+
+        .field-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--corp-neutral-text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .field-value {
+            font-size: 13px;
+            color: var(--corp-neutral-text);
+            line-height: 1.5;
         }
 
         .significance-badge {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 12px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
         }
+
+        /* Row transition animations */
+        @starting-style {
+            .table tbody tr {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+        }
+
+        .table tbody tr {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* ===== HERO HEADER ===== */
+        .em-hero {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px 28px;
+            color: #1a3a5c;
+            margin-bottom: 24px;
+            border: 1px solid #e8edf5;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+        .em-hero h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+            color: #1a3a5c;
+        }
+        .em-hero .subtitle {
+            font-size: 0.85rem;
+            color: #6b7a99;
+        }
+        .btn-add-em {
+            background: #1a3a5c;
+            color: #fff !important;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 10px rgba(26,58,92,0.18);
+            transition: all .2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-add-em:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(26,58,92,0.25);
+            color: #fff !important;
+            background: #2d6a9f;
+        }
+
+        /* ===== FILTER CARD ===== */
+        .filter-card {
+            border-radius: 16px;
+            border: 1px solid #e8edf5;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+            background: #fff;
+        }
+
+        /* ===== TABLE CARD ===== */
+        .table-card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+            overflow: hidden;
+            background: #fff;
+        }
+        .table-card .card-header-custom {
+            background: #fff;
+            padding: 20px 24px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .table-card .card-header-custom h5 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a3a5c;
+        }
+
+        /* ===== TABLE STYLING OVERRIDES ===== */
+        .table-card thead th {
+            background: #f8fafd !important;
+            color: #6b7a99 !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.6px !important;
+            border-bottom: 2px solid #e8edf5 !important;
+            padding: 13px 14px !important;
+            white-space: nowrap;
+        }
+        .table-card tbody tr:hover {
+            background: #f4f8ff !important;
+        }
+        .table-card tbody td {
+            padding: 13px 14px !important;
+            vertical-align: middle !important;
+            border-color: #f0f3f9 !important;
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+        }
+
+        /* No baris */
+        .row-num {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #9ca3af;
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 3px 8px;
+            display: inline-block;
+        }
+
+        /* No surat tugas / LHA */
+        .no-surat {
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #1a3a5c;
+            background: #eef3fb;
+            border-radius: 8px;
+            padding: 5px 10px;
+            display: inline-block;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        /* Action buttons */
+        .action-wrap {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .btn-act {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+            border: none;
+            transition: all .2s;
+            cursor: pointer;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+        .btn-act-view     { background: #e0f2fe; color: #0369a1; }
+        .btn-act-view:hover   { background: #bae6fd; color: #0284c7; }
+        .btn-act-edit     { background: #fef3c7; color: #d97706; }
+        .btn-act-edit:hover   { background: #fde68a; color: #b45309; }
+        .btn-act-delete   { background: #fee2e2; color: #dc2626; }
+        .btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+        .btn-act-approve { background: #dcfce7; color: #16a34a; }
+        .btn-act-approve:hover { background: #bbf7d0; color: #15803d; }
+        .btn-act-reject { background: #f3f4f6; color: #4b5563; }
+        .btn-act-reject:hover { background: #e5e7eb; color: #374151; }
     </style>
 @endsection
 
 @section('content')
-<div class="row">
+<div class="row mb-1">
     <div class="col-12">
-        <div class="page-title-box">
-            <div class="page-title-right">
-                <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item"><a href="{{ url('/') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="#">Audit</a></li>
-                    <li class="breadcrumb-item active">Pelaporan Hasil Audit</li>
-                </ol>
+        <div class="em-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 fs-12">
+                        <li class="breadcrumb-item"><a href="{{ url('/') }}" class="text-muted"><i class="mdi mdi-home-outline"></i></a></li>
+                        <li class="breadcrumb-item text-muted">Audit</li>
+                        <li class="breadcrumb-item active text-primary" aria-current="page">Pelaporan Hasil Audit</li>
+                    </ol>
+                </nav>
+                <h2><i class="mdi mdi-file-document-outline me-2"></i>Pelaporan Hasil Audit</h2>
+                <div class="subtitle">Kelola dan pantau seluruh pelaporan hasil audit, ISS, dan status approval.</div>
             </div>
-            <h4 class="page-title">
-                <i class="mdi mdi-file-document-outline me-2"></i>
-                Pelaporan Hasil Audit
-            </h4>
+            <div>
+                @canModifyData
+                <a href="{{ route('audit.pelaporan-hasil-audit.create') }}" class="btn-add-em">
+                    <i class="mdi mdi-plus-circle"></i>
+                    Tambah Pelaporan
+                </a>
+                @endcanModifyData
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-light">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h5 class="card-title mb-0">
-                            <i class="mdi mdi-table me-2"></i>
-                            Data Pelaporan Hasil Audit
-                        </h5>
+        @if(session('success'))
+            @include('components.alert')
+        @endif
+
+        <!-- Filter Card -->
+        <div class="card filter-card">
+            <div class="card-body py-3">
+                <form method="GET" action="{{ route('audit.pelaporan-hasil-audit.index') }}" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label for="jenis_lha_lhk" class="form-label mb-1">Jenis LHA/LHK</label>
+                        <select name="jenis_lha_lhk" id="jenis_lha_lhk" class="form-select">
+                            <option value="">Semua Jenis</option>
+                            <option value="LHA" {{ request('jenis_lha_lhk') == 'LHA' ? 'selected' : '' }}>LHA</option>
+                            <option value="LHK" {{ request('jenis_lha_lhk') == 'LHK' ? 'selected' : '' }}>LHK</option>
+                        </select>
                     </div>
-                    <div class="col-md-6 text-end">
-                        <div class="d-flex align-items-center justify-content-end gap-2">
-                            @canModifyData
-                            <a href="{{ route('audit.pelaporan-hasil-audit.create') }}" class="btn btn-primary" style="border-radius: 25px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <i class="mdi mdi-plus-circle me-2"></i>
-                                Tambah Pelaporan
+                    <div class="col-md-3">
+                        <label for="kode_spi" class="form-label mb-1">Jenis Audit</label>
+                        <select name="kode_spi" id="kode_spi" class="form-select">
+                            <option value="">Semua</option>
+                            @php
+                                $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
+                            @endphp
+                            @foreach($jenisAudit as $ja)
+                                <option value="{{ $ja->kode }}" {{ request('kode_spi') == $ja->kode ? 'selected' : '' }}>{{ $ja->nama_jenis_audit }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status_approval" class="form-label mb-1">Status Approval</label>
+                        <select name="status_approval" id="status_approval" class="form-select">
+                            <option value="">Semua Status</option>
+                            <option value="pending" {{ request('status_approval') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved_level1" {{ request('status_approval') == 'approved_level1' ? 'selected' : '' }}>Approved Level 1</option>
+                            <option value="approved" {{ request('status_approval') == 'approved' ? 'selected' : '' }}>Approved (Final)</option>
+                            <option value="rejected_level1" {{ request('status_approval') == 'rejected_level1' ? 'selected' : '' }}>Rejected Level 1</option>
+                            <option value="rejected" {{ request('status_approval') == 'rejected' ? 'selected' : '' }}>Rejected (Final)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-custom btn-primary flex-grow-1" style="padding: 9px 14px;">
+                                <i class="mdi mdi-magnify me-1"></i> Filter
+                            </button>
+                            <a href="{{ route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-custom btn-secondary flex-grow-1" style="padding: 9px 14px;">
+                                <i class="mdi mdi-refresh me-1"></i> Reset
                             </a>
-                            @endcanModifyData
-                            <div class="dropdown">
-                                <a class="nav-link dropdown-toggle nav-user" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                                    <span class="pro-user-name">
-                                        Profile <i class="mdi mdi-chevron-down"></i>
-                                    </span>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end profile-dropdown">
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="mdi mdi-account-circle-outline fs-16 align-middle"></i>
-                                        <span>My Account</span>
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item" id="logout-link-card">
-                                        <i class="mdi mdi-location-exit fs-16 align-middle"></i>
-                                        <span>Logout</span>
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
-            
-            <div class="card-body">
-                @if(session('success'))
-                    @include('components.alert')
-                @endif
-                
+        </div>
 
-                <!-- Filter Section -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <form method="GET" action="{{ route('audit.pelaporan-hasil-audit.index') }}" class="row g-3">
-                            <div class="col-md-3">
-                                <label for="jenis_lha_lhk" class="form-label">Jenis LHA/LHK</label>
-                                <select name="jenis_lha_lhk" id="jenis_lha_lhk" class="form-select">
-                                    <option value="">Semua Jenis</option>
-                                    <option value="LHA" {{ request('jenis_lha_lhk') == 'LHA' ? 'selected' : '' }}>LHA</option>
-                                    <option value="LHK" {{ request('jenis_lha_lhk') == 'LHK' ? 'selected' : '' }}>LHK</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="kode_spi" class="form-label">Jenis Audit</label>
-                                <select name="kode_spi" id="kode_spi" class="form-select">
-                                    <option value="">Semua</option>
-                                    @php
-                                        $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
-                                    @endphp
-                                    @foreach($jenisAudit as $ja)
-                                        <option value="{{ $ja->kode }}" {{ request('kode_spi') == $ja->kode ? 'selected' : '' }}>{{ $ja->nama_jenis_audit }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="status_approval" class="form-label">Status Approval</label>
-                                <select name="status_approval" id="status_approval" class="form-select">
-                                    <option value="">Semua Status</option>
-                                    <option value="pending" {{ request('status_approval') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="approved_level1" {{ request('status_approval') == 'approved_level1' ? 'selected' : '' }}>Approved Level 1</option>
-                                    <option value="approved" {{ request('status_approval') == 'approved' ? 'selected' : '' }}>Approved (Final)</option>
-                                    <option value="rejected_level1" {{ request('status_approval') == 'rejected_level1' ? 'selected' : '' }}>Rejected Level 1</option>
-                                    <option value="rejected" {{ request('status_approval') == 'rejected' ? 'selected' : '' }}>Rejected (Final)</option>
-                                </select>
-                            </div>
-                                                                <div class="col-md-3">
-                                        <label class="form-label">&nbsp;</label>
-                                        <div class="d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary" style="border-radius: 25px; font-weight: 500;">
-                                                <i class="mdi mdi-magnify me-2"></i>
-                                                Filter Data
-                                            </button>
-                                            <a href="{{ route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-outline-secondary" style="border-radius: 25px; font-weight: 500;">
-                                                <i class="mdi mdi-refresh me-2"></i>
-                                                Reset
-                                            </a>
-                                        </div>
-                                    </div>
-                        </form>
-                    </div>
+        <!-- Table Card -->
+        <div class="card table-card">
+            <div class="card-body p-0">
+                <div class="px-4 py-3 d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0 text-dark font-weight-700">
+                        <i class="mdi mdi-table me-2 text-primary"></i> Data Pelaporan Hasil Audit
+                    </h5>
                 </div>
-
-                <!-- Data Table -->
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-hover" id="pelaporanTable">
-                        <thead class="table-dark">
+                <div class="table-responsive p-3">
+                    <table class="table table-hover" id="pelaporanTable">
+                        <thead>
                             <tr>
-                                <th width="50">No</th>
+                                <th style="width: 50px;">No</th>
                                 <th>Surat Tugas</th>
                                 <th>Nomor LHA/LHK</th>
-                                <th width="80">Jenis</th>
-                                <th width="150">Jenis Audit</th>
-                                <th width="100">Kode SPI</th>
-                                <th width="80">ISS</th>
-                                <th width="100">Status</th>
-                                <th width="120">Aksi</th>
+                                <th style="width: 80px;">Jenis</th>
+                                <th style="width: 150px;">Jenis Audit</th>
+                                <th style="width: 100px;">Kode SPI</th>
+                                <th style="width: 80px;">ISS</th>
+                                <th style="width: 120px;">Status</th>
+                                <th style="width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($data as $index => $item)
                                 <tr>
-                                    <td class="text-center">{{ $index + 1 }}</td>
+                                    <td class="text-center"><span class="row-num">{{ $index + 1 }}</span></td>
                                     <td>
-                                        <strong>{{ $item->perencanaanAudit->nomor_surat_tugas ?? '-' }}</strong>
+                                        @if($item->perencanaanAudit && $item->perencanaanAudit->nomor_surat_tugas)
+                                            <span class="no-surat">{{ $item->perencanaanAudit->nomor_surat_tugas }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <strong>{{ $item->nomor_lha_lhk }}</strong>
@@ -293,7 +675,7 @@
                                         <small class="text-muted">Urut: {{ $item->nomor_urut }} | Tahun: {{ $item->tahun }}</small>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge {{ $item->jenis_lha_lhk == 'LHA' ? 'bg-primary' : 'bg-info' }} status-badge">
+                                        <span class="badge {{ $item->jenis_lha_lhk == 'LHA' ? 'bg-primary' : 'bg-info' }}">
                                             {{ $item->jenis_lha_lhk }}
                                         </span>
                                     </td>
@@ -302,7 +684,7 @@
                                             $jenisAudit = \App\Models\MasterData\MasterJenisAudit::where('kode', $item->kode_spi)->first();
                                             $namaJenisAudit = $jenisAudit ? $jenisAudit->nama_jenis_audit : '-';
                                         @endphp
-                                        <span class="badge bg-info status-badge">
+                                        <span class="badge bg-info">
                                             {{ $namaJenisAudit }}
                                         </span>
                                     </td>
@@ -344,15 +726,15 @@
                                                     $statusApprovalText = 'Pending';
                                             }
                                         @endphp
-                                        <span class="badge {{ $statusApprovalClass }} status-badge">{{ $statusApprovalText }}</span>
+                                        <span class="badge {{ $statusApprovalClass }}">{{ $statusApprovalText }}</span>
                                     </td>
                                     <td>
-                                        <div class="btn-group-vertical btn-group-sm" role="group">
+                                        <div class="action-wrap">
                                             @canModifyData
                                             <a href="{{ route('audit.pelaporan-hasil-audit.edit', $item->id) }}" 
-                                               class="btn btn-outline-primary btn-sm mb-1 btn-custom" 
+                                               class="btn-act btn-act-edit" 
                                                title="Edit">
-                                                <i class="mdi mdi-pencil me-1"></i>Edit
+                                                <i class="mdi mdi-pencil"></i>
                                             </a>
                                             @endcanModifyData
                                             
@@ -361,25 +743,25 @@
                                                 $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($item);
                                                 $canReject      = \App\Helpers\ApprovalHelper::canReject($item);
                                             @endphp
-
+                                
                                             @if($canApproveLvl1 || $canApproveLvl2 || $canReject)
-                                                <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block">
+                                                <form id="approval-form-{{ $item->id }}" action="{{ route('audit.pelaporan-hasil-audit.approval', $item->id) }}" method="POST" style="display:inline-block; margin: 0;">
                                                     @csrf
                                                     <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                     
                                                     @if($canApproveLvl1)
-                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
-                                                            <i class="mdi mdi-check me-1"></i> Approve
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve">
+                                                            <i class="mdi mdi-check"></i>
                                                         </button>
                                                     @elseif($canApproveLvl2)
-                                                        <button type="button" class="btn btn-sm btn-success mb-1 btn-custom" onclick="approveData({{ $item->id }})">
-                                                            <i class="mdi mdi-check-all me-1"></i> Approve Final
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Final">
+                                                            <i class="mdi mdi-check-all"></i>
                                                         </button>
                                                     @endif
-
+                                
                                                     @if($canReject)
-                                                        <button type="button" class="btn btn-sm btn-danger mb-1 btn-custom" onclick="rejectData({{ $item->id }})">
-                                                            <i class="mdi mdi-close me-1"></i> Reject
+                                                        <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject">
+                                                            <i class="mdi mdi-close"></i>
                                                         </button>
                                                     @endif
                                                 </form>
@@ -387,10 +769,10 @@
                                             
                                             @canModifyData
                                             <button type="button" 
-                                                    class="btn btn-outline-danger btn-sm btn-custom" 
+                                                    class="btn-act btn-act-delete" 
                                                     title="Hapus"
                                                     onclick="deleteData({{ $item->id }})">
-                                                <i class="mdi mdi-delete me-1"></i>Hapus
+                                                <i class="mdi mdi-delete"></i>
                                             </button>
                                             @endcanModifyData
                                         </div>
@@ -411,18 +793,20 @@
 <div class="modal fade" id="issModal" tabindex="-1" aria-labelledby="issModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="issModalLabel">
                     <i class="mdi mdi-file-document-outline me-2"></i>
                     Detail ISS - <span id="modalLhaLhkTitle"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="issModalBody">
                 <!-- ISS details will be loaded here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-custom btn-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close me-1"></i>Tutup
+                </button>
             </div>
         </div>
     </div>
@@ -432,9 +816,9 @@
 <div class="modal fade" id="editIssModal" tabindex="-1" aria-labelledby="editIssModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header">
                 <h5 class="modal-title" id="editIssModalLabel">
-                    <i class="mdi mdi-pencil me-2"></i>
+                    <i class="mdi mdi-pencil me-2 text-warning"></i>
                     Edit ISS
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -525,8 +909,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-warning" onclick="saveEditIss()">
+                <button type="button" class="btn btn-custom btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-custom btn-primary" onclick="saveEditIss()">
                     <i class="mdi mdi-content-save me-1"></i>Simpan Perubahan
                 </button>
             </div>

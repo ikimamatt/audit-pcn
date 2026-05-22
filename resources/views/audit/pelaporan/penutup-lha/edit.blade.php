@@ -1,7 +1,93 @@
 @extends('layouts.vertical', ['title' => 'Edit Penutup LHA/LHK'])
 
+@section('css')
+    <style>
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            background-color: #ffffff;
+            transition: none !important;
+        }
+        .card-header {
+            background-color: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+        }
+        .card-header h4 {
+            color: #1a3a5c !important;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+        }
+        .btn-primary {
+            background-color: #1e3a8a !important;
+            border-color: #1e3a8a !important;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(30, 58, 138, 0.15);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #0f172a !important;
+            border-color: #0f172a !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2);
+        }
+        .btn-secondary {
+            background-color: #ffffff !important;
+            color: #334155 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .btn-secondary:hover {
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            transform: translateY(-1px);
+        }
+        .bg-light {
+            background-color: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.875rem;
+        }
+        .form-text {
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+    </style>
+@endsection
+
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
