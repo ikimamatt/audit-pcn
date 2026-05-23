@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Audit;
+namespace App\Http\Controllers\Audit\PelaksanaanAudit;
 
 use App\Http\Controllers\Controller;
 use App\Models\WalkthroughAudit;

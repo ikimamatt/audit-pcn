@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Audit;
+namespace App\Http\Controllers\Audit\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\RealisasiAudit;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Audit;
+namespace App\Http\Controllers\Audit\PelaporanAudit;
 
 use App\Http\Controllers\Controller;
 use App\Models\PenutupLhaRekomendasi;
