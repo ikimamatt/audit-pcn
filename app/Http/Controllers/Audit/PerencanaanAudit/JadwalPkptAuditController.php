@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Http\Controllers\Audit;
+namespace App\Http\Controllers\Audit\PerencanaanAudit;
 
 use App\Http\Controllers\Controller;
 use App\Models\Models\Audit\JadwalPkptAudit;
