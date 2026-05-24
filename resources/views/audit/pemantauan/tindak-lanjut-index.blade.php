@@ -101,11 +101,11 @@
                                             $typeClass = 'bg-primary-subtle text-primary';
                                             $icon = 'mdi-account-tie';
                                         } elseif ($user->pivot->pic_type === 'approval_1_spi') {
-                                            $typeLabel = 'Approval 1 SPI';
+                                            $typeLabel = 'Business Reviewer 1';
                                             $typeClass = 'bg-warning-subtle text-warning';
                                             $icon = 'mdi-account-check';
                                         } elseif ($user->pivot->pic_type === 'approval_2_spi') {
-                                            $typeLabel = 'Approval 2 SPI';
+                                            $typeLabel = 'Business Reviewer 2';
                                             $typeClass = 'bg-success-subtle text-success';
                                             $icon = 'mdi-shield-check';
                                         }
@@ -134,12 +134,12 @@
                                                     $role = 'Business Contact';
                                                     $typeClass = 'bg-primary-subtle text-primary';
                                                     $icon = 'mdi-account-tie';
-                                                } elseif (stripos($role, 'APPROVAL 1') !== false || stripos($role, 'APPROVAL_1') !== false) {
-                                                    $role = 'Approval 1 SPI';
+                                                } elseif (stripos($role, 'APPROVAL 1') !== false || stripos($role, 'APPROVAL_1') !== false || stripos($role, 'BUSINESS REVIEWER 1') !== false || stripos($role, 'BUSINESS_REVIEWER_1') !== false) {
+                                                    $role = 'Business Reviewer 1';
                                                     $typeClass = 'bg-warning-subtle text-warning';
                                                     $icon = 'mdi-account-check';
-                                                } elseif (stripos($role, 'APPROVAL 2') !== false || stripos($role, 'APPROVAL_2') !== false) {
-                                                    $role = 'Approval 2 SPI';
+                                                } elseif (stripos($role, 'APPROVAL 2') !== false || stripos($role, 'APPROVAL_2') !== false || stripos($role, 'BUSINESS REVIEWER 2') !== false || stripos($role, 'BUSINESS_REVIEWER_2') !== false) {
+                                                    $role = 'Business Reviewer 2';
                                                     $typeClass = 'bg-success-subtle text-success';
                                                     $icon = 'mdi-shield-check';
                                                 }
