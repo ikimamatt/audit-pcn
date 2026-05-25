@@ -139,6 +139,25 @@
             margin-bottom: 6px;
         }
 
+        /* Info boxes and custom callouts */
+        .info-box {
+            background-color: var(--corp-navy-subtle);
+            border: 1px solid rgba(30, 58, 138, 0.15);
+            color: var(--corp-navy-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .info-box i {
+            font-size: 20px;
+            color: var(--corp-navy-primary);
+        }
         /* No baris */
         .row-num {
             font-size: 0.78rem;
@@ -286,12 +305,12 @@
                         <table class="table table-hover" id="responsive-datatable">
                             <thead>
                                 <tr>
-                                    <th style="width: 60px;">No</th>
+                                    <th style="width: 60px; text-align: center;">No</th>
                                     <th>Nomor Surat Tugas</th>
                                     <th>Jenis Audit</th>
                                     <th>Nomor LHA/LHK</th>
                                     <th>Jumlah Rekomendasi</th>
-                                    <th style="width: 200px;">Aksi</th>
+                                    <th style="width: 200px; text-align: center;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -312,12 +331,12 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-info">
+                                        <span class="badge bg-info-subtle text-info border-0 px-2.5 py-1" style="font-size: 0.8rem; font-weight: 600; border-radius: 6px;">
                                             <i class="mdi mdi-clipboard-text-outline me-1"></i>
                                             {{ $item['count_rekomendasi'] }} rekomendasi
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <a href="{{ route('audit.pemantauan.index', ['nomor_surat_tugas' => $item['nomor_surat_tugas']]) }}" 
                                            class="btn-custom-go btn-sm">
                                             <i class="mdi mdi-eye"></i> Lihat Pemantauan

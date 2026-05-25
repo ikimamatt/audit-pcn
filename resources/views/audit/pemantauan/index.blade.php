@@ -235,6 +235,14 @@
                                                             $role  = trim($parts[0] ?? '');
                                                             $name  = trim($parts[1] ?? '');
                                                             $color = $picColors[$i % count($picColors)];
+
+                                                            if (stripos($role, 'BUSINESS CONTACT') !== false) {
+                                                                $role = 'Business Contact';
+                                                            } elseif (stripos($role, 'APPROVAL 1') !== false || stripos($role, 'APPROVAL_1') !== false || stripos($role, 'BUSINESS REVIEWER 1') !== false || stripos($role, 'BUSINESS_REVIEWER_1') !== false) {
+                                                                $role = 'Business Reviewer 1';
+                                                            } elseif (stripos($role, 'APPROVAL 2') !== false || stripos($role, 'APPROVAL_2') !== false || stripos($role, 'BUSINESS REVIEWER 2') !== false || stripos($role, 'BUSINESS_REVIEWER_2') !== false) {
+                                                                $role = 'Business Reviewer 2';
+                                                            }
                                                         @endphp
                                                         <div class="rounded px-2 py-1 border" style="background:#f8f9fa; font-size:0.72rem; line-height:1.4;">
                                                             <div class="fw-semibold text-muted" style="font-size:0.68rem; text-transform:uppercase; letter-spacing:.03em;">

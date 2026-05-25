@@ -285,10 +285,10 @@ class PenutupLhaRekomendasiController extends Controller
             $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
         }
         if ($picApproval1) {
-            $picRekomendasiList[] = 'APPROVAL 1 SPI: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
+            $picRekomendasiList[] = 'BUSINESS REVIEWER 1: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
         }
         if ($picApproval2) {
-            $picRekomendasiList[] = 'APPROVAL 2 SPI: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
+            $picRekomendasiList[] = 'BUSINESS REVIEWER 2: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
         }
         $picRekomendasi = implode(' | ', $picRekomendasiList);
         
@@ -374,10 +374,10 @@ class PenutupLhaRekomendasiController extends Controller
             $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
         }
         if ($picApproval1) {
-            $picRekomendasiList[] = 'APPROVAL 1 SPI: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
+            $picRekomendasiList[] = 'BUSINESS REVIEWER 1: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
         }
         if ($picApproval2) {
-            $picRekomendasiList[] = 'APPROVAL 2 SPI: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
+            $picRekomendasiList[] = 'BUSINESS REVIEWER 2: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
         }
         $picRekomendasi = implode(' | ', $picRekomendasiList);
         
