@@ -1164,7 +1164,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     initPage();
 });
-</script>
 
 function deleteData(id) {
     Swal.fire({
