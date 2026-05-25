@@ -303,7 +303,7 @@
 
                 @if($nomorSuratTugasList->count() > 0)
                     <div class="table-responsive p-3">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="responsive-datatable">
                             <thead>
                                 <tr>
                                     <th style="width: 60px;">No</th>
@@ -365,4 +365,8 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('script')
+    @vite([ 'resources/js/pages/datatable.init.js'])
 @endsection

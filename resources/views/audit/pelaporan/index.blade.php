@@ -924,54 +924,68 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 const canModifyData = @json(\App\Helpers\AuthHelper::canModifyData());
-$(document).ready(function() {
-    console.log('Document ready, initializing DataTable...');
-    
-    // Initialize DataTable
-    $('#pelaporanTable').DataTable({
-        responsive: true,
-        pageLength: 25,
-        order: [[0, 'asc']],
-        columnDefs: [
-            { orderable: false, targets: [8] } // Disable sorting for action column
-        ]
-    });
 
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+document.addEventListener('DOMContentLoaded', function() {
+    function initPage() {
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.DataTable) {
+            const $ = window.jQuery;
+            console.log('jQuery and DataTables are loaded, running initialization...');
+            
+            // Initialize DataTable
+            $('#pelaporanTable').DataTable({
+                responsive: false,
+                pageLength: 15,
+                lengthMenu: [[15, 30, 50, 100], [15, 30, 50, 100]],
+                order: [[0, 'asc']],
+                columnDefs: [
+                    { orderable: false, targets: [8] } // Disable sorting for action column
+                ],
+                language: {
+                    emptyTable: "Tidak ada data."
+                }
+            });
 
-    // Logout handler for profile menu in card header
-    $('#logout-link-card').click(function(e) {
-        e.preventDefault();
-        Swal.fire({
-            title: 'Konfirmasi Logout',
-            text: 'Apakah Anda yakin ingin keluar?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Ya, Logout!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route('logout') }}';
-                form.style.display = 'none';
-                const csrfToken = $('meta[name="csrf-token"]').attr('content');
-                const csrfInput = $('<input>').attr({
-                    type: 'hidden',
-                    name: '_token',
-                    value: csrfToken
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Logout handler for profile menu in card header
+            $('#logout-link-card').click(function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Konfirmasi Logout',
+                    text: 'Apakah Anda yakin ingin keluar?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Logout!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('logout') }}';
+                        form.style.display = 'none';
+                        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+                        const csrfInput = $('<input>').attr({
+                            type: 'hidden',
+                            name: '_token',
+                            value: csrfToken
+                        });
+                        form.appendChild(csrfInput[0]);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
                 });
-                form.appendChild(csrfInput[0]);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    });
+            });
+        } else {
+            console.log('Waiting for jQuery and DataTables to be ready...');
+            setTimeout(initPage, 50);
+        }
+    }
+    initPage();
 });
 
 function showIssModal(id, nomorLhaLhk) {

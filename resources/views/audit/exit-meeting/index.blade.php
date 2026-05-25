@@ -96,7 +96,7 @@
 </div>
 
 {{-- Table --}}
-@php $total = count($realisasiAudits); @endphp
+@php $total = $realisasiAudits->count(); @endphp
 <div class="card table-card">
     <div class="card-header-custom d-flex align-items-center justify-content-between pb-3">
         <div class="d-flex align-items-center gap-2">
