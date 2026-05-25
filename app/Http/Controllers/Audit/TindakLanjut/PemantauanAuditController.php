@@ -22,12 +22,12 @@ class PemantauanAuditController extends Controller
         // Ambil semua perencanaan audit yang memiliki rekomendasi
         $query = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
-        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee mereka
+        // Jika user adalah AUDITEE, filter berdasarkan unit (area) mereka saja
         if (\App\Helpers\AuthHelper::isAuditee() && $currentUserId) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            if ($userAreaId) {
+                $query->where('area_id', $userAreaId);
+            }
         }
         
         // Filter berdasarkan search
@@ -49,19 +49,12 @@ class PemantauanAuditController extends Controller
         $perencanaanList = $query->with(['pelaporanHasilAudit'])->get();
         
         $nomorSuratTugasList = $perencanaanList
-            ->map(function($perencanaan) use ($currentUserId, $canSeeAllData) {
+            ->map(function($perencanaan) {
                 // Hitung rekomendasi secara langsung dari tabel PenutupLhaRekomendasi
                 // agar akurat meskipun satu temuan punya >1 rekomendasi
                 $rekomendasiQuery = PenutupLhaRekomendasi::whereHas('temuan.pelaporanHasilAudit', function($q) use ($perencanaan) {
                     $q->where('perencanaan_audit_id', $perencanaan->id);
                 });
-                
-                if (\App\Helpers\AuthHelper::isAuditee()) {
-                    $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                    $rekomendasiQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                        $q->where('auditee_id', $userAuditeeId);
-                    });
-                }
                 
                 $totalRekomendasi = $rekomendasiQuery->count();
                 
@@ -85,14 +78,15 @@ class PemantauanAuditController extends Controller
             ->sortBy('nomor_surat_tugas')
             ->values();
         
-        // Ambil daftar jenis audit untuk filter dropdown (dengan filter PIC jika perlu)
+        // Ambil daftar jenis audit untuk filter dropdown
         $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
         
+        // Filter dropdown jenis audit juga berdasarkan unit auditee
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $jenisAuditQuery->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            if ($userAreaId) {
+                $jenisAuditQuery->where('area_id', $userAreaId);
+            }
         }
         
         $jenisAuditList = $jenisAuditQuery
@@ -129,12 +123,14 @@ class PemantauanAuditController extends Controller
             });
         }
         
-        // Jika user adalah AUDITEE, filter berdasarkan auditee_id mereka
+        // Jika user adalah AUDITEE, filter berdasarkan unit (area) mereka
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            if ($userAreaId) {
+                $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                    $q->where('area_id', $userAreaId);
+                });
+            }
         }
         
         // Apply month filter if provided
@@ -216,53 +212,36 @@ class PemantauanAuditController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $currentUserId = AuthHelper::getCurrentUserId();
-        $user = Auth::user();
         $rekomendasi = PenutupLhaRekomendasi::findOrFail($id);
         
-        $isPicApproval1 = $rekomendasi->picUsers()
-            ->where('master_user_id', $currentUserId)
-            ->wherePivot('pic_type', 'approval_1_spi')
-            ->exists();
-            
-        $isPicApproval2 = $rekomendasi->picUsers()
-            ->where('master_user_id', $currentUserId)
-            ->wherePivot('pic_type', 'approval_2_spi')
-            ->exists();
-
-        $canUpdateStatus = $isPicApproval1 || $isPicApproval2 || \App\Helpers\AuthHelper::isSuperAdmin();
-        
-        if (!$canUpdateStatus) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki akses untuk mengubah status tindak lanjut.'
-            ], 403);
-        }
-        
         $request->validate([
-            'status_tindak_lanjut' => 'required|in:open,on_progress,closed',
+            'action' => 'required|in:approve,reject',
+            'rejection_reason' => 'required_if:action,reject|nullable|string|min:10',
+        ], [
+            'rejection_reason.required_if' => 'Alasan penolakan harus diisi jika Anda menolak tindak lanjut.',
+            'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter.',
         ]);
-        
-        $item = PenutupLhaRekomendasi::findOrFail($id);
-        
-        // Update status di tabel rekomendasi utama
-        $item->update([
-            'status_tindak_lanjut' => $request->status_tindak_lanjut
-        ]);
-        
-        // Juga update status di tindak lanjut terbaru jika ada
-        $latestTindakLanjut = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
-        if ($latestTindakLanjut) {
-            $latestTindakLanjut->update([
-                'status_tindak_lanjut' => $request->status_tindak_lanjut
+
+        $result = \App\Helpers\ApprovalHelper::processApproval(
+            $rekomendasi,
+            $request->action,
+            $request->rejection_reason
+        );
+
+        if ($result['success']) {
+            $rekomendasi->refresh();
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'new_status' => $rekomendasi->status_tindak_lanjut,
+                'status_approval' => $rekomendasi->status_approval,
             ]);
         }
-        
+
         return response()->json([
-            'success' => true,
-            'message' => 'Status tindak lanjut berhasil diupdate!',
-            'new_status' => $request->status_tindak_lanjut
-        ]);
+            'success' => false,
+            'message' => $result['message']
+        ], 403);
     }
 
     /**

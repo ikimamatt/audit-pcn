@@ -78,7 +78,7 @@ class ApprovalHelper
     }
 
     /**
-     * Cek apakah user saat ini bisa approve Level 1 (Ketua Tim)
+     * Cek apakah user saat ini bisa approve Level 1 (Ketua Tim atau PIC approval_1_spi)
      * SUPER ADMIN selalu bisa.
      */
     public static function canApproveLevel1($item, ?int $userId = null): bool
@@ -93,6 +93,14 @@ class ApprovalHelper
         // SUPER ADMIN bypass role, but still respect the status workflow
         if (AuthHelper::isSuperAdmin()) return $validStatusLvl1;
 
+        if ($item->getTable() === 'penutup_lha_rekomendasi') {
+            return DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $item->id)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_1_spi')
+                ->exists() && $validStatusLvl1;
+        }
+
         $perencanaan = self::getPerencanaanAudit($item);
         if (!$perencanaan) return false;
 
@@ -100,7 +108,7 @@ class ApprovalHelper
     }
 
     /**
-     * Cek apakah user saat ini bisa approve Level 2 (Koordinator)
+     * Cek apakah user saat ini bisa approve Level 2 (Koordinator atau PIC approval_2_spi)
      * SUPER ADMIN selalu bisa.
      */
     public static function canApproveLevel2($item, ?int $userId = null): bool
@@ -114,6 +122,14 @@ class ApprovalHelper
 
         // SUPER ADMIN bypass role, but still respect the status workflow
         if (AuthHelper::isSuperAdmin()) return $validStatusLvl2;
+
+        if ($item->getTable() === 'penutup_lha_rekomendasi') {
+            return DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $item->id)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_2_spi')
+                ->exists() && $validStatusLvl2;
+        }
 
         $perencanaan = self::getPerencanaanAudit($item);
         if (!$perencanaan) return false;
@@ -137,6 +153,23 @@ class ApprovalHelper
         // SUPER ADMIN bypass role
         if (AuthHelper::isSuperAdmin()) {
             return $validKetuaReject || $validKoordReject;
+        }
+
+        if ($item->getTable() === 'penutup_lha_rekomendasi') {
+            $isPic1 = DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $item->id)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_1_spi')
+                ->exists();
+            $isPic2 = DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $item->id)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_2_spi')
+                ->exists();
+
+            if ($isPic1 && $validKetuaReject) return true;
+            if ($isPic2 && $validKoordReject) return true;
+            return false;
         }
 
         $perencanaan = self::getPerencanaanAudit($item);
@@ -172,20 +205,36 @@ class ApprovalHelper
         $isSuperAdmin = AuthHelper::isSuperAdmin();
 
         $perencanaan = self::getPerencanaanAudit($item);
+        $tableName = $item->getTable();
+        $itemId    = $item->getKey();
 
-        if (!$perencanaan && !$isSuperAdmin) {
+        if (!$perencanaan && !$isSuperAdmin && $tableName !== 'penutup_lha_rekomendasi') {
             return ['success' => false, 'message' => 'Data perencanaan audit tidak ditemukan.'];
         }
 
-        $ketuaId      = $perencanaan ? (int) $perencanaan->ketua_tim_id : null;
-        $koordinatorId = $perencanaan ? (int) $perencanaan->koordinator_id : null;
+        $isKetua = false;
+        $isKoordinator = false;
 
-        $isKetua      = $ketuaId && $ketuaId === $userId;
-        $isKoordinator = $koordinatorId && $koordinatorId === $userId;
+        if ($tableName === 'penutup_lha_rekomendasi') {
+            $isKetua = DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $itemId)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_1_spi')
+                ->exists();
+            $isKoordinator = DB::table('penutup_lha_rekomendasi_pic')
+                ->where('penutup_lha_rekomendasi_id', $itemId)
+                ->where('master_user_id', $userId)
+                ->where('pic_type', 'approval_2_spi')
+                ->exists();
+        } else {
+            $ketuaId      = $perencanaan ? (int) $perencanaan->ketua_tim_id : null;
+            $koordinatorId = $perencanaan ? (int) $perencanaan->koordinator_id : null;
+
+            $isKetua      = $ketuaId && $ketuaId === $userId;
+            $isKoordinator = $koordinatorId && $koordinatorId === $userId;
+        }
 
         $status    = $item->status_approval ?? 'pending';
-        $tableName = $item->getTable();
-        $itemId    = $item->getKey();
 
         Log::info('ApprovalHelper::processApproval', [
             'action'         => $action,
@@ -203,18 +252,33 @@ class ApprovalHelper
 
             // Level 1: Ketua Tim (atau SUPER ADMIN dari pending)
             if (($isKetua || $isSuperAdmin) && in_array($status, ['pending', 'rejected_level1'])) {
-                $updated = DB::table($tableName)->where('id', $itemId)->update([
+                $updateData = [
                     'status_approval'    => 'approved_level1',
                     'approved_by_level1' => $userId,
                     'approved_at_level1' => now(),
-                ]);
+                ];
+
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $updateData['status_tindak_lanjut'] = 'on_progress';
+                }
+
+                $updated = DB::table($tableName)->where('id', $itemId)->update($updateData);
 
                 if ($updated === false) {
                     return ['success' => false, 'message' => 'Gagal menyimpan approval Level 1.'];
                 }
 
                 $item->refresh();
-                return ['success' => true, 'message' => 'Berhasil diapprove Level 1 (Ketua Tim).'];
+                
+                // Juga update status tindak lanjut terbaru di tabel riwayat jika ada
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $latestTl = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
+                    if ($latestTl) {
+                        $latestTl->update(['status_tindak_lanjut' => 'on_progress']);
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Berhasil diapprove Level 1 (Ketua Tim / PIC 1).'];
             }
 
             // Level 2: Koordinator (atau SUPER ADMIN dari approved_level1)
@@ -231,6 +295,9 @@ class ApprovalHelper
                 if (Schema::hasColumn($tableName, 'approved_at')) {
                     $updateData['approved_at'] = now();
                 }
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $updateData['status_tindak_lanjut'] = 'closed';
+                }
 
                 $updated = DB::table($tableName)->where('id', $itemId)->update($updateData);
 
@@ -239,7 +306,16 @@ class ApprovalHelper
                 }
 
                 $item->refresh();
-                return ['success' => true, 'message' => 'Berhasil diapprove Level 2 (Koordinator). Dokumen selesai diapprove!'];
+
+                // Juga update status tindak lanjut terbaru di tabel riwayat jika ada
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $latestTl = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
+                    if ($latestTl) {
+                        $latestTl->update(['status_tindak_lanjut' => 'closed']);
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Berhasil diapprove Level 2 (Koordinator / PIC 2). Dokumen selesai diapprove!'];
             }
 
             return [
@@ -256,30 +332,60 @@ class ApprovalHelper
 
             $reason = trim($rejectionReason);
 
-            // Ketua Tim reject dari pending
+            // Ketua Tim / PIC 1 reject dari pending
             if (($isKetua || $isSuperAdmin) && in_array($status, ['pending', 'rejected_level1'])) {
-                DB::table($tableName)->where('id', $itemId)->update([
+                $updateData = [
                     'status_approval'         => 'rejected_level1',
                     'rejected_by_level1'      => $userId,
                     'rejected_at_level1'      => now(),
                     'rejection_reason_level1' => $reason,
-                ]);
+                ];
+
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $updateData['status_tindak_lanjut'] = 'open';
+                }
+
+                DB::table($tableName)->where('id', $itemId)->update($updateData);
 
                 $item->refresh();
-                return ['success' => true, 'message' => 'Dokumen ditolak Level 1 (Ketua Tim). Alasan: ' . $reason];
+
+                // Juga update status tindak lanjut terbaru di tabel riwayat jika ada
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $latestTl = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
+                    if ($latestTl) {
+                        $latestTl->update(['status_tindak_lanjut' => 'open']);
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Dokumen ditolak Level 1. Alasan: ' . $reason];
             }
 
-            // Koordinator reject dari approved_level1
+            // Koordinator / PIC 2 reject dari approved_level1
             if (($isKoordinator || $isSuperAdmin) && $status === 'approved_level1') {
-                DB::table($tableName)->where('id', $itemId)->update([
+                $updateData = [
                     'status_approval'         => 'rejected',
                     'rejected_by_level2'      => $userId,
                     'rejected_at_level2'      => now(),
                     'rejection_reason_level2' => $reason,
-                ]);
+                ];
+
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $updateData['status_tindak_lanjut'] = 'open';
+                }
+
+                DB::table($tableName)->where('id', $itemId)->update($updateData);
 
                 $item->refresh();
-                return ['success' => true, 'message' => 'Dokumen ditolak Level 2 (Koordinator). Alasan: ' . $reason];
+
+                // Juga update status tindak lanjut terbaru di tabel riwayat jika ada
+                if ($tableName === 'penutup_lha_rekomendasi') {
+                    $latestTl = $item->tindakLanjut()->orderBy('created_at', 'desc')->first();
+                    if ($latestTl) {
+                        $latestTl->update(['status_tindak_lanjut' => 'open']);
+                    }
+                }
+
+                return ['success' => true, 'message' => 'Dokumen ditolak Level 2. Alasan: ' . $reason];
             }
 
             return [
