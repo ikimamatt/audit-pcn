@@ -158,7 +158,6 @@
             font-size: 20px;
             color: var(--corp-navy-primary);
         }
-
         /* No baris */
         .row-num {
             font-size: 0.78rem;
@@ -230,7 +229,7 @@
                     <ol class="breadcrumb mb-1 fs-12">
                         <li class="breadcrumb-item"><a href="{{ url('/') }}" class="text-muted"><i class="mdi mdi-home-outline"></i></a></li>
                         <li class="breadcrumb-item text-muted">Audit</li>
-                        <li class="breadcrumb-item text-muted">Tindak Lanjut</li>
+                        <li class="breadcrumb-item text-muted">Pemantauan</li>
                         <li class="breadcrumb-item active text-primary" aria-current="page">Pilih Nomor Surat Tugas</li>
                     </ol>
                 </nav>
@@ -303,7 +302,7 @@
 
                 @if($nomorSuratTugasList->count() > 0)
                     <div class="table-responsive p-3">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="responsive-datatable">
                             <thead>
                                 <tr>
                                     <th style="width: 60px; text-align: center;">No</th>
@@ -365,4 +364,8 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('script')
+    @vite([ 'resources/js/pages/datatable.init.js'])
 @endsection

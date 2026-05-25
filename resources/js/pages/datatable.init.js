@@ -1,10 +1,5 @@
-/*
-Template Name: Tapeli - Responsive Laravel Admin Dashboard
-Author: Zoyothemes
-Version: 1.0.0
-Website: https://zoyothemes.com/
-File: Datatable init Js
-*/
+import $ from 'jquery';
+window.jQuery = window.$ = $;
 
 import 'datatables.net/js/jquery.dataTables';
 // DataTable().
@@ -34,11 +29,13 @@ $(document).ready(function () {
     if ($("#responsive-datatable").length) {
         try {
             var table = $("#responsive-datatable").DataTable({
-                scrollX: true,
+                scrollX: false,
                 responsive: false,
                 keys: false, // Disable keyTable to prevent errors with empty tables
+                pageLength: 15, // Default page length
+                lengthMenu: [[15, 30, 50, 100], [15, 30, 50, 100]], // Dynamic page length options
                 language: {
-                    emptyTable: "Tidak ada data exit meeting."
+                    emptyTable: "Tidak ada data."
                 }
             });
             
@@ -73,7 +70,12 @@ $(document).ready(function () {
 
     // Scroll Horizontal Datatable
     $('#scroll-horizontal-datatable').DataTable({ 
-        scrollX: true
+        scrollX: false,
+        pageLength: 15, // Default page length
+        lengthMenu: [[15, 30, 50, 100], [15, 30, 50, 100]], // Dynamic page length options
+        language: {
+            emptyTable: "Tidak ada data."
+        }
     });
 
     // Complex headers with column visibility Datatable

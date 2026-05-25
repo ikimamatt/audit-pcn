@@ -158,7 +158,7 @@
                     @endif
 
                     <div class="table-responsive" style="overflow-x:auto;">
-                        <table id="scroll-horizontal-datatable" class="table table-bordered table-hover w-100 nowrap" style="min-width:1200px;">
+                        <table id="scroll-horizontal-datatable" class="table table-bordered table-hover w-100" style="min-width:1200px;">
                             <thead>
                                 <tr>
                                     <th>No</th>

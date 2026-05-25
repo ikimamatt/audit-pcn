@@ -29,13 +29,7 @@
                                     <option value="">Pilih Perencanaan Audit</option>
                                     @forelse($perencanaanAudits as $perencanaanAudit)
                                         @php
-                                            $hasRejectedEntry = false;
-                                            foreach($perencanaanAudit->programKerjaAudit as $pka) {
-                                                if($pka->entryMeeting && $pka->entryMeeting->status === 'rejected') {
-                                                    $hasRejectedEntry = true;
-                                                    break;
-                                                }
-                                            }
+                                            $isRejectedExit = $perencanaanAudit->realisasiAudit && $perencanaanAudit->realisasiAudit->status_approval === 'rejected';
                                         @endphp
                                         <option value="{{ $perencanaanAudit->id }}" {{ old('perencanaan_audit_id') == $perencanaanAudit->id ? 'selected' : '' }}>
                                             {{ $perencanaanAudit->nomor_surat_tugas }} - 
@@ -48,8 +42,8 @@
                                             @if($perencanaanAudit->tanggal_audit_mulai && $perencanaanAudit->tanggal_audit_sampai)
                                                 · [{{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
                                             @endif
-                                            @if($hasRejectedEntry)
-                                                <span class="text-danger"> - Reject (Ajukan Ulang)</span>
+                                            @if($isRejectedExit)
+                                                · <span class="text-danger">Reject (Ajukan Ulang)</span>
                                             @endif
                                         </option>
                                     @empty

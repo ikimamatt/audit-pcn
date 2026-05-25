@@ -314,7 +314,7 @@
 
     <div class="card-body p-0 pt-0">
         <div class="table-responsive">
-            <table id="responsive-datatable" class="table table-centered w-100 dt-responsive nowrap mb-0">
+            <table id="responsive-datatable" class="table table-centered w-100 mb-0">
                 <thead>
                     <tr>
                         <th style="width:40px;">No</th>
