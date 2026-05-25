@@ -538,8 +538,12 @@ class PenutupLhaRekomendasiController extends Controller
         
         \App\Models\PenutupLhaTindakLanjut::create($data);
         
-        // Tidak perlu update status di rekomendasi utama karena status tidak berubah
-        // Status hanya bisa diubah melalui halaman pemantauan oleh user yang berwenang
+        // Reset status approval rekomendasi ke pending agar bisa diapprove kembali secara berjenjang
+        // Dan ubah status tindak lanjut ke 'on_progress' (sedang ditinjau)
+        $rekomendasi->update([
+            'status_approval' => 'pending',
+            'status_tindak_lanjut' => 'on_progress'
+        ]);
         
         $komentarCount = count($validKomentar);
         

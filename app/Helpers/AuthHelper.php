@@ -89,6 +89,7 @@ class AuthHelper
     /**
      * Dapatkan auditee_id user yang sedang login
      * Null = bisa melihat semua data (non-AUDITEE)
+     * @deprecated Gunakan getUserAreaId() untuk filter berbasis unit (area)
      */
     public static function getUserAuditeeId(): ?int
     {
@@ -97,6 +98,20 @@ class AuthHelper
 
         $user = Auth::user();
         return $user->master_auditee_id ?? null;
+    }
+
+    /**
+     * Dapatkan area_id (unit) user yang sedang login.
+     * Digunakan untuk memfilter data auditee berdasarkan unit mereka.
+     * Null jika bukan AUDITEE atau belum login.
+     */
+    public static function getUserAreaId(): ?int
+    {
+        if (!Auth::check()) return null;
+        if (!self::isAuditee()) return null;
+
+        $user = Auth::user();
+        return $user->master_area_id ?? null;
     }
 
     /**

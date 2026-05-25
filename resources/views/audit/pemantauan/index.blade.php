@@ -267,12 +267,12 @@
                                                     if (in_array($namaAkses, ['AUDITOR', 'Auditor', 'ASMAN SPI', 'KSPI'])) {
                                                         $canUpdateStatus = true;
                                                     } else {
-                                                        // Check if user is PIC APPROVAL 2
-                                                        $isPicApproval2 = $row->picUsers()
+                                                        // Check if user is PIC APPROVAL 1 or PIC APPROVAL 2
+                                                        $isPicApproval = $row->picUsers()
                                                             ->where('master_user_id', $user->id)
-                                                            ->wherePivot('pic_type', 'approval_2_spi')
+                                                            ->whereIn('pic_type', ['approval_1_spi', 'approval_2_spi'])
                                                             ->exists();
-                                                        if ($isPicApproval2) {
+                                                        if ($isPicApproval) {
                                                             $canUpdateStatus = true;
                                                         }
                                                     }
@@ -300,12 +300,31 @@
                                                 @endif
                                             </div>
 
-                                            @if($canUpdateStatus)
-                                                <button type="button" class="btn btn-sm btn-outline-primary w-100 btn-update-status"
-                                                    data-rekomendasi-id="{{ $row->id }}"
-                                                    data-current-status="{{ $statusTindakLanjut }}" data-bs-toggle="modal"
-                                                    data-bs-target="#modalUpdateStatus{{ $row->id }}">
-                                                    <i class="mdi mdi-pencil me-1"></i>Ubah Status
+                                            @php
+                                                $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($row);
+                                                $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($row);
+                                                $canReject = \App\Helpers\ApprovalHelper::canReject($row);
+                                            @endphp
+
+                                            @if($canApproveLvl1)
+                                                <button type="button" class="btn btn-sm btn-success w-100 btn-action-approve-index mb-1" 
+                                                    data-rekomendasi-id="{{ $row->id }}" data-action="approve" data-level="1">
+                                                    <i class="mdi mdi-check-circle me-1"></i>Approve Lvl 1
+                                                </button>
+                                            @endif
+
+                                            @if($canApproveLvl2)
+                                                <button type="button" class="btn btn-sm btn-success w-100 btn-action-approve-index mb-1" 
+                                                    data-rekomendasi-id="{{ $row->id }}" data-action="approve" data-level="2">
+                                                    <i class="mdi mdi-check-decagram me-1"></i>Approve Lvl 2
+                                                </button>
+                                            @endif
+
+                                            @if($canReject)
+                                                <button type="button" class="btn btn-sm btn-danger w-100 btn-action-reject-trigger mb-1" 
+                                                    data-rekomendasi-id="{{ $row->id }}" data-nomor-iss="{{ $row->temuan->nomor_iss ?? '-' }}"
+                                                    data-bs-toggle="modal" data-bs-target="#modalRejectTindakLanjutIndex">
+                                                    <i class="mdi mdi-close-circle me-1"></i>Reject
                                                 </button>
                                             @endif
 
@@ -386,99 +405,7 @@
                                         </td>
                                     </tr>
 
-                                    <!-- Modal Update Status -->
-                                    @php
-                                        $latestTindakLanjut = $row->tindakLanjut->sortByDesc('created_at')->first();
-                                        $statusTindakLanjut = $latestTindakLanjut ? $latestTindakLanjut->status_tindak_lanjut : $row->status_tindak_lanjut;
-
-                                        $canUpdateStatus = false;
-                                        $user = Auth::user();
-                                        if ($user && $user->akses) {
-                                            $namaAkses = $user->akses->nama_akses;
-                                            if (in_array($namaAkses, ['AUDITOR', 'Auditor', 'ASMAN SPI', 'KSPI'])) {
-                                                $canUpdateStatus = true;
-                                            } else {
-                                                $isPicApproval2 = $row->picUsers()
-                                                    ->where('master_user_id', $user->id)
-                                                    ->wherePivot('pic_type', 'approval_2_spi')
-                                                    ->exists();
-                                                if ($isPicApproval2) {
-                                                    $canUpdateStatus = true;
-                                                }
-                                            }
-                                        }
-                                    @endphp
-
-                                    @if($canUpdateStatus)
-                                        <div class="modal fade" id="modalUpdateStatus{{ $row->id }}" tabindex="-1"
-                                            aria-labelledby="modalUpdateStatusLabel{{ $row->id }}" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="modalUpdateStatusLabel{{ $row->id }}">
-                                                            <i class="mdi mdi-pencil-circle me-2"></i>Update Status Tindak Lanjut
-                                                        </h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                            aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-bold">Nomor ISS:</label>
-                                                            <p>{{ $row->temuan->nomor_iss ?? 'N/A' }}</p>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-bold">Rekomendasi:</label>
-                                                            <p class="text-muted">{{ Str::limit($row->rekomendasi, 150) }}</p>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-bold">Status Saat Ini:</label>
-                                                            <div>
-                                                                @if($statusTindakLanjut == 'closed')
-                                                                    <span class="badge bg-success">
-                                                                        <i class="mdi mdi-check-circle me-1"></i>Closed
-                                                                    </span>
-                                                                @elseif($statusTindakLanjut == 'on_progress')
-                                                                    <span class="badge bg-info">
-                                                                        <i class="mdi mdi-clock me-1"></i>On Progress
-                                                                    </span>
-                                                                @elseif($statusTindakLanjut == 'open')
-                                                                    <span class="badge bg-warning">
-                                                                        <i class="mdi mdi-alert-circle me-1"></i>Open
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="mb-3">
-                                                            <label for="newStatus{{ $row->id }}" class="form-label fw-bold">Pilih
-                                                                Status Baru: <span class="text-danger">*</span></label>
-                                                            <select class="form-select" id="newStatus{{ $row->id }}" required>
-                                                                <option value="">-- Pilih Status --</option>
-                                                                <option value="open" {{ $statusTindakLanjut == 'open' ? 'selected' : '' }}>
-                                                                    🟡 Open
-                                                                </option>
-                                                                <option value="on_progress" {{ $statusTindakLanjut == 'on_progress' ? 'selected' : '' }}>
-                                                                    🔵 On Progress
-                                                                </option>
-                                                                <option value="closed" {{ $statusTindakLanjut == 'closed' ? 'selected' : '' }}>
-                                                                    🟢 Closed
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                            <i class="mdi mdi-close me-1"></i>Batal
-                                                        </button>
-                                                        <button type="button" class="btn btn-primary btn-confirm-update"
-                                                            data-rekomendasi-id="{{ $row->id }}">
-                                                            <i class="mdi mdi-check me-1"></i>Update Status
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
+                                    {{-- Modals removed in favor of single reject modal at the bottom --}}
 
                                 @empty
                                     {{-- DataTables will show emptyTable message automatically --}}
@@ -491,9 +418,44 @@
         </div>
     </div>
 
+    <!-- Single Modal Reject Tindak Lanjut Index -->
+    <div class="modal fade" id="modalRejectTindakLanjutIndex" tabindex="-1" aria-labelledby="modalRejectTindakLanjutIndexLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRejectTindakLanjutIndexLabel">
+                        <i class="mdi mdi-close-circle me-2 text-danger"></i>Tolak Tindak Lanjut
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <input type="hidden" id="reject_rekomendasi_id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nomor ISS:</label>
+                        <p id="reject_iss_placeholder" class="form-control-plaintext text-muted mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_reason_index" class="form-label fw-bold">Alasan Penolakan: <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason_index" rows="4" placeholder="Masukkan alasan penolakan (minimal 10 karakter)..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close me-1"></i>Batal
+                    </button>
+                    <button type="button" class="btn btn-danger btn-confirm-reject-index">
+                        <i class="mdi mdi-check me-1"></i>Tolak Tindak Lanjut
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('script')
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/js/pages/datatable.init.js'])
 
     {{-- Toast container untuk notifikasi reminder --}}
@@ -507,19 +469,107 @@
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            // Handle status update confirmation
-            document.querySelectorAll('.btn-confirm-update').forEach(function (button) {
+            // Handle Approve from Index Page
+            document.querySelectorAll('.btn-action-approve-index').forEach(function (button) {
                 button.addEventListener('click', function () {
                     const rekomendasiId = this.dataset.rekomendasiId;
-                    const newStatusSelect = document.getElementById(`newStatus${rekomendasiId}`);
-                    const newStatus = newStatusSelect.value;
+                    const level = this.dataset.level;
 
-                    if (!newStatus) {
-                        alert('Silakan pilih status terlebih dahulu!');
+                    Swal.fire({
+                        title: 'Konfirmasi Approval',
+                        text: `Apakah Anda yakin ingin menyetujui (Approve) Tindak Lanjut ini untuk Level ${level}?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#198754',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, Setujui',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Disable button
+                            this.disabled = true;
+                            const originalHtml = this.innerHTML;
+                            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>...';
+
+                            fetch(`/audit/pemantauan/${rekomendasiId}/update-status`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    action: 'approve'
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: data.message,
+                                        icon: 'success',
+                                        confirmButtonColor: '#198754'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Gagal!',
+                                        text: data.message || 'Gagal menyetujui tindak lanjut.',
+                                        icon: 'error',
+                                        confirmButtonColor: '#d33'
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({
+                                    title: 'Terjadi Kesalahan!',
+                                    text: 'Terjadi kesalahan saat menyetujui tindak lanjut.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#d33'
+                                });
+                            })
+                            .finally(() => {
+                                this.disabled = false;
+                                this.innerHTML = originalHtml;
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Handle Reject Trigger (populates the single modal)
+            document.querySelectorAll('.btn-action-reject-trigger').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const rekomendasiId = this.dataset.rekomendasiId;
+                    const nomorIss = this.dataset.nomorIss;
+
+                    document.getElementById('reject_rekomendasi_id').value = rekomendasiId;
+                    document.getElementById('reject_iss_placeholder').innerText = nomorIss;
+                    document.getElementById('rejection_reason_index').value = '';
+                });
+            });
+
+            // Handle Reject Confirmation from the Single Modal
+            const btnConfirmRejectIndex = document.querySelector('.btn-confirm-reject-index');
+            if (btnConfirmRejectIndex) {
+                btnConfirmRejectIndex.addEventListener('click', function () {
+                    const rekomendasiId = document.getElementById('reject_rekomendasi_id').value;
+                    const reasonTextarea = document.getElementById('rejection_reason_index');
+                    const reason = reasonTextarea.value.trim();
+
+                    if (!reason || reason.length < 10) {
+                        Swal.fire({
+                            title: 'Validasi Gagal!',
+                            text: 'Alasan penolakan harus diisi minimal 10 karakter!',
+                            icon: 'warning',
+                            confirmButtonColor: '#dc3545'
+                        });
                         return;
                     }
 
-                    // Disable button while processing
+                    // Disable button
                     this.disabled = true;
                     const originalHtml = this.innerHTML;
                     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
@@ -531,54 +581,50 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            status_tindak_lanjut: newStatus
+                            action: 'reject',
+                            rejection_reason: reason
                         })
                     })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                const statusContainer = document.getElementById(`status-container-${rekomendasiId}`);
-                                let badgeClass = 'bg-secondary';
-                                let badgeIcon = 'mdi-help-circle';
-                                let badgeText = 'Unknown';
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal first
+                            const modalEl = document.getElementById('modalRejectTindakLanjutIndex');
+                            const modal = bootstrap.Modal.getInstance(modalEl);
+                            if (modal) modal.hide();
 
-                                if (newStatus === 'closed') {
-                                    badgeClass = 'bg-success';
-                                    badgeIcon = 'mdi-check-circle';
-                                    badgeText = 'Closed';
-                                } else if (newStatus === 'on_progress') {
-                                    badgeClass = 'bg-info';
-                                    badgeIcon = 'mdi-clock';
-                                    badgeText = 'On Progress';
-                                } else if (newStatus === 'open') {
-                                    badgeClass = 'bg-warning';
-                                    badgeIcon = 'mdi-alert-circle';
-                                    badgeText = 'Open';
-                                }
-
-                                statusContainer.innerHTML = `
-                            <span class="badge ${badgeClass} w-100 py-2">
-                                <i class="mdi ${badgeIcon} me-1"></i>${badgeText}
-                            </span>
-                        `;
-
-                                const modal = bootstrap.Modal.getInstance(document.getElementById(`modalUpdateStatus${rekomendasiId}`));
-                                modal.hide();
-                                alert(data.message);
-                            } else {
-                                alert(data.message || 'Gagal mengubah status');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Terjadi kesalahan saat mengubah status');
-                        })
-                        .finally(() => {
-                            this.disabled = false;
-                            this.innerHTML = originalHtml;
+                            Swal.fire({
+                                title: 'Berhasil Menolak!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#dc3545'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Gagal!',
+                                text: data.message || 'Gagal menolak tindak lanjut.',
+                                icon: 'error',
+                                confirmButtonColor: '#d33'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Terjadi Kesalahan!',
+                            text: 'Terjadi kesalahan saat menolak tindak lanjut.',
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
                         });
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                        this.innerHTML = originalHtml;
+                    });
                 });
-            });
+            }
 
             // ─────────────────────────────────────────────
             //  Handler: Tombol Kirim Reminder Email
@@ -608,50 +654,59 @@
                     const rekomendasiId = this.dataset.rekomendasiId;
                     const nomorIss      = this.dataset.nomorIss;
 
-                    if (!confirm(`Kirim email pengingat untuk rekomendasi ISS: ${nomorIss}?\n\nEmail akan dikirim ke semua PIC (Auditee + Approver SPI) yang memiliki alamat email terdaftar.`)) {
-                        return;
-                    }
+                    Swal.fire({
+                        title: 'Kirim Email Pengingat?',
+                        text: `Kirim email pengingat untuk rekomendasi ISS: ${nomorIss}? Email akan dikirim ke semua PIC yang memiliki alamat email terdaftar.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#8b5cf6',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, Kirim!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Loading state
+                            const btnEl = this;
+                            btnEl.disabled = true;
+                            btnEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
-                    // Loading state
-                    const btnEl = this;
-                    btnEl.disabled = true;
-                    btnEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-                    fetch(`/audit/pemantauan/${rekomendasiId}/kirim-reminder`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            fetch(`/audit/pemantauan/${rekomendasiId}/kirim-reminder`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showReminderToast(
+                                        'success',
+                                        'Email Terkirim!',
+                                        `Pengingat berhasil dikirim ke ${data.sent_to ? data.sent_to.length : '?'} PIC.`
+                                    );
+                                    // Update badge notified di bawah tombol
+                                    const td = btnEl.closest('td');
+                                    const existing = td.querySelector('.badge-notified');
+                                    const now = new Date().toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+                                    if (existing) {
+                                        existing.innerHTML = `<i class="mdi mdi-email-check-outline"></i> Terkirim: ${now}`;
+                                    } else {
+                                        const badge = document.createElement('div');
+                                        badge.className = 'badge-notified mt-1';
+                                        badge.innerHTML = `<i class="mdi mdi-email-check-outline"></i> Terkirim: ${now}`;
+                                        td.appendChild(badge);
+                                    }
+                                } else {
+                                    showReminderToast('error', 'Gagal!', data.message || 'Terjadi kesalahan.');
+                                }
+                            })
+                            .catch(() => showReminderToast('error', 'Gagal!', 'Koneksi bermasalah. Coba lagi.'))
+                            .finally(() => {
+                                btnEl.disabled = false;
+                                btnEl.innerHTML = '<i class="mdi mdi-bell-ring"></i>';
+                            });
                         }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            showReminderToast(
-                                'success',
-                                'Email Terkirim!',
-                                `Pengingat berhasil dikirim ke ${data.sent_to ? data.sent_to.length : '?'} PIC.`
-                            );
-                            // Update badge notified di bawah tombol
-                            const td = btnEl.closest('td');
-                            const existing = td.querySelector('.badge-notified');
-                            const now = new Date().toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-                            if (existing) {
-                                existing.innerHTML = `<i class="mdi mdi-email-check-outline"></i> Terkirim: ${now}`;
-                            } else {
-                                const badge = document.createElement('div');
-                                badge.className = 'badge-notified mt-1';
-                                badge.innerHTML = `<i class="mdi mdi-email-check-outline"></i> Terkirim: ${now}`;
-                                td.appendChild(badge);
-                            }
-                        } else {
-                            showReminderToast('error', 'Gagal!', data.message || 'Terjadi kesalahan.');
-                        }
-                    })
-                    .catch(() => showReminderToast('error', 'Gagal!', 'Koneksi bermasalah. Coba lagi.'))
-                    .finally(() => {
-                        btnEl.disabled = false;
-                        btnEl.innerHTML = '<i class="mdi mdi-bell-ring"></i>';
                     });
                 });
             });

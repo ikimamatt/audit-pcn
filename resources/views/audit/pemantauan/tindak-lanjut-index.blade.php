@@ -196,11 +196,15 @@
                             <dt class="col-sm-3">Status Approval</dt>
                             <dd class="col-sm-9">
                                 @if($rekomendasi->status_approval == 'approved')
-                                    <span class="badge bg-success">Approved</span>
+                                    <span class="badge bg-success">Approved (Final)</span>
+                                @elseif($rekomendasi->status_approval == 'approved_level1')
+                                    <span class="badge bg-info">Approved Level 1</span>
+                                @elseif($rekomendasi->status_approval == 'rejected_level1')
+                                    <span class="badge bg-danger">Rejected Level 1</span>
                                 @elseif($rekomendasi->status_approval == 'rejected')
-                                    <span class="badge bg-danger">Rejected</span>
+                                    <span class="badge bg-danger">Rejected (Final)</span>
                                 @else
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span class="badge bg-warning">Pending (Menunggu Approval)</span>
                                 @endif
                             </dd>
                         </dl>
@@ -328,14 +332,71 @@
                             ->wherePivot('pic_type', 'business_contact')
                             ->exists();
                         $canAddTindakLanjut = $isBusinessContact || \App\Helpers\AuthHelper::isSuperAdmin();
+
+                        // Cek kelayakan approval menggunakan ApprovalHelper
+                        $canApproveLvl1 = \App\Helpers\ApprovalHelper::canApproveLevel1($rekomendasi);
+                        $canApproveLvl2 = \App\Helpers\ApprovalHelper::canApproveLevel2($rekomendasi);
+                        $canReject = \App\Helpers\ApprovalHelper::canReject($rekomendasi);
                     @endphp
                     
+                    @if($canApproveLvl1)
+                    <button type="button" class="btn btn-success me-2 btn-action-approve" data-action="approve" data-level="1">
+                        <i class="mdi mdi-check-circle me-1"></i>Approve Level 1
+                    </button>
+                    @endif
+
+                    @if($canApproveLvl2)
+                    <button type="button" class="btn btn-success me-2 btn-action-approve" data-action="approve" data-level="2">
+                        <i class="mdi mdi-check-decagram me-1"></i>Approve Level 2 (Final)
+                    </button>
+                    @endif
+
+                    @if($canReject)
+                    <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#modalRejectTindakLanjut">
+                        <i class="mdi mdi-close-circle me-1"></i>Reject
+                    </button>
+                    @endif
+
                     @if($canAddTindakLanjut)
                     <a href="{{ route('audit.penutup-lha-rekomendasi.tindak-lanjut.form', $rekomendasi->id) }}" class="btn btn-success">
                         <i class="mdi mdi-plus-circle me-2"></i>Tambah Tindak Lanjut
                     </a>
                     @endif
                 </div>
+
+                @if($canReject)
+                <!-- Modal Reject Tindak Lanjut -->
+                <div class="modal fade" id="modalRejectTindakLanjut" tabindex="-1" aria-labelledby="modalRejectTindakLanjutLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalRejectTindakLanjutLabel">
+                                    <i class="mdi mdi-close-circle me-2 text-danger"></i>Tolak Tindak Lanjut
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nomor ISS:</label>
+                                    <p>{{ $rekomendasi->temuan->nomor_iss ?? 'N/A' }}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="rejection_reason" class="form-label fw-bold">Alasan Penolakan: <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="rejection_reason" rows="4" placeholder="Masukkan alasan penolakan (minimal 10 karakter)..." required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-close me-1"></i>Batal
+                                </button>
+                                <button type="button" class="btn btn-danger btn-confirm-reject">
+                                    <i class="mdi mdi-check me-1"></i>Tolak Tindak Lanjut
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -430,4 +491,156 @@
     background: #ffffff !important;
 }
 </style>
+@endsection
+
+@section('script')
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle Approve
+        document.querySelectorAll('.btn-action-approve').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const action = this.dataset.action;
+                const level = this.dataset.level;
+
+                Swal.fire({
+                    title: 'Konfirmasi Approval',
+                    text: `Apakah Anda yakin ingin menyetujui (Approve) Tindak Lanjut ini untuk Level ${level}?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#198754',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Setujui',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Disable button
+                        this.disabled = true;
+                        const originalHtml = this.innerHTML;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
+
+                        fetch(`/audit/pemantauan/{{ $rekomendasi->id }}/update-status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                action: action
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#198754'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Gagal!',
+                                    text: data.message || 'Gagal menyetujui tindak lanjut.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#d33'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'Terjadi Kesalahan!',
+                                text: 'Terjadi kesalahan saat menyetujui tindak lanjut.',
+                                icon: 'error',
+                                confirmButtonColor: '#d33'
+                            });
+                        })
+                        .finally(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalHtml;
+                        });
+                    }
+                });
+            });
+        });
+
+        // Handle Reject
+        const btnConfirmReject = document.querySelector('.btn-confirm-reject');
+        if (btnConfirmReject) {
+            btnConfirmReject.addEventListener('click', function () {
+                const reasonTextarea = document.getElementById('rejection_reason');
+                const reason = reasonTextarea.value.trim();
+
+                if (!reason || reason.length < 10) {
+                    Swal.fire({
+                        title: 'Validasi Gagal!',
+                        text: 'Alasan penolakan harus diisi minimal 10 karakter!',
+                        icon: 'warning',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return;
+                }
+
+                // Disable button
+                this.disabled = true;
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memproses...';
+
+                fetch(`/audit/pemantauan/{{ $rekomendasi->id }}/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        action: 'reject',
+                        rejection_reason: reason
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal first
+                        const modalEl = document.getElementById('modalRejectTindakLanjut');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+
+                        Swal.fire({
+                            title: 'Berhasil Menolak!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#dc3545'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: data.message || 'Gagal menolak tindak lanjut.',
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Terjadi Kesalahan!',
+                        text: 'Terjadi kesalahan saat menolak tindak lanjut.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33'
+                    });
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                });
+            });
+        }
+    });
+</script>
 @endsection 

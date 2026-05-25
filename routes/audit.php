@@ -54,6 +54,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('pemantauan/select-nomor-surat-tugas', [PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');
         Route::get('pemantauan', [PemantauanAuditController::class, 'index'])->name('pemantauan.index');
         Route::get('pemantauan/{id}/tindak-lanjut', [PemantauanAuditController::class, 'tindakLanjutIndex'])->name('pemantauan.tindak-lanjut.index');
+        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
 
         // Penutup LHA Rekomendasi (view only)
         Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
@@ -141,7 +142,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // --- Pemantauan (aksi SPI: edit, update, kirim reminder) ---
         Route::get('pemantauan/{id}/edit', [PemantauanAuditController::class, 'edit'])->name('pemantauan.edit');
         Route::put('pemantauan/{id}', [PemantauanAuditController::class, 'update'])->name('pemantauan.update');
-        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
         Route::post('pemantauan/{id}/kirim-reminder', [PemantauanAuditController::class, 'sendReminder'])->name('pemantauan.send-reminder');
 
         // --- Dashboard ---
