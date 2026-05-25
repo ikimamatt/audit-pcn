@@ -39,35 +39,42 @@ class ExitMeetingController extends Controller
             });
         });
 
-        $realisasiAudits = $query->orderByDesc('id')
-            ->paginate(15)
-            ->withQueryString();
+        $realisasiAudits = $query->orderByDesc('id')->get();
 
         return view('audit.exit-meeting.index', compact('realisasiAudits'));
     }
 
     public function create()
     {
-        // Get all perencanaan audit with their PKA and entry meetings
-        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
-        $query = PerencanaanAudit::with(['auditee', 'programKerjaAudit.entryMeeting']);
+        // Ambil Perencanaan Audit yang memiliki PKA dengan milestone 'Exit Meeting'
+        // dan belum memiliki RealisasiAudit (Exit Meeting) yang statusnya pending atau approved
+        try {
+            $query = PerencanaanAudit::whereHas('programKerjaAudit.milestones', function($q) {
+                $q->where('nama_milestone', 'Exit Meeting');
+            })
+            ->whereDoesntHave('realisasiAudit', function($q) {
+                $q->whereIn('status_approval', ['approved', 'pending']);
+            })
+            ->with([
+                'auditee', 
+                'programKerjaAudit.milestones' => function($q) {
+                    $q->where('nama_milestone', 'Exit Meeting');
+                },
+                'realisasiAudit' => function($q) {
+                    $q->where('status_approval', 'rejected');
+                }
+            ]);
+        } catch (\Exception $e) {
+            // Fallback jika terjadi kegagalan query
+            $query = PerencanaanAudit::with(['auditee', 'programKerjaAudit']);
+        }
         
         $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
         if ($userAuditeeId !== null) {
             $query->where('auditee_id', $userAuditeeId);
         }
         
-        $allPerencanaanAudits = $query->get();
-        
-        // Filter perencanaan audit yang bisa digunakan untuk exit meeting
-        // Tampilkan semua perencanaan audit yang belum pernah dibuat exit meeting
-        $perencanaanAudits = $allPerencanaanAudits->filter(function($perencanaan) {
-            // Check jika sudah ada exit meeting untuk perencanaan audit ini
-            $hasExitMeeting = \App\Models\RealisasiAudit::where('perencanaan_audit_id', $perencanaan->id)->exists();
-            
-            // Tampilkan semua perencanaan audit yang belum ada exit meeting
-            return !$hasExitMeeting;
-        });
+        $perencanaanAudits = $query->orderBy('nomor_surat_tugas')->get();
             
         return view('audit.exit-meeting.create', compact('perencanaanAudits'));
     }

@@ -9,7 +9,7 @@ File: Main Js File
 import $ from 'jquery'
 
 // Prevent Vite's jQuery from overwriting the globally loaded jQuery (which has plugins like Select2)
-// window.jQuery = window.$ = $
+window.jQuery = window.$ = $
 
 
 import bootstrap from 'bootstrap/dist/js/bootstrap.min';

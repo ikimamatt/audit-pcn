@@ -706,7 +706,7 @@
                     </h5>
                 </div>
                 <div class="table-responsive p-3">
-                    <table class="table table-hover" id="penutupLhaTable">
+                    <table class="table table-hover" id="responsive-datatable">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">No</th>
@@ -1150,12 +1150,21 @@
     @vite([ 'resources/js/pages/datatable.init.js'])
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+document.addEventListener('DOMContentLoaded', function() {
+    function initPage() {
+        if (window.jQuery) {
+            const $ = window.jQuery;
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        } else {
+            setTimeout(initPage, 50);
+        }
+    }
+    initPage();
 });
+</script>
 
 function deleteData(id) {
     Swal.fire({

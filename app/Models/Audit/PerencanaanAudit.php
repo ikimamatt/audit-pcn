@@ -60,5 +60,8 @@ class PerencanaanAudit extends Model
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'ketua_tim_id');
     }
 
-
+    public function realisasiAudit()
+    {
+        return $this->hasOne(\App\Models\RealisasiAudit::class, 'perencanaan_audit_id');
+    }
 } 
