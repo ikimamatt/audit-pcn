@@ -155,4 +155,23 @@ class MasterUserController extends Controller
             throw $e;
         }
     }
+
+    public function resetPassword(Request $request, MasterUser $masterUser)
+    {
+        // Prevent resetting Superadmin users
+        if ($masterUser->akses && $masterUser->akses->nama_akses === 'Superadmin') {
+            return redirect()->route('master.user.index')
+                ->with('error', 'Superadmin user password cannot be reset through this interface.');
+        }
+
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $masterUser->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return redirect()->route('master.user.index')->with('success', 'Password user ' . $masterUser->nama . ' berhasil direset!');
+    }
 } 

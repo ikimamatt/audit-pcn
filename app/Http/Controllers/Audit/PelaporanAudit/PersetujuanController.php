@@ -65,9 +65,34 @@ class PersetujuanController extends Controller
             ->get();
 
         // 8. Fetch Penutup LHA Rekomendasi
-        $penutups = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit.perencanaanAudit.auditee', 'temuan.pelaporanHasilAudit.perencanaanAudit.ketuaTim', 'temuan.pelaporanHasilAudit.perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
+        $penutupsQuery = PenutupLhaRekomendasi::with([
+            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee', 
+            'temuan.pelaporanHasilAudit.perencanaanAudit.ketuaTim', 
+            'temuan.pelaporanHasilAudit.perencanaanAudit.koordinator',
+            'picUsers'
+        ])
+            ->where(function($q) {
+                $q->whereIn('status_approval', ['pending', 'approved_level1'])
+                  ->orWhereNull('status_approval');
+            });
+
+        // Optimize: Filter at DB level for non-superadmins
+        if (!$isSuperAdmin) {
+            $penutupsQuery->whereHas('picUsers', function($q) use ($userId) {
+                $q->where('master_user_id', $userId)
+                  ->where(function($q2) {
+                      $q2->where(function($q3) {
+                          $q3->whereIn('penutup_lha_rekomendasi.status_approval', ['pending'])
+                             ->orWhereNull('penutup_lha_rekomendasi.status_approval');
+                      })->where('pic_type', 'approval_1_spi')
+                      ->orWhere(function($q3) {
+                          $q3->where('penutup_lha_rekomendasi.status_approval', 'approved_level1');
+                      })->where('pic_type', 'approval_2_spi');
+                  });
+            });
+        }
+
+        $penutups = $penutupsQuery->get();
 
         $allPendingItems = collect();
 
@@ -81,15 +106,32 @@ class PersetujuanController extends Controller
             $canApprove = false;
             $canReject = false;
             
-            $isKetua = (int)($perencanaan->ketua_tim_id ?? 0) === $userId;
-            $isKoordinator = (int)($perencanaan->koordinator_id ?? 0) === $userId;
+            if ($modelType === 'penutup_lha_rekomendasi') {
+                $isPic1 = $item->picUsers->where('id', $userId)->where('pivot.pic_type', 'approval_1_spi')->isNotEmpty();
+                $isPic2 = $item->picUsers->where('id', $userId)->where('pivot.pic_type', 'approval_2_spi')->isNotEmpty();
 
-            if ($status === 'pending') {
-                $canApprove = ($isKetua || $isSuperAdmin);
-                $canReject = ($isKetua || $isSuperAdmin);
-            } elseif ($status === 'approved_level1') {
-                $canApprove = ($isKoordinator || $isSuperAdmin);
-                $canReject = ($isKoordinator || $isSuperAdmin);
+                if ($status === 'pending') {
+                    $canApprove = ($isPic1 || $isSuperAdmin);
+                    $canReject = ($isPic1 || $isSuperAdmin);
+                } elseif ($status === 'approved_level1') {
+                    $canApprove = ($isPic2 || $isSuperAdmin);
+                    $canReject = ($isPic2 || $isSuperAdmin);
+                }
+                
+                $approvalLevel = $status === 'pending' ? 'Level 1 (Business Reviewer 1)' : 'Level 2 (Business Reviewer 2)';
+            } else {
+                $isKetua = (int)($perencanaan->ketua_tim_id ?? 0) === $userId;
+                $isKoordinator = (int)($perencanaan->koordinator_id ?? 0) === $userId;
+
+                if ($status === 'pending') {
+                    $canApprove = ($isKetua || $isSuperAdmin);
+                    $canReject = ($isKetua || $isSuperAdmin);
+                } elseif ($status === 'approved_level1') {
+                    $canApprove = ($isKoordinator || $isSuperAdmin);
+                    $canReject = ($isKoordinator || $isSuperAdmin);
+                }
+                
+                $approvalLevel = $status === 'pending' ? 'Level 1 (Ketua Tim)' : 'Level 2 (Koordinator)';
             }
 
             // If the user cannot approve/reject and is not super admin, we filter it out
@@ -105,7 +147,7 @@ class PersetujuanController extends Controller
                 'auditee_name' => $perencanaan->auditee->divisi ?? '-',
                 'title' => $title,
                 'status_approval' => $status,
-                'approval_level' => $status === 'pending' ? 'Level 1 (Ketua Tim)' : 'Level 2 (Koordinator)',
+                'approval_level' => $approvalLevel,
                 'date' => $item->updated_at ?? $item->created_at ?? now(),
                 'detail_url' => $detailUrl,
                 'can_approve' => $canApprove,
@@ -213,7 +255,7 @@ class PersetujuanController extends Controller
             $mapped = $mapItem(
                 $item, 
                 'penutup_lha_rekomendasi', 
-                'Penutup LHA Rekomendasi', 
+                'Pemantauan Hasil Audit', 
                 $perencanaan, 
                 'Rekomendasi: ' . $truncatedRekomendasi,
                 route('audit.penutup-lha-rekomendasi.show', $item->id)

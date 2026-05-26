@@ -28,6 +28,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('forms/tabel_perencanaan_audit', [RoutingController::class, 'tabelPerencanaanAudit']);
     Route::get('forms/perencanaan_audit', [RoutingController::class, 'perencanaanAuditForm']);
 
+    Route::post('profile/change-password', [App\Http\Controllers\ProfileController::class, 'changePassword'])->name('profile.change-password');
+
     // Catch-all routes - MUST BE LAST
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');

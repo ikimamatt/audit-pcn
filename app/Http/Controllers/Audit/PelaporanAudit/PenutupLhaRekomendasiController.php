@@ -207,10 +207,29 @@ class PenutupLhaRekomendasiController extends Controller
                 ];
             });
         
+        // Dapatkan perencanaan_audit_id
+        $perencanaanAudit = null;
+        if ($nomorSuratTugas) {
+            $perencanaanAudit = PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas)->first();
+        } elseif ($isiLhaId) {
+            $temuan = PelaporanTemuan::with('pelaporanHasilAudit.perencanaanAudit')->find($isiLhaId);
+            $perencanaanAudit = $temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+        }
+
+        $areaId = $perencanaanAudit ? $perencanaanAudit->area_id : null;
+
         // Ambil semua user dari master_user untuk dipilih sebagai PIC
-        $picUsers = MasterUser::with(['akses', 'auditee'])
-            ->orderBy('nama')
-            ->get();
+        // Filter: Hanya user dengan role AUDITEE dan dari unit (area) perencanaan tersebut
+        $picUsersQuery = MasterUser::with(['akses', 'auditee', 'area'])
+            ->whereHas('akses', function($q) {
+                $q->where('nama_akses', 'AUDITEE');
+            });
+
+        if ($areaId) {
+            $picUsersQuery->where('master_area_id', $areaId);
+        }
+
+        $picUsers = $picUsersQuery->orderBy('nama')->get();
         
         return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers', 'nomorSuratTugas'));
     }
@@ -327,12 +346,23 @@ class PenutupLhaRekomendasiController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi.');
         }
 
-        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'picUsers.auditee'])->findOrFail($id);
+        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit.perencanaanAudit', 'picUsers.auditee'])->findOrFail($id);
         
+        $perencanaanAudit = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+        $areaId = $perencanaanAudit ? $perencanaanAudit->area_id : null;
+
         // Ambil semua user dari master_user untuk dipilih sebagai PIC
-        $picUsers = MasterUser::with(['akses', 'auditee'])
-            ->orderBy('nama')
-            ->get();
+        // Filter: Hanya user dengan role AUDITEE dan dari unit (area) perencanaan tersebut
+        $picUsersQuery = MasterUser::with(['akses', 'auditee', 'area'])
+            ->whereHas('akses', function($q) {
+                $q->where('nama_akses', 'AUDITEE');
+            });
+
+        if ($areaId) {
+            $picUsersQuery->where('master_area_id', $areaId);
+        }
+
+        $picUsers = $picUsersQuery->orderBy('nama')->get();
         
         // Ambil PIC berdasarkan pic_type dari pivot table
         $picBusinessContact = $item->picUsers()->wherePivot('pic_type', 'business_contact')->first();

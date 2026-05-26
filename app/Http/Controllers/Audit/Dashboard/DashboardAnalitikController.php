@@ -23,7 +23,7 @@ class DashboardAnalitikController extends Controller
         $divisiId = $request->divisi_id;
         $areaId = $request->area_id;
 
-        $masterDivisi = MasterAuditee::select('id', 'divisi')->orderBy('divisi')->get();
+        $masterDivisi = MasterAuditee::select('id', 'nama_bidang as divisi')->orderBy('nama_bidang')->get();
         $masterArea = MasterArea::select('id', 'nama_area')->orderBy('nama_area')->get();
 
         // 1. KPI Summary Cards
@@ -130,7 +130,7 @@ class DashboardAnalitikController extends Controller
                 'plr.target_waktu',
                 'plr.status_tindak_lanjut',
                 'plr.rekomendasi',
-                'ma.divisi',
+                'ma.nama_bidang as divisi',
                 'ma_area.nama_area as unit'
             )
             ->get();
@@ -187,14 +187,14 @@ class DashboardAnalitikController extends Controller
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
             ->leftJoin('penutup_lha_rekomendasi as plr', 'pt.id', '=', 'plr.pelaporan_isi_lha_id')
             ->select(
-                'ma.divisi as auditee',
+                'ma.nama_bidang as auditee',
                 DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "closed" THEN 1 ELSE 0 END) as closed_count'),
                 DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "on_progress" THEN 1 ELSE 0 END) as progress_count'),
                 DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "open" OR plr.status_tindak_lanjut IS NULL THEN 1 ELSE 0 END) as open_count')
             )
             ->whereIn('pa.id', $planIds)
-            ->whereNotNull('ma.divisi')
-            ->groupBy('ma.id', 'ma.divisi')
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.id', 'ma.nama_bidang')
             ->orderByDesc('open_count')
             ->limit(8)
             ->get();
@@ -216,10 +216,10 @@ class DashboardAnalitikController extends Controller
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
-            ->select('ma.divisi', DB::raw('count(pt.id) as total'))
+            ->select('ma.nama_bidang as divisi', DB::raw('count(pt.id) as total'))
             ->whereIn('pa.id', $planIds)
-            ->whereNotNull('ma.divisi')
-            ->groupBy('ma.divisi')
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.nama_bidang')
             ->orderByDesc('total')
             ->limit(8)
             ->get();
@@ -257,10 +257,10 @@ class DashboardAnalitikController extends Controller
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
             ->join('master_kode_risk as mkr', 'pt.kode_risk_id', '=', 'mkr.id')
-            ->select('ma.divisi', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', DB::raw('count(pt.id) as total'))
+            ->select('ma.nama_bidang as divisi', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', DB::raw('count(pt.id) as total'))
             ->whereIn('pa.id', $planIds)
-            ->whereNotNull('ma.divisi')
-            ->groupBy('ma.divisi', 'mkr.kode_risiko', 'mkr.deskripsi_risiko')
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.nama_bidang', 'mkr.kode_risiko', 'mkr.deskripsi_risiko')
             ->get();
             
         $heatmapDivisis = $divisiTemuan->pluck('divisi')->toArray();
@@ -353,7 +353,7 @@ class DashboardAnalitikController extends Controller
                 'plr.rekomendasi',
                 'plr.target_waktu',
                 'plr.status_tindak_lanjut',
-                'ma.divisi',
+                'ma.nama_bidang as divisi',
                 'ma_area.nama_area as unit',
                 'pa.nomor_surat_tugas'
             )

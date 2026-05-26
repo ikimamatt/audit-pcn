@@ -23,7 +23,12 @@ class PerencanaanAuditController extends Controller
         $auditees   = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
         $areas      = MasterArea::with('region')->orderBy('kd_area')->get();
-        $auditors   = MasterUser::with('akses')->orderBy('nama')->get();
+        $auditors   = MasterUser::with('akses')
+            ->whereDoesntHave('akses', function($q) {
+                $q->where('nama_akses', 'AUDITEE');
+            })
+            ->orderBy('nama')
+            ->get();
         
         return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'areas'));
     }
@@ -103,7 +108,12 @@ class PerencanaanAuditController extends Controller
         $auditees    = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
         $areas       = MasterArea::with('region')->orderBy('kd_area')->get();
-        $auditors    = MasterUser::with('akses')->orderBy('nama')->get();
+        $auditors    = MasterUser::with('akses')
+            ->whereDoesntHave('akses', function($q) {
+                $q->where('nama_akses', 'AUDITEE');
+            })
+            ->orderBy('nama')
+            ->get();
         
         // Mencocokkan auditor lama dengan user baru berdasarkan NIP
         $matchedAuditorIds = [];

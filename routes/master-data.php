@@ -8,6 +8,7 @@ use App\Http\Controllers\MasterData\MasterUserController;
 use App\Http\Controllers\MasterData\MasterAksesUserController;
 use App\Http\Controllers\MasterData\MasterJenisAuditController;
 use App\Http\Controllers\MasterData\MasterAreaController;
+use App\Http\Controllers\MasterData\MasterSubBidangController;
 
 // Master Data Routes — hanya KSPI, ASMAN SPI, dan SUPER ADMIN
 Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
@@ -24,15 +25,29 @@ Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
             ->names('kode-risk')
             ->parameters(['kode-risk' => 'masterKodeRisk']);
 
-        // Auditee
+        // Bidang (formerly Auditee)
         Route::resource('auditee', MasterAuditeeController::class)
             ->names('auditee')
             ->parameters(['auditee' => 'masterAuditee']);
+
+        // Endpoint AJAX: ambil sub bidang untuk bidang tertentu
+        Route::get('auditee/{masterAuditee}/sub-bidang', [MasterAuditeeController::class, 'getSubBidang'])
+            ->name('auditee.sub-bidang');
+
+        // Sub Bidang (AJAX — digunakan dari Offcanvas di halaman Master Bidang)
+        Route::post('sub-bidang', [MasterSubBidangController::class, 'store'])
+            ->name('sub-bidang.store');
+        Route::put('sub-bidang/{masterSubBidang}', [MasterSubBidangController::class, 'update'])
+            ->name('sub-bidang.update');
+        Route::delete('sub-bidang/{masterSubBidang}', [MasterSubBidangController::class, 'destroy'])
+            ->name('sub-bidang.destroy');
 
         // User
         Route::resource('user', MasterUserController::class)
             ->names('user')
             ->parameters(['user' => 'masterUser']);
+        Route::post('user/{masterUser}/reset-password', [MasterUserController::class, 'resetPassword'])
+            ->name('user.reset-password');
 
         // Akses User
         Route::get('akses-user', [MasterAksesUserController::class, 'index'])->name('akses-user.index');

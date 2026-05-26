@@ -4,31 +4,66 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class MasterUnitSeeder extends Seeder
 {
     public function run(): void
     {
-        $units = [
-            ['kode_unit' => 'U001', 'nama_unit' => 'Unit Pengawasan Internal'],
-            ['kode_unit' => 'U002', 'nama_unit' => 'Unit Keuangan & Akuntansi'],
-            ['kode_unit' => 'U003', 'nama_unit' => 'Unit Sumber Daya Manusia'],
-            ['kode_unit' => 'U004', 'nama_unit' => 'Unit Teknologi Informasi'],
-            ['kode_unit' => 'U005', 'nama_unit' => 'Unit Operasional & Produksi'],
-            ['kode_unit' => 'U006', 'nama_unit' => 'Unit Pemasaran & Penjualan'],
-            ['kode_unit' => 'U007', 'nama_unit' => 'Unit Kepatuhan & Regulasi'],
-            ['kode_unit' => 'U008', 'nama_unit' => 'Unit Manajemen Risiko'],
-            ['kode_unit' => 'U009', 'nama_unit' => 'Unit Pengadaan & Logistik'],
-            ['kode_unit' => 'U010', 'nama_unit' => 'Unit Hukum & Sekretaris Perusahaan'],
-        ];
+        $this->command->info('🌱 Seeding Master Region, Area and Sub-Bidang from SQL files...');
 
-        foreach ($units as &$unit) {
-            $unit['created_at'] = now();
-            $unit['updated_at'] = now();
+        // 1. Seed master_region
+        $regionSqlPath = base_path('master_region (UP).sql');
+        if (File::exists($regionSqlPath)) {
+            $sql = File::get($regionSqlPath);
+            // Split SQL statements by semicolon
+            $statements = array_filter(array_map('trim', explode(';', $sql)));
+            $inserted = 0;
+            foreach ($statements as $statement) {
+                if (stripos($statement, 'INSERT INTO') !== false) {
+                    DB::unprepared($statement);
+                    $inserted++;
+                }
+            }
+            $this->command->info("✅ Seeded master_region: {$inserted} insert statements executed.");
+        } else {
+            $this->command->error("❌ File not found: {$regionSqlPath}");
         }
 
-        DB::table('master_unit')->insert($units);
+        // 2. Seed master_area
+        $areaSqlPath = base_path('master_area (UL).sql');
+        if (File::exists($areaSqlPath)) {
+            $sql = File::get($areaSqlPath);
+            // Split SQL statements by semicolon
+            $statements = array_filter(array_map('trim', explode(';', $sql)));
+            $inserted = 0;
+            foreach ($statements as $statement) {
+                if (stripos($statement, 'INSERT INTO') !== false) {
+                    DB::unprepared($statement);
+                    $inserted++;
+                }
+            }
+            $this->command->info("✅ Seeded master_area: {$inserted} insert statements executed.");
+        } else {
+            $this->command->error("❌ File not found: {$areaSqlPath}");
+        }
 
-        $this->command->info('MasterUnitSeeder: ' . count($units) . ' data unit berhasil ditambahkan.');
+        // 3. Seed master_sub_bidang
+        $subBidangSqlPath = base_path('master_sub_bidang.sql');
+        if (File::exists($subBidangSqlPath)) {
+            $sql = File::get($subBidangSqlPath);
+            // Split SQL statements by semicolon
+            $statements = array_filter(array_map('trim', explode(';', $sql)));
+            $inserted = 0;
+            foreach ($statements as $statement) {
+                if (stripos($statement, 'INSERT INTO') !== false) {
+                    DB::unprepared($statement);
+                    $inserted++;
+                }
+            }
+            $this->command->info("✅ Seeded master_sub_bidang: {$inserted} insert statements executed.");
+        } else {
+            $this->command->error("❌ File not found: {$subBidangSqlPath}");
+        }
     }
 }

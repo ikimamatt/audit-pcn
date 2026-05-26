@@ -330,7 +330,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($data as $index => $item)
+                    @foreach($data as $index => $item)
                         <tr>
                             {{-- No --}}
                             <td><span class="row-num">{{ $index + 1 }}</span></td>
@@ -479,17 +479,7 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10">
-                                <div class="empty-state">
-                                    <i class="mdi mdi-clipboard-text-off-outline"></i>
-                                    <p class="mb-0 fw-semibold">Belum ada data perencanaan audit</p>
-                                    <p class="mb-0" style="font-size:.82rem;">Klik tombol <strong>Tambah Surat Tugas</strong> untuk memulai</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>

@@ -171,14 +171,14 @@
                         <label for="filter-doc-type" class="form-label font-weight-bold">Tipe Dokumen</label>
                         <select id="filter-doc-type" class="form-select">
                             <option value="">Semua Dokumen</option>
-                            <option value="Program Kerja Audit">Program Kerja Audit (PKA)</option>
+                            <option value="Program Kerja Audit (PKA)">Program Kerja Audit (PKA)</option>
                             <option value="Entry Meeting">Entry Meeting</option>
                             <option value="Walkthrough Audit">Walkthrough Audit</option>
                             <option value="TOD BPM Audit">TOD BPM Audit</option>
                             <option value="TOE Audit">TOE Audit</option>
                             <option value="Exit Meeting">Exit Meeting</option>
-                            <option value="Pelaporan Hasil Audit">Pelaporan Hasil Audit (LHA/LHK)</option>
-                            <option value="Penutup LHA Rekomendasi">Penutup LHA Rekomendasi</option>
+                            <option value="Pelaporan Hasil Audit (LHA/LHK)">Pelaporan Hasil Audit (LHA/LHK)</option>
+                            <option value="Pemantauan Hasil Audit">Pemantauan Hasil Audit</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -212,7 +212,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($allPendingItems as $index => $item)
+                            @foreach($allPendingItems as $index => $item)
                                 <tr>
                                     <td class="text-center">{{ $index + 1 }}</td>
                                     <td>
@@ -221,9 +221,7 @@
                                     <td>
                                         <span class="badge bg-secondary status-badge">{{ $item['auditee_name'] }}</span>
                                     </td>
-                                    <td>
-                                        <span class="font-weight-bold text-dark">{{ $item['document_name'] }}</span>
-                                    </td>
+                                    <td><span class="font-weight-bold text-dark">{{ $item['document_name'] }}</span></td>
                                     <td>
                                         <span class="text-muted">{{ $item['title'] }}</span>
                                     </td>
@@ -269,16 +267,15 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center py-4">
-                                        <i class="mdi mdi-check-all text-success fs-36"></i>
-                                        <p class="mt-2 mb-0 font-weight-bold text-muted">Hebat! Tidak ada persetujuan yang tertunda.</p>
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
+                    @if($allPendingItems->isEmpty())
+                        <div class="text-center py-4 border-top">
+                            <i class="mdi mdi-check-all text-success fs-36"></i>
+                            <p class="mt-2 mb-0 font-weight-bold text-muted">Hebat! Tidak ada persetujuan yang tertunda.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -330,7 +327,7 @@
     @vite([ 'resources/js/pages/datatable.init.js'])
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    $(document).ready(function() {
+    window.addEventListener('load', function() {
         const table = $('#persetujuanTable').DataTable({
             responsive: true,
             pageLength: 25,

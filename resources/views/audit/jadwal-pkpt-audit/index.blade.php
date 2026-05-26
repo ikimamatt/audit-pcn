@@ -248,7 +248,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($data as $i => $item)
+                    @foreach($data as $i => $item)
                     <tr>
                         {{-- No --}}
                         <td><span class="row-num">{{ $i+1 }}</span></td>
@@ -309,19 +309,16 @@
                             </div>
                         </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <i class="mdi mdi-calendar-remove-outline"></i>
-                                <p class="mb-0 fw-semibold">Belum ada data Jadwal PKPT Audit</p>
-                                <p class="mb-0" style="font-size:.82rem;">Klik tombol <strong>Tambah Jadwal PKPT</strong> untuk memulai</p>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
+            @if($data->isEmpty())
+                <div class="empty-state border-top pt-4 pb-4">
+                    <i class="mdi mdi-calendar-remove-outline"></i>
+                    <p class="mb-0 fw-semibold">Belum ada data Jadwal PKPT Audit</p>
+                    <p class="mb-0" style="font-size:.82rem;">Klik tombol <strong>Tambah Jadwal PKPT</strong> untuk memulai</p>
+                </div>
+            @endif
         </div>
     </div>
 </div>

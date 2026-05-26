@@ -30,10 +30,10 @@ class MasterDataSeeder extends Seeder
         $this->command->info('✅ Master Kode Risk seeded successfully!');
         $this->command->newLine();
 
-        // 3. Master Auditee
-        $this->command->info('📊 Seeding Master Auditee...');
+        // 3. Master Bidang
+        $this->command->info('📊 Seeding Master Bidang...');
         $this->call(MasterAuditeeSeeder::class);
-        $this->command->info('✅ Master Auditee seeded successfully!');
+        $this->command->info('✅ Master Bidang seeded successfully!');
         $this->command->newLine();
 
         // 4. Master Akses User
@@ -62,7 +62,7 @@ class MasterDataSeeder extends Seeder
             [
                 ['master_kode_aoi', '✅ Seeded'],
                 ['master_kode_risk', '✅ Seeded'],
-                ['master_auditee', '✅ Seeded'],
+                ['master_auditee (Master Bidang)', '✅ Seeded'],
                 ['master_akses_user', '✅ Seeded'],
                 ['master_user', '✅ Seeded'],
                 ['master_jenis_audit', '✅ Seeded'],

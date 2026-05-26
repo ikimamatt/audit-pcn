@@ -119,7 +119,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Kode AOI <span class="text-danger">*</span></label>
-                <select name="kode_aoi_id[]" class="form-select kode-aoi-select select2-search" required>
+                <select name="kode_aoi_id[]" class="form-select kode-aoi-select select2-iss" required>
                     <option value="">Pilih Kode AOI</option>
                     @foreach($kodeAoi as $aoi)
                         <option value="{{ $aoi->id }}">{{ $aoi->kode_area_of_improvement }} - {{ $aoi->deskripsi_area_of_improvement }}</option>
@@ -128,7 +128,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label">Kode Risiko <span class="text-danger">*</span></label>
-                <select name="kode_risk_id[]" class="form-select kode-risk-select select2-search" required>
+                <select name="kode_risk_id[]" class="form-select kode-risk-select select2-iss" required>
                     <option value="">Pilih Kode Risiko</option>
                     @foreach($kodeRisk as $risk)
                         <option value="{{ $risk->id }}">{{ $risk->kode_risiko }} - {{ $risk->deskripsi_risiko }}</option>
@@ -219,100 +219,127 @@
 <script>
 const existingTemuan = @json($existingTemuan);
 
-$(document).ready(function() {
+window.addEventListener('load', function() {
     let issIndex = 0;
 
-    // Auto-set Kode SPI dari jenis audit
-    $('#jenis_audit_id').change(function() {
-        const kode = $(this).find('option:selected').data('kode');
-        $('#kode_spi').val(kode || '');
-    });
-    // Trigger saat load jika sudah ada nilai
-    if ($('#jenis_audit_id').val()) {
-        $('#jenis_audit_id').trigger('change');
-    }
-
-    // Tambah ISS item baru
-    $('#add-iss-btn').click(function() {
-        addIssItem({});
+    // ─── Jenis Audit → auto-fill Kode SPI ─────────────────────────────────────
+    $('#jenis_audit_id').on('change select2:select', function() {
+        const kode = $(this).find('option:selected').data('kode') || '';
+        $('#kode_spi').val(kode);
+        $('.nomor-iss-input').val('');
     });
 
+    // ─── Tambah ISS Item (baru atau existing) ──────────────────────────────────
     function addIssItem(data) {
         const template = document.getElementById('iss-item-template');
-        const clone = $(template.content.cloneNode(true));
+        const clone    = template.content.cloneNode(true);
+        const itemEl   = clone.querySelector('.iss-item');
+        const idx      = issIndex;
 
-        clone.find('.iss-item').attr('data-iss-index', issIndex);
+        // Set index sebelum append
+        itemEl.setAttribute('data-iss-index', idx);
 
-        // Isi hidden temuan_id (kosong jika baru)
-        clone.find('input[name="temuan_id[]"]').val(data.id || '');
+        // ── Isi data ke elemen fragment SEBELUM append ke DOM ──────────────────
+        // Hidden temuan_id
+        const temuanIdEl = itemEl.querySelector('input[name="temuan_id[]"]');
+        if (temuanIdEl) temuanIdEl.value = data.id || '';
 
-        // Isi nilai existing
-        if (data.hasil_temuan)   clone.find('textarea[name="hasil_temuan[]"]').val(data.hasil_temuan);
-        if (data.kode_aoi_id)    clone.find('select[name="kode_aoi_id[]"]').val(data.kode_aoi_id);
-        if (data.kode_risk_id)   clone.find('select[name="kode_risk_id[]"]').val(data.kode_risk_id);
-        if (data.nomor_iss)      clone.find('.nomor-iss-input').val(data.nomor_iss);
-        if (data.nomor_urut_iss) clone.find('.nomor-urut-iss-input').val(data.nomor_urut_iss);
-        if (data.permasalahan)   clone.find('textarea[name="permasalahan[]"]').val(data.permasalahan);
-        if (data.kriteria)       clone.find('textarea[name="kriteria[]"]').val(data.kriteria);
-        if (data.dampak_terjadi) clone.find('textarea[name="dampak_terjadi[]"]').val(data.dampak_terjadi);
-        if (data.dampak_potensi) clone.find('textarea[name="dampak_potensi[]"]').val(data.dampak_potensi);
-        if (data.signifikan)     clone.find('select[name="signifikan[]"]').val(data.signifikan);
-        if (data.penyebab)       clone.find('textarea[name="penyebab[]"]').val(data.penyebab);
+        // Textarea & input
+        if (data.hasil_temuan)   itemEl.querySelector('textarea[name="hasil_temuan[]"]').value   = data.hasil_temuan;
+        if (data.nomor_iss)      itemEl.querySelector('.nomor-iss-input').value                   = data.nomor_iss;
+        if (data.nomor_urut_iss) itemEl.querySelector('.nomor-urut-iss-input').value              = data.nomor_urut_iss;
+        if (data.permasalahan)   itemEl.querySelector('textarea[name="permasalahan[]"]').value    = data.permasalahan;
+        if (data.kriteria)       itemEl.querySelector('textarea[name="kriteria[]"]').value        = data.kriteria;
+        if (data.dampak_terjadi) itemEl.querySelector('textarea[name="dampak_terjadi[]"]').value = data.dampak_terjadi;
+        if (data.dampak_potensi) itemEl.querySelector('textarea[name="dampak_potensi[]"]').value = data.dampak_potensi;
+        if (data.penyebab)       itemEl.querySelector('textarea[name="penyebab[]"]').value        = data.penyebab;
 
-        // Jika ada data existing, langsung buka detail
-        if (data.id) {
-            clone.find('.iss-detail-collapse').addClass('show');
+        // Select values (set selected attribute directly)
+        if (data.kode_aoi_id) {
+            const opt = itemEl.querySelector(`select[name="kode_aoi_id[]"] option[value="${data.kode_aoi_id}"]`);
+            if (opt) opt.selected = true;
+        }
+        if (data.kode_risk_id) {
+            const opt = itemEl.querySelector(`select[name="kode_risk_id[]"] option[value="${data.kode_risk_id}"]`);
+            if (opt) opt.selected = true;
+        }
+        if (data.signifikan) {
+            const opt = itemEl.querySelector(`select[name="signifikan[]"] option[value="${data.signifikan}"]`);
+            if (opt) opt.selected = true;
         }
 
-        $('#iss-container').append(clone);
-        
-        // Re-initialize select2 for newly added elements
-        $('#iss-container').find('[data-iss-index="' + issIndex + '"] .select2-search').select2({
-            width: '100%'
+        // Jika data existing, langsung tampilkan detail
+        if (data.id) {
+            const detail = itemEl.querySelector('.iss-detail-collapse');
+            if (detail) detail.classList.add('show');
+        }
+
+        // ── Append ke DOM (fragment pindah ke DOM di sini) ─────────────────────
+        document.getElementById('iss-container').appendChild(clone);
+
+        // ── Inisialisasi Select2 pada elemen LIVE di DOM ───────────────────────
+        const $item = $(`#iss-container [data-iss-index="${idx}"]`);
+        $item.find('.select2-iss').each(function() {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
+            }
+            $(this).select2({ width: '100%' });
         });
-        
-        bindIssEvents(issIndex);
+
         issIndex++;
     }
 
-    function bindIssEvents(index) {
-        const container = $(`[data-iss-index="${index}"]`);
+    // Tombol Tambah ISS (item baru kosong)
+    $('#add-iss-btn').on('click', function() {
+        addIssItem({});
+    });
 
-        // Toggle detail
-        container.find('.expand-iss-detail-btn').click(function() {
-            container.find('.iss-detail-collapse').toggleClass('show');
-        });
+    // ─── Event Delegation — semua event pada .iss-item ────────────────────────
 
-        // Hapus ISS
-        container.find('.remove-iss-btn').click(function() {
-            container.remove();
-        });
+    // Toggle Detail ISS
+    $(document).on('click', '#iss-container .expand-iss-detail-btn', function() {
+        $(this).closest('.iss-item').find('.iss-detail-collapse').toggleClass('show');
+    });
 
-        // Generate nomor ISS
-        container.find('.generate-iss-btn').click(function() {
-            generateIssNumber(index);
-        });
+    // Hapus ISS
+    $(document).on('click', '#iss-container .remove-iss-btn', function() {
+        $(this).closest('.iss-item').remove();
+    });
 
-        // Auto-generate saat AOI/Risk berubah
-        container.find('.kode-aoi-select, .kode-risk-select').change(function() {
-            container.find('.nomor-iss-input').val('');
-            const aoi  = container.find('.kode-aoi-select').val();
-            const risk = container.find('.kode-risk-select').val();
-            if (aoi && risk && $('#nomor_lha_lhk').val() && $('#kode_spi').val()) {
-                generateIssNumber(index);
-            }
-        });
-    }
+    // Generate ISS (manual)
+    $(document).on('click', '#iss-container .generate-iss-btn', function() {
+        generateIssNumber($(this).closest('.iss-item'), false);
+    });
 
-    function generateIssNumber(index) {
-        const container   = $(`[data-iss-index="${index}"]`);
+    // Auto-generate saat AOI atau Risiko diubah
+    $(document).on('change', '#iss-container .kode-aoi-select, #iss-container .kode-risk-select', function() {
+        const $item  = $(this).closest('.iss-item');
+        const aoiVal = $item.find('.kode-aoi-select').val();
+        const rskVal = $item.find('.kode-risk-select').val();
+
+        $item.find('.nomor-iss-input').val('');
+
+        if (aoiVal && rskVal) {
+            generateIssNumber($item, true); // silent
+        }
+    });
+
+    // ─── Fungsi Generate Nomor ISS ────────────────────────────────────────────
+    function generateIssNumber($item, silent) {
         const nomorLhaLhk = $('#nomor_lha_lhk').val();
         const kodeSpi     = $('#kode_spi').val();
-        const kodeAoiId   = container.find('.kode-aoi-select').val();
-        const kodeRiskId  = container.find('.kode-risk-select').val();
+        const kodeAoiId   = $item.find('.kode-aoi-select').val();
+        const kodeRiskId  = $item.find('.kode-risk-select').val();
 
         if (!nomorLhaLhk || !kodeSpi || !kodeAoiId || !kodeRiskId) {
-            alert('Lengkapi nomor LHA/LHK, kode SPI, kode AOI, dan kode risiko terlebih dahulu');
+            if (!silent) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Field Belum Lengkap',
+                    text: 'Mohon lengkapi Nomor LHA/LHK, Kode SPI, Kode AOI, dan Kode Risiko terlebih dahulu.',
+                    confirmButtonText: 'OK'
+                });
+            }
             return;
         }
 
@@ -320,30 +347,32 @@ $(document).ready(function() {
             url: '{{ route("audit.pelaporan-hasil-audit.generate-nomor-iss") }}',
             type: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token       : '{{ csrf_token() }}',
                 nomor_lha_lhk: nomorLhaLhk,
-                kode_spi: kodeSpi,
-                kode_aoi_id: kodeAoiId,
-                kode_risk_id: kodeRiskId
+                kode_spi     : kodeSpi,
+                kode_aoi_id  : kodeAoiId,
+                kode_risk_id : kodeRiskId
             },
             success: function(res) {
-                container.find('.nomor-iss-input').val(res.nomor_iss);
-                container.find('.nomor-urut-iss-input').val(res.nomor_urut_iss);
+                $item.find('.nomor-iss-input').val(res.nomor_iss);
+                $item.find('.nomor-urut-iss-input').val(res.nomor_urut_iss);
             },
-            error: function() {
-                alert('Gagal generate nomor ISS');
+            error: function(xhr) {
+                console.error('Error generating nomor ISS:', xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal generate nomor ISS. Periksa console untuk detail.',
+                });
             }
         });
     }
 
-    // Load existing temuan on page load
-    existingTemuan.forEach(function(t) {
-        addIssItem(t);
-    });
-
-    // Jika tidak ada temuan existing, tambah satu kosong
-    if (existingTemuan.length === 0) {
-        addIssItem({});
+    // ─── Load data temuan existing saat halaman dibuka ────────────────────────
+    if (existingTemuan.length > 0) {
+        existingTemuan.forEach(function(t) { addIssItem(t); });
+    } else {
+        addIssItem({}); // Minimal satu item kosong
     }
 });
 </script>

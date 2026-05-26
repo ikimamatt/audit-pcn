@@ -125,6 +125,8 @@
 .btn-act-edit:hover   { background: #fde68a; color: #b45309; }
 .btn-act-delete   { background: #fee2e2; color: #dc2626; }
 .btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+.btn-act-reset    { background: #e0f2fe; color: #0369a1; }
+.btn-act-reset:hover  { background: #bae6fd; color: #0284c7; }
 
 /* Empty state */
 .empty-state {
@@ -226,6 +228,12 @@
                             </td>
                             <td>
                                 <div class="action-wrap">
+                                    <button type="button" 
+                                            class="btn-act btn-act-reset" 
+                                            onclick="openResetModal({{ $item->id }}, '{{ addslashes($item->nama) }}')" 
+                                            title="Reset Password">
+                                        <i class="mdi mdi-key-variant"></i>
+                                    </button>
                                     <a href="{{ route('master.user.edit', $item->id) }}" 
                                        class="btn-act btn-act-edit" 
                                        title="Edit User">
@@ -259,12 +267,105 @@
     </div>
 </div>
 
+{{-- ===== MODAL RESET PASSWORD ===== --}}
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header border-bottom-0 pb-0" style="padding: 24px 24px 0;">
+                <h5 class="modal-title fw-bold text-dark" id="resetPasswordModalLabel" style="font-size: 1.15rem; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="mdi mdi-key-variant text-primary" style="font-size: 1.4rem;"></i>
+                    Reset Password User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reset-password-form" method="POST" action="">
+                @csrf
+                <div class="modal-body" style="padding: 20px 24px;">
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">
+                        Anda akan mereset password untuk user <strong id="reset-user-name" class="text-dark"></strong>. Silakan masukkan password baru di bawah ini.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Password Baru</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-outline"></i></span>
+                            <input type="password" 
+                                   name="password" 
+                                   id="new_password" 
+                                   class="form-control border-start-0" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
+                                   placeholder="Minimal 6 karakter" 
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('new_password')" style="border-radius: 0 8px 8px 0;">
+                                <i class="mdi mdi-eye" id="new_password-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label for="new_password_confirmation" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Konfirmasi Password Baru</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-outline"></i></span>
+                            <input type="password" 
+                                   name="password_confirmation" 
+                                   id="new_password_confirmation" 
+                                   class="form-control border-start-0" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
+                                   placeholder="Ulangi password baru" 
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('new_password_confirmation')" style="border-radius: 0 8px 8px 0;">
+                                <i class="mdi mdi-eye" id="new_password_confirmation-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0" style="padding: 0 24px 24px;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 8px 16px;">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 8px 16px; background: #1a3a5c; border-color: #1a3a5c;">Simpan Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('script')
     @vite([ 'resources/js/pages/datatable.init.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        function openResetModal(userId, userName) {
+            const form = document.getElementById('reset-password-form');
+            form.action = `/master/user/${userId}/reset-password`;
+            document.getElementById('reset-user-name').innerText = userName;
+            
+            // Clear inputs
+            document.getElementById('new_password').value = '';
+            document.getElementById('new_password_confirmation').value = '';
+            
+            // Reset eye icons and input types to password
+            document.getElementById('new_password').type = 'password';
+            document.getElementById('new_password_confirmation').type = 'password';
+            document.getElementById('new_password-eye').className = 'mdi mdi-eye';
+            document.getElementById('new_password_confirmation-eye').className = 'mdi mdi-eye';
+
+            // Show Modal
+            const myModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            myModal.show();
+        }
+
+        function togglePasswordVisibility(id) {
+            const input = document.getElementById(id);
+            const eye = document.getElementById(id + '-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.className = 'mdi mdi-eye-off';
+            } else {
+                input.type = 'password';
+                eye.className = 'mdi mdi-eye';
+            }
+        }
+
         function deleteData(id) {
             Swal.fire({
                 title: 'Apakah Anda yakin?',

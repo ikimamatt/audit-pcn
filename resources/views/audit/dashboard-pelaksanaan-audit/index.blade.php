@@ -63,7 +63,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($dashboardData as $index => $data)
+                            @foreach($dashboardData as $index => $data)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $data['auditee'] }}</strong></td>
@@ -127,11 +127,7 @@
                                         </td>
                                     @endforeach
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="{{ 7 + count($months) }}" class="text-center">Tidak ada data pelaksanaan audit.</td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

@@ -719,7 +719,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($data as $index => $item)
+                            @foreach($data as $index => $item)
                             <tr>
                                 <td><span class="row-num">{{ $index + 1 }}</span></td>
                                 <td>
@@ -916,11 +916,7 @@
                                     </div>
                                 </td>
                             </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center">Belum ada data rekomendasi.</td>
-                            </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

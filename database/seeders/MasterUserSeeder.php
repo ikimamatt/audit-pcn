@@ -10,9 +10,9 @@ class MasterUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil mapping divisi ke id dari master_auditee (case-insensitive, trim)
+        // Ambil mapping bidang (nama_bidang) ke id dari master_auditee (case-insensitive, trim)
         $divisiMap = DB::table('master_auditee')->get()->mapWithKeys(function ($item) {
-            return [strtolower(trim($item->divisi)) => $item->id];
+            return [strtolower(trim($item->nama_bidang)) => $item->id];
         });
 
         // Ambil mapping akses user ke id

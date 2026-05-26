@@ -9,24 +9,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Fill existing NULL values with the first available unit
-        $firstUnit = DB::table('master_unit')->orderBy('id')->first();
-        if ($firstUnit) {
+        // Fill existing NULL values with the first available area
+        $firstArea = DB::table('master_area')->orderBy('id')->first();
+        if ($firstArea) {
             DB::table('master_user')
-                ->whereNull('master_unit_id')
-                ->update(['master_unit_id' => $firstUnit->id]);
+                ->whereNull('master_area_id')
+                ->update(['master_area_id' => $firstArea->id]);
         }
 
         Schema::table('master_user', function (Blueprint $table) {
-            // Drop old FK (was created with nullOnDelete)
-            $table->dropForeign(['master_unit_id']);
+            try {
+                $table->dropForeign(['master_area_id']);
+            } catch (\Exception $e) {}
         });
 
         Schema::table('master_user', function (Blueprint $table) {
-            // Make NOT NULL then recreate FK with cascade delete (no SET NULL)
-            $table->unsignedBigInteger('master_unit_id')->nullable(false)->change();
-            $table->foreign('master_unit_id')
-                  ->references('id')->on('master_unit')
+            $table->unsignedBigInteger('master_area_id')->nullable(false)->change();
+            $table->foreign('master_area_id')
+                  ->references('id')->on('master_area')
                   ->onDelete('restrict');
         });
     }
@@ -34,13 +34,15 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('master_user', function (Blueprint $table) {
-            $table->dropForeign(['master_unit_id']);
+            try {
+                $table->dropForeign(['master_area_id']);
+            } catch (\Exception $e) {}
         });
 
         Schema::table('master_user', function (Blueprint $table) {
-            $table->unsignedBigInteger('master_unit_id')->nullable()->change();
-            $table->foreign('master_unit_id')
-                  ->references('id')->on('master_unit')
+            $table->unsignedBigInteger('master_area_id')->nullable()->change();
+            $table->foreign('master_area_id')
+                  ->references('id')->on('master_area')
                   ->onDelete('set null');
         });
     }

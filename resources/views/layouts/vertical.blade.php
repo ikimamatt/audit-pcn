@@ -256,7 +256,7 @@
 @include("layouts.partials/vendor")
 
 <!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
 
 <!-- SweetAlert2 - loaded early so all scripts below can use Swal -->
 <script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
@@ -309,19 +309,149 @@
             document.body.appendChild(form);
             form.submit();
         }
+
+        // Global Reset Password Modal Trigger
+        const resetPasswordNavLink = document.getElementById('reset-password-nav-link');
+        if (resetPasswordNavLink) {
+            resetPasswordNavLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Clear fields
+                document.getElementById('global_old_password').value = '';
+                document.getElementById('global_new_password').value = '';
+                document.getElementById('global_new_password_confirmation').value = '';
+                
+                // Reset types & eye icons
+                document.getElementById('global_old_password').type = 'password';
+                document.getElementById('global_new_password').type = 'password';
+                document.getElementById('global_new_password_confirmation').type = 'password';
+                document.getElementById('global_old_password-eye').className = 'mdi mdi-eye';
+                document.getElementById('global_new_password-eye').className = 'mdi mdi-eye';
+                document.getElementById('global_new_password_confirmation-eye').className = 'mdi mdi-eye';
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('globalResetPasswordModal'));
+                modal.show();
+            });
+        }
+
+        // Auto-open global modal if there are password validation errors (and we aren't on profile page)
+        @if ($errors->has('old_password') || $errors->has('password'))
+            if (window.location.pathname.indexOf('/utility/profile') === -1) {
+                const modal = new bootstrap.Modal(document.getElementById('globalResetPasswordModal'));
+                modal.show();
+            }
+        @endif
     });
+
+    function toggleGlobalPasswordVisibility(id) {
+        const input = document.getElementById(id);
+        const eye = document.getElementById(id + '-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.className = 'mdi mdi-eye-off';
+        } else {
+            input.type = 'password';
+            eye.className = 'mdi mdi-eye';
+        }
+    }
 </script>
 
 @stack('scripts')
 
 <script>
-    $(document).ready(function() {
+    window.addEventListener('load', function() {
         // Initialize Select2 on any select with class 'select2-search'
-        $('.select2-search').select2({
-            width: '100%'
-        });
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2-search').select2({
+                width: '100%'
+            });
+        }
     });
 </script>
+
+{{-- ===== GLOBAL MODAL RESET PASSWORD ===== --}}
+<div class="modal fade" id="globalResetPasswordModal" tabindex="-1" aria-labelledby="globalResetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header border-bottom-0 pb-0" style="padding: 24px 24px 0;">
+                <h5 class="modal-title fw-bold text-dark" id="globalResetPasswordModalLabel" style="font-size: 1.15rem; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="mdi mdi-key-change text-primary" style="font-size: 1.4rem;"></i>
+                    Reset / Ubah Password Anda
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="global-reset-password-form" method="POST" action="{{ route('profile.change-password') }}">
+                @csrf
+                <div class="modal-body" style="padding: 20px 24px;">
+                    <p class="text-muted mb-3" style="font-size: 0.85rem;">
+                        Silakan masukkan password lama Anda dan password baru yang ingin digunakan.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label for="global_old_password" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Password Lama</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-outline"></i></span>
+                            <input type="password" 
+                                   name="old_password" 
+                                   id="global_old_password" 
+                                   class="form-control border-start-0 @error('old_password') is-invalid @enderror" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
+                                   placeholder="Masukkan password saat ini" 
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_old_password')" style="border-radius: 0 8px 8px 0;">
+                                <i class="mdi mdi-eye" id="global_old_password-eye"></i>
+                            </button>
+                            @error('old_password')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="global_new_password" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Password Baru</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-open-outline"></i></span>
+                            <input type="password" 
+                                   name="password" 
+                                   id="global_new_password" 
+                                   class="form-control border-start-0 @error('password') is-invalid @enderror" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
+                                   placeholder="Minimal 6 karakter" 
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password')" style="border-radius: 0 8px 8px 0;">
+                                <i class="mdi mdi-eye" id="global_new_password-eye"></i>
+                            </button>
+                            @error('password')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label for="global_new_password_confirmation" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Konfirmasi Password Baru</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-check-outline"></i></span>
+                            <input type="password" 
+                                   name="password_confirmation" 
+                                   id="global_new_password_confirmation" 
+                                   class="form-control border-start-0" 
+                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
+                                   placeholder="Ulangi password baru" 
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password_confirmation')" style="border-radius: 0 8px 8px 0;">
+                                <i class="mdi mdi-eye" id="global_new_password_confirmation-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0" style="padding: 0 24px 24px;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 8px 16px;">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 8px 16px; background: #1a3a5c; border-color: #1a3a5c;">Simpan Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

@@ -10,7 +10,10 @@ return new class extends Migration
     {
         Schema::create('master_auditee', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('divisi');
+            $table->string('kd_bidang', 10)->unique();
+            $table->string('nama_bidang');
+            $table->boolean('is_available_for_up')->default(true)->comment('Apakah bidang ini tersedia untuk user UP');
+            $table->timestamps();
         });
     }
 

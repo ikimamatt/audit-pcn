@@ -8,13 +8,12 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Kolom direktorat & divisi_cabang tidak lagi digunakan —
+     * digantikan oleh kd_bidang, nama_bidang, is_available_for_up di migration awal.
      */
     public function up(): void
     {
-        Schema::table('master_auditee', function (Blueprint $table) {
-            $table->string('direktorat')->nullable()->after('id');
-            $table->string('divisi_cabang')->nullable()->after('direktorat');
-        });
+        // no-op
     }
 
     /**
@@ -22,8 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('master_auditee', function (Blueprint $table) {
-            $table->dropColumn(['direktorat', 'divisi_cabang']);
-        });
+        // no-op
     }
 };

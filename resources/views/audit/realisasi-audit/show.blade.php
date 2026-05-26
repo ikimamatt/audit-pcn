@@ -115,7 +115,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($realisasiData as $index => $item)
+                            @foreach($realisasiData as $index => $item)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>
@@ -202,11 +202,7 @@
                                         </a>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center">Tidak ada data realisasi audit.</td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

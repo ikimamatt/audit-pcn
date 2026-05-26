@@ -175,12 +175,24 @@
                             @endif
                         </div>
 
+                        <!-- item-->
+                        <!-- <a href="/utility/profile" class="dropdown-item notify-item">
+                            <i class="mdi mdi-account-circle-outline fs-16 align-middle text-info"></i>
+                            <span>Profil Saya</span>
+                        </a> -->
+
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item notify-item" id="reset-password-nav-link">
+                            <i class="mdi mdi-key-change fs-16 align-middle text-primary"></i>
+                            <span>Reset Password</span>
+                        </a>
+
                         <div class="dropdown-divider"></div>
 
                         <!-- item-->
                         <a href="javascript:void(0);" class="dropdown-item notify-item" id="logout-link">
-                            <i class="mdi mdi-location-exit fs-16 align-middle"></i>
-                            <span>Logout</span>
+                            <i class="mdi mdi-location-exit fs-16 align-middle text-danger"></i>
+                            <span class="text-danger">Logout</span>
                         </a>
 
                     </div>

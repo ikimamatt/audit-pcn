@@ -14,6 +14,8 @@
     </div>
 </div>
 
+@include('components.alert')
+
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -25,9 +27,13 @@
                         <img src="/images/users/user-11.jpg" class="rounded-circle avatar-xxl img-thumbnail float-start" alt="image profile">
 
                         <div class="overflow-hidden ms-4">
-                            <h4 class="m-0 text-dark fs-20">Phoenix Baker</h4>
-                            <p class="my-1 text-muted fs-16">Passionate Software Engineer Crafting Innovative Solutions</p>
-                            <span class="fs-15"><i class="mdi mdi-message me-2 align-middle"></i>Speaks: <span>English <span class="badge bg-primary-subtle text-primary px-2 py-1 fs-13 fw-normal">native</span> , Bitish, Turkish </span></span>
+                            <h4 class="m-0 text-dark fs-20">{{ auth()->user()->nama }}</h4>
+                            <p class="my-1 text-muted fs-16">{{ auth()->user()->jabatan ?? 'User' }}</p>
+                            <span class="fs-15">
+                                <i class="mdi mdi-shield-account me-1 align-middle text-primary"></i>Akses: <span class="badge bg-primary-subtle text-primary px-2 py-1 fs-13 fw-normal">{{ auth()->user()->akses?->nama_akses ?? '-' }}</span>
+                                <span class="mx-2 text-muted">|</span>
+                                <i class="mdi mdi-office-building me-1 align-middle text-info"></i>Bidang: <span class="badge bg-info-subtle text-info px-2 py-1 fs-13 fw-normal">{{ auth()->user()->auditee?->divisi ?? '-' }}</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -518,121 +524,160 @@
 
                     <div class="tab-pane pt-4" id="profile_setting" role="tabpanel">
                         <div class="row">
-
                             <div class="row">
                                 <div class="col-lg-6 col-xl-6">
-                                    <div class="card border mb-0">
-
-                                        <div class="card-header">
-                                            <div class="row align-items-center">
-                                                <div class="col">                      
-                                                    <h4 class="card-title mb-0">Personal Information</h4>                      
-                                                </div><!--end col-->                                                       
-                                            </div>
+                                    <div class="card border mb-0" style="border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+                                        <div class="card-header bg-transparent border-bottom-0 pb-0">
+                                            <h4 class="card-title mb-0 fw-bold text-dark" style="font-size: 1rem;">Personal Information</h4>
                                         </div>
-
                                         <div class="card-body">
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">First Name</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Nama Lengkap</label>
                                                 <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="text" value="Charles">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->nama }}" readonly>
                                                 </div>
                                             </div>
 
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">Last Name</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Username</label>
                                                 <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="text" value="Buncle">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->username }}" readonly>
                                                 </div>
                                             </div>
 
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">Contact Phone</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">NIP</label>
+                                                <div class="col-lg-12 col-xl-12">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->nip }}" readonly>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group mb-3 row">
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Nomor Telepon</label>
                                                 <div class="col-lg-12 col-xl-12">
                                                     <div class="input-group">
-                                                        <span class="input-group-text"><i class="mdi mdi-phone-outline"></i></span>
-                                                        <input class="form-control" type="text" placeholder="Phone" aria-describedby="basic-addon1" value="+61 399615">
+                                                        <span class="input-group-text bg-light"><i class="mdi mdi-phone-outline"></i></span>
+                                                        <input class="form-control bg-light" type="text" value="{{ auth()->user()->no_telpon ?? '-' }}" readonly>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">Email Address</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Alamat Email</label>
                                                 <div class="col-lg-12 col-xl-12">
                                                     <div class="input-group">
-                                                        <span class="input-group-text"><i class="mdi mdi-email"></i></span>
-                                                        <input type="text" class="form-control" value="CharlesBuncle@dayrep.com" placeholder="Email" aria-describedby="basic-addon1">
+                                                        <span class="input-group-text bg-light"><i class="mdi mdi-email-outline"></i></span>
+                                                        <input type="text" class="form-control bg-light" value="{{ auth()->user()->email ?? '-' }}" readonly>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">Company</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Jabatan</label>
                                                 <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="text" value="zoyothemes">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->jabatan ?? '-' }}" readonly>
                                                 </div>
                                             </div>
 
                                             <div class="form-group mb-3 row">
-                                                <label class="form-label">City</label>
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Bidang / Divisi</label>
                                                 <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="text" value="Adelaide">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->auditee?->divisi ?? '-' }}" readonly>
                                                 </div>
                                             </div>
 
-                                            <div class="form-group mb-3 row">
-                                                <label class="form-label">Address</label>
+                                            <div class="form-group mb-0 row">
+                                                <label class="form-label fw-semibold text-muted mb-1" style="font-size: 0.8rem;">Area</label>
                                                 <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="text" value="Australia">
+                                                    <input class="form-control bg-light" type="text" value="{{ auth()->user()->area?->nama_area ?? '-' }}" readonly>
                                                 </div>
                                             </div>
-
-                                        </div><!--end card-body-->
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="col-lg-6 col-xl-6">
-                                    <div class="card border mb-0">
-
-                                        <div class="card-header">
-                                            <div class="row align-items-center">
-                                                <div class="col">                      
-                                                    <h4 class="card-title mb-0">Change Password</h4>                      
-                                                </div><!--end col-->                                                       
-                                            </div>
+                                    <div class="card border mb-0" style="border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+                                        <div class="card-header bg-transparent border-bottom-0 pb-0">
+                                            <h4 class="card-title mb-0 fw-bold text-dark" style="font-size: 1rem;">Change Password</h4>
                                         </div>
+                                        <form action="{{ route('profile.change-password') }}" method="POST" class="m-0">
+                                            @csrf
+                                            <div class="card-body mb-0">
+                                                <div class="form-group mb-3 row">
+                                                    <label for="old_password" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Password Lama</label>
+                                                    <div class="col-lg-12 col-xl-12">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-outline"></i></span>
+                                                            <input class="form-control border-start-0 @error('old_password') is-invalid @enderror" 
+                                                                   id="old_password"
+                                                                   name="old_password" 
+                                                                   type="password" 
+                                                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;"
+                                                                   placeholder="Masukkan password saat ini"
+                                                                   required>
+                                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('old_password')" style="border-radius: 0 8px 8px 0;">
+                                                                <i class="mdi mdi-eye" id="old_password-eye"></i>
+                                                            </button>
+                                                            @error('old_password')
+                                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                            @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="form-group mb-3 row">
+                                                    <label for="profile_new_password" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Password Baru</label>
+                                                    <div class="col-lg-12 col-xl-12">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-open-outline"></i></span>
+                                                            <input class="form-control border-start-0 @error('password') is-invalid @enderror" 
+                                                                   id="profile_new_password"
+                                                                   name="password" 
+                                                                   type="password" 
+                                                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;"
+                                                                   placeholder="Minimal 6 karakter"
+                                                                   required>
+                                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('profile_new_password')" style="border-radius: 0 8px 8px 0;">
+                                                                <i class="mdi mdi-eye" id="profile_new_password-eye"></i>
+                                                            </button>
+                                                            @error('password')
+                                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                            @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                        <div class="card-body mb-0">
-                                            <div class="form-group mb-3 row">
-                                                <label class="form-label">Old Password</label>
-                                                <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="password" placeholder="Old Password">
+                                                <div class="form-group mb-4 row">
+                                                    <label for="profile_new_password_confirmation" class="form-label fw-semibold text-dark mb-1" style="font-size: 0.82rem;">Konfirmasi Password Baru</label>
+                                                    <div class="col-lg-12 col-xl-12">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px;"><i class="mdi mdi-lock-check-outline"></i></span>
+                                                            <input class="form-control border-start-0" 
+                                                                   id="profile_new_password_confirmation"
+                                                                   name="password_confirmation" 
+                                                                   type="password" 
+                                                                   style="border-radius: 0 8px 8px 0; font-size: 0.875rem;"
+                                                                   placeholder="Ulangi password baru"
+                                                                   required>
+                                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('profile_new_password_confirmation')" style="border-radius: 0 8px 8px 0;">
+                                                                <i class="mdi mdi-eye" id="profile_new_password_confirmation-eye"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="form-group mb-3 row">
-                                                <label class="form-label">New Password</label>
-                                                <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="password" placeholder="New Password">
-                                                </div>
-                                            </div>
-                                            <div class="form-group mb-3 row">
-                                                <label class="form-label">Confirm Password</label>
-                                                <div class="col-lg-12 col-xl-12">
-                                                    <input class="form-control" type="password" placeholder="Confirm Password">
-                                                </div>
-                                            </div>
 
-                                            <div class="form-group row">
-                                                <div class="col-lg-12 col-xl-12">
-                                                    <button type="submit" class="btn btn-primary">Change Password</button>
-                                                    <button type="button" class="btn btn-danger">Cancel</button>
+                                                <div class="form-group row mb-0">
+                                                    <div class="col-lg-12 col-xl-12">
+                                                        <button type="submit" class="btn btn-primary fw-semibold px-4" style="border-radius: 8px; background: #1a3a5c; border-color: #1a3a5c; font-size: 0.875rem; padding: 8px 20px;">
+                                                            <i class="mdi mdi-content-save me-1"></i> Simpan Password
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                        </div><!--end card-body-->
+                                        </form>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div> <!-- end education -->
@@ -642,4 +687,31 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('script')
+    <script>
+        function togglePasswordVisibility(id) {
+            const input = document.getElementById(id);
+            const eye = document.getElementById(id + '-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.className = 'mdi mdi-eye-off';
+            } else {
+                input.type = 'password';
+                eye.className = 'mdi mdi-eye';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // If we have validation errors or password update success/error, auto-activate settings tab
+            @if ($errors->any() || session('success') || session('error'))
+                const settingTabLink = document.getElementById('setting_tab');
+                if (settingTabLink) {
+                    const tab = new bootstrap.Tab(settingTabLink);
+                    tab.show();
+                }
+            @endif
+        });
+    </script>
 @endsection
