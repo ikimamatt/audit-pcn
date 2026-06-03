@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Traits\FilterableByAuditee;
 
 class RealisasiAudit extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
 
     protected $fillable = [
         'perencanaan_audit_id',

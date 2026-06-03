@@ -10,11 +10,27 @@ use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\Audit\PelaporanTemuan;
 use App\Models\Audit\PerencanaanAudit;
 use App\Models\MasterData\MasterUser;
+use App\Helpers\QueryHelper;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaporanAudit\StorePenutupLhaRekomendasiRequest;
+use App\Http\Requests\Audit\PelaporanAudit\UpdatePenutupLhaRekomendasiRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
+use App\Http\Requests\Audit\TindakLanjut\StoreTindakLanjutRequest;
+use App\Http\Requests\Audit\TindakLanjut\UpdateTindakLanjutRequest;
 use Illuminate\Support\Facades\Storage;
 
 class PenutupLhaRekomendasiController extends Controller
 {
+    protected $rekomendasiService;
+    protected $tindakLanjutService;
+
+    public function __construct(
+        \App\Services\Audit\PenutupLhaRekomendasiService $rekomendasiService,
+        \App\Services\Audit\TindakLanjutService $tindakLanjutService
+    ) {
+        $this->rekomendasiService = $rekomendasiService;
+        $this->tindakLanjutService = $tindakLanjutService;
+    }
     public function selectNomorSuratTugas(Request $request)
     {
         // Ambil semua nomor surat tugas yang memiliki PelaporanHasilAudit dengan temuan yang sudah approved
@@ -42,7 +58,7 @@ class PenutupLhaRekomendasiController extends Controller
         
         // Filter berdasarkan search (nomor surat tugas atau nomor LHA/LHK)
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = QueryHelper::escapeLike($request->search);
             $query->where(function($q) use ($search) {
                 $q->where('nomor_surat_tugas', 'like', '%' . $search . '%')
                   ->orWhereHas('pelaporanHasilAudit', function($q2) use ($search) {
@@ -144,11 +160,11 @@ class PenutupLhaRekomendasiController extends Controller
         }
         
         if ($request->filled('search')) {
-            $query->where('rekomendasi', 'like', '%' . $request->search . '%');
+            $query->where('rekomendasi', 'like', '%' . QueryHelper::escapeLike($request->search) . '%');
         }
         
         if ($request->filled('pic')) {
-            $query->where('pic_rekomendasi', 'like', '%' . $request->pic . '%');
+            $query->where('pic_rekomendasi', 'like', '%' . QueryHelper::escapeLike($request->pic) . '%');
         }
         
         $data = $query->get();
@@ -277,55 +293,13 @@ class PenutupLhaRekomendasiController extends Controller
         return response()->json($approvedIss);
     }
 
-    public function store(Request $request)
+    public function store(StorePenutupLhaRekomendasiRequest $request)
     {
         if (!\App\Helpers\AuthHelper::canModifyData()) {
             abort(403, 'Anda tidak memiliki akses untuk membuat rekomendasi.');
         }
-
-        $request->validate([
-            'pelaporan_isi_lha_id' => 'required|exists:pelaporan_temuan,id',
-            'rekomendasi' => 'required|string|max:5000',
-            'rencana_aksi' => 'required|string|max:5000',
-            'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_business_contact' => 'required|exists:master_user,id',
-            'pic_approval_1_spi' => 'required|exists:master_user,id',
-            'pic_approval_2_spi' => 'required|exists:master_user,id',
-            'target_waktu' => 'required|date',
-        ]);
         
-        // Ambil data user untuk format PIC Rekomendasi (gabungan)
-        $picBusinessContact = MasterUser::with('auditee')->find($request->pic_business_contact);
-        $picApproval1 = MasterUser::with('auditee')->find($request->pic_approval_1_spi);
-        $picApproval2 = MasterUser::with('auditee')->find($request->pic_approval_2_spi);
-        
-        $picRekomendasiList = [];
-        if ($picBusinessContact) {
-            $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
-        }
-        if ($picApproval1) {
-            $picRekomendasiList[] = 'BUSINESS REVIEWER 1: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
-        }
-        if ($picApproval2) {
-            $picRekomendasiList[] = 'BUSINESS REVIEWER 2: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
-        }
-        $picRekomendasi = implode(' | ', $picRekomendasiList);
-        
-        // Create record with pelaporan_temuan_id stored in pelaporan_isi_lha_id field for compatibility
-        $data = $request->all();
-        $data['pic_rekomendasi'] = $picRekomendasi;
-        unset($data['pic_business_contact']);
-        unset($data['pic_approval_1_spi']);
-        unset($data['pic_approval_2_spi']);
-        
-        $rekomendasi = PenutupLhaRekomendasi::create($data);
-        
-        // Attach PIC users to rekomendasi dengan pic_type
-        $rekomendasi->picUsers()->attach([
-            $request->pic_business_contact => ['pic_type' => 'business_contact'],
-            $request->pic_approval_1_spi => ['pic_type' => 'approval_1_spi'],
-            $request->pic_approval_2_spi => ['pic_type' => 'approval_2_spi'],
-        ]);
+        $rekomendasi = $this->rekomendasiService->create($request->validated());
         
         // Reload dengan relasi untuk mendapatkan nomor surat tugas
         $rekomendasi->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
@@ -376,57 +350,17 @@ class PenutupLhaRekomendasiController extends Controller
         return view('audit.pelaporan.penutup-lha.edit', compact('item', 'picUsers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePenutupLhaRekomendasiRequest $request, $id)
     {
         if (!\App\Helpers\AuthHelper::canModifyData()) {
             abort(403, 'Anda tidak memiliki akses untuk mengupdate rekomendasi.');
         }
 
-        $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
-        $request->validate([
-            'pelaporan_isi_lha_id' => 'required|exists:pelaporan_temuan,id',
-            'rekomendasi' => 'required|string|max:5000',
-            'rencana_aksi' => 'required|string|max:5000',
-            'eviden_rekomendasi' => 'required|string|max:5000',
-            'pic_business_contact' => 'required|exists:master_user,id',
-            'pic_approval_1_spi' => 'required|exists:master_user,id',
-            'pic_approval_2_spi' => 'required|exists:master_user,id',
-            'target_waktu' => 'required|date',
-        ]);
-        
-        // Ambil data user untuk format PIC Rekomendasi (gabungan)
-        $picBusinessContact = MasterUser::with('auditee')->find($request->pic_business_contact);
-        $picApproval1 = MasterUser::with('auditee')->find($request->pic_approval_1_spi);
-        $picApproval2 = MasterUser::with('auditee')->find($request->pic_approval_2_spi);
-        
-        $picRekomendasiList = [];
-        if ($picBusinessContact) {
-            $picRekomendasiList[] = 'BUSINESS CONTACT: ' . $picBusinessContact->nama . ' - ' . ($picBusinessContact->auditee->divisi ?? '-');
-        }
-        if ($picApproval1) {
-            $picRekomendasiList[] = 'BUSINESS REVIEWER 1: ' . $picApproval1->nama . ' - ' . ($picApproval1->auditee->divisi ?? '-');
-        }
-        if ($picApproval2) {
-            $picRekomendasiList[] = 'BUSINESS REVIEWER 2: ' . $picApproval2->nama . ' - ' . ($picApproval2->auditee->divisi ?? '-');
-        }
-        $picRekomendasi = implode(' | ', $picRekomendasiList);
-        
-        $data = $request->all();
-        $data['pic_rekomendasi'] = $picRekomendasi;
-        unset($data['pic_business_contact']);
-        unset($data['pic_approval_1_spi']);
-        unset($data['pic_approval_2_spi']);
-        
-        $item->update($data);
-        
-        // Sync PIC users to rekomendasi dengan pic_type
-        $item->picUsers()->sync([
-            $request->pic_business_contact => ['pic_type' => 'business_contact'],
-            $request->pic_approval_1_spi => ['pic_type' => 'approval_1_spi'],
-            $request->pic_approval_2_spi => ['pic_type' => 'approval_2_spi'],
-        ]);
+        $item = PenutupLhaRekomendasi::findOrFail($id);
+        $this->rekomendasiService->update($item, $request->validated());
         
         // Ambil nomor surat tugas dari temuan
+        $item->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
         $nomorSuratTugas = null;
         if ($item->temuan && $item->temuan->pelaporanHasilAudit && $item->temuan->pelaporanHasilAudit->perencanaanAudit) {
             $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
@@ -450,7 +384,7 @@ class PenutupLhaRekomendasiController extends Controller
             $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
         }
         
-        $item->delete();
+        $this->rekomendasiService->delete($item);
         
         return redirect()->route('audit.penutup-lha-rekomendasi.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', 'Rekomendasi penutup LHA/LHK berhasil dihapus!');
@@ -458,7 +392,12 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function show($id)
     {
-        $item = PenutupLhaRekomendasi::with(['approvedBy', 'temuan.pelaporanHasilAudit.perencanaanAudit'])->findOrFail($id);
+        $item = PenutupLhaRekomendasi::with([
+            'approvedBy', 
+            'temuan.pelaporanHasilAudit.perencanaanAudit', 
+            'tindakLanjut', 
+            'picUsers.auditee'
+        ])->findOrFail($id);
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
             $userUnitId = auth()->user()->master_area_id ?? null;
@@ -470,19 +409,9 @@ class PenutupLhaRekomendasiController extends Controller
         return view('audit.pelaporan.penutup-lha.show', compact('item'));
     }
 
-    public function approval(Request $request, $id)
+    public function approval(ApprovalRequest $request, $id)
     {
         $item = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit'])->findOrFail($id);
-        
-        // Validasi alasan penolakan jika reject
-        if ($request->action == 'reject') {
-            $request->validate([
-                'rejection_reason' => 'required|string|min:10',
-            ], [
-                'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
-            ]);
-        }
 
         $result = \App\Helpers\ApprovalHelper::processApproval(
             $item,
@@ -515,20 +444,8 @@ class PenutupLhaRekomendasiController extends Controller
         return view('audit.pelaporan.penutup-lha.tindak-lanjut-form', compact('rekomendasi'));
     }
 
-    public function storeTindakLanjut(Request $request, $rekomendasiId)
+    public function storeTindakLanjut(StoreTindakLanjutRequest $request, $rekomendasiId)
     {
-        $request->validate([
-            'real_waktu' => 'nullable|date',
-            'komentar' => 'required|array|min:1',
-            'komentar.*' => 'required|string|min:3',
-            'file_eviden' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
-        ], [
-            'file_eviden.required' => 'File eviden wajib diupload.',
-            'file_eviden.file'     => 'File eviden tidak valid.',
-            'file_eviden.mimes'    => 'Format file eviden harus berupa: PDF, JPG, PNG, DOC, atau DOCX.',
-            'file_eviden.max'      => 'Ukuran file eviden maksimal 5MB.',
-        ]);
-        
         $rekomendasi = PenutupLhaRekomendasi::findOrFail($rekomendasiId);
 
         $currentUserId = \App\Helpers\AuthHelper::getCurrentUserId();
@@ -541,48 +458,25 @@ class PenutupLhaRekomendasiController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk menyimpan tindak lanjut. Hanya Business Contact yang berhak.');
         }
         
-        // Filter komentar yang tidak kosong
-        $validKomentar = array_filter($request->komentar, function($k) { 
-            return trim($k) !== ''; 
-        });
-        
-        // Gabungkan semua komentar menjadi satu string dengan separator
-        $combinedKomentar = implode("\n\n---\n\n", $validKomentar);
-        
-        // Ambil status yang sudah ada, jangan ubah dari form (status hanya bisa diubah dari halaman pemantauan)
-        $latestTindakLanjut = $rekomendasi->tindakLanjut()->orderBy('created_at', 'desc')->first();
-        $statusTindakLanjut = $latestTindakLanjut ? $latestTindakLanjut->status_tindak_lanjut : ($rekomendasi->status_tindak_lanjut ?? 'open');
-        
-        // Buat satu record tindak lanjut dengan komentar yang digabungkan
-        $data = [
-            'real_waktu' => $request->real_waktu,
-            'komentar' => $combinedKomentar,
-            'status_tindak_lanjut' => $statusTindakLanjut,
-            'penutup_lha_rekomendasi_id' => $rekomendasiId,
-        ];
-        
-        // Handle file evidence
+        $data = $request->validated();
         if ($request->hasFile('file_eviden')) {
-            $data['file_eviden'] = $request->file('file_eviden')->store('eviden_tindak_lanjut', 'public');
+            $data['file_eviden_file'] = $request->file('file_eviden');
         }
-        
-        \App\Models\PenutupLhaTindakLanjut::create($data);
-        
-        // Reset status approval rekomendasi ke pending agar bisa diapprove kembali secara berjenjang
-        // Dan ubah status tindak lanjut ke 'on_progress' (sedang ditinjau)
-        $rekomendasi->update([
-            'status_approval' => 'pending',
-            'status_tindak_lanjut' => 'on_progress'
-        ]);
-        
-        $komentarCount = count($validKomentar);
+
+        $this->tindakLanjutService->storeTindakLanjut($rekomendasiId, $data);
         
         // Ambil nomor surat tugas untuk redirect
+        $rekomendasi->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
         $nomorSuratTugas = null;
         if ($rekomendasi->temuan && $rekomendasi->temuan->pelaporanHasilAudit && $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit) {
             $nomorSuratTugas = $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
         }
         
+        $validKomentar = array_filter($request->komentar, function($k) { 
+            return trim($k) !== ''; 
+        });
+        $komentarCount = count($validKomentar);
+
         return redirect()->route('audit.pemantauan.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', "Berhasil menambahkan tindak lanjut dengan {$komentarCount} komentar!");
     }
@@ -593,34 +487,14 @@ class PenutupLhaRekomendasiController extends Controller
         return view('audit.pelaporan.penutup-lha.tindak-lanjut-edit', compact('tindakLanjut'));
     }
 
-    public function updateTindakLanjut(Request $request, $id)
+    public function updateTindakLanjut(UpdateTindakLanjutRequest $request, $id)
     {
-        $tindakLanjut = PenutupLhaTindakLanjut::with(['rekomendasi.temuan.pelaporanHasilAudit'])->findOrFail($id);
-        $request->validate([
-            'real_waktu' => 'nullable|date',
-            'komentar' => 'nullable|string',
-            'file_eviden' => 'nullable|file|max:2048',
-            'status_tindak_lanjut' => 'required|in:open,closed,on_progress',
-        ]);
-        $data = $request->only(['real_waktu', 'komentar', 'status_tindak_lanjut']);
+        $data = $request->validated();
         if ($request->hasFile('file_eviden')) {
-            // Hapus file lama jika ada
-            if ($tindakLanjut->file_eviden) {
-                Storage::disk('public')->delete($tindakLanjut->file_eviden);
-            }
-            $data['file_eviden'] = $request->file('file_eviden')->store('eviden_tindak_lanjut', 'public');
+            $data['file_eviden_file'] = $request->file('file_eviden');
         }
-        $tindakLanjut->update($data);
-        
-        // Update status tindak lanjut di tabel rekomendasi utama berdasarkan tindak lanjut terbaru
-        $rekomendasi = $tindakLanjut->rekomendasi;
-        $latestTindakLanjut = $rekomendasi->tindakLanjut()->orderBy('created_at', 'desc')->first();
-        if ($latestTindakLanjut && $latestTindakLanjut->id == $tindakLanjut->id) {
-            // Jika ini adalah tindak lanjut terbaru, update status di rekomendasi
-            $rekomendasi->update([
-                'status_tindak_lanjut' => $request->status_tindak_lanjut
-            ]);
-        }
+
+        $tindakLanjut = $this->tindakLanjutService->updateTindakLanjut($id, $data);
         
         return redirect()->route('audit.penutup-lha-rekomendasi.show', $tindakLanjut->penutup_lha_rekomendasi_id)
             ->with('success', 'Tindak lanjut berhasil diupdate!');
@@ -628,12 +502,7 @@ class PenutupLhaRekomendasiController extends Controller
 
     public function destroyTindakLanjut($id)
     {
-        $tindakLanjut = PenutupLhaTindakLanjut::with(['rekomendasi.temuan.pelaporanHasilAudit'])->findOrFail($id);
-        $rekomendasiId = $tindakLanjut->penutup_lha_rekomendasi_id;
-        if ($tindakLanjut->file_eviden) {
-            Storage::disk('public')->delete($tindakLanjut->file_eviden);
-        }
-        $tindakLanjut->delete();
+        $rekomendasiId = $this->tindakLanjutService->destroyTindakLanjut($id);
         return redirect()->route('audit.penutup-lha-rekomendasi.show', $rekomendasiId)
             ->with('success', 'Tindak lanjut berhasil dihapus!');
     }

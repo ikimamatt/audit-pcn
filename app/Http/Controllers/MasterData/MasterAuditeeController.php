@@ -5,9 +5,20 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterAuditee;
 use Illuminate\Http\Request;
+use App\Http\Requests\MasterData\StoreMasterAuditeeRequest;
+use App\Http\Requests\MasterData\UpdateMasterAuditeeRequest;
+
+use App\Services\MasterData\MasterAuditeeService;
 
 class MasterAuditeeController extends Controller
 {
+    protected $auditeeService;
+
+    public function __construct(MasterAuditeeService $auditeeService)
+    {
+        $this->auditeeService = $auditeeService;
+    }
+
     public function index()
     {
         $data = MasterAuditee::withCount('subBidang')->orderBy('kd_bidang')->get();
@@ -19,19 +30,9 @@ class MasterAuditeeController extends Controller
         return view('master-data.auditee.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreMasterAuditeeRequest $request)
     {
-        $request->validate([
-            'kd_bidang'           => 'required|string|max:10|unique:master_auditee,kd_bidang',
-            'nama_bidang'         => 'required|string|max:255',
-            'is_available_for_up' => 'nullable|boolean',
-        ]);
-
-        MasterAuditee::create([
-            'kd_bidang'           => $request->kd_bidang,
-            'nama_bidang'         => $request->nama_bidang,
-            'is_available_for_up' => $request->boolean('is_available_for_up', true),
-        ]);
+        $this->auditeeService->create($request->validated());
 
         return redirect()->route('master.auditee.index')->with('success', 'Bidang berhasil ditambahkan!');
     }
@@ -41,19 +42,9 @@ class MasterAuditeeController extends Controller
         return view('master-data.auditee.edit', compact('masterAuditee'));
     }
 
-    public function update(Request $request, MasterAuditee $masterAuditee)
+    public function update(UpdateMasterAuditeeRequest $request, MasterAuditee $masterAuditee)
     {
-        $request->validate([
-            'kd_bidang'           => 'required|string|max:10|unique:master_auditee,kd_bidang,' . $masterAuditee->id,
-            'nama_bidang'         => 'required|string|max:255',
-            'is_available_for_up' => 'nullable|boolean',
-        ]);
-
-        $masterAuditee->update([
-            'kd_bidang'           => $request->kd_bidang,
-            'nama_bidang'         => $request->nama_bidang,
-            'is_available_for_up' => $request->boolean('is_available_for_up', true),
-        ]);
+        $this->auditeeService->update($masterAuditee, $request->validated());
 
         return redirect()->route('master.auditee.index')->with('success', 'Bidang berhasil diperbarui!');
     }
@@ -61,7 +52,7 @@ class MasterAuditeeController extends Controller
     public function destroy(MasterAuditee $masterAuditee)
     {
         try {
-            $masterAuditee->delete();
+            $this->auditeeService->delete($masterAuditee);
             return redirect()->route('master.auditee.index')->with('success', 'Bidang berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23000') {
@@ -76,7 +67,7 @@ class MasterAuditeeController extends Controller
      */
     public function getSubBidang(MasterAuditee $masterAuditee)
     {
-        $subBidang = $masterAuditee->subBidang()->orderBy('nama')->get();
+        $subBidang = $this->auditeeService->getSubBidang($masterAuditee);
         return response()->json([
             'success'    => true,
             'data'       => $subBidang,

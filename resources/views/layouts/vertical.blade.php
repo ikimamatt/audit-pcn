@@ -174,10 +174,42 @@
                     <script>
                         Swal.fire({
                             icon: 'success',
-                            title: 'Success!',
+                            title: 'Berhasil!',
                             text: '{{ session('success') }}',
                             showConfirmButton: false,
                             timer: 3000
+                        });
+                    </script>
+                @endif
+
+                @if(session('error'))
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    <script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Terjadi Kesalahan!',
+                            text: '{{ session('error') }}',
+                            confirmButtonColor: '#1a3a5c',
+                            confirmButtonText: 'Tutup'
+                        });
+                    </script>
+                @endif
+
+                @if($errors->any() && !($errors->has('old_password') || $errors->has('password')))
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    <script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Validasi!',
+                            html: `<div class="text-start">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>`,
+                            confirmButtonColor: '#1a3a5c',
+                            confirmButtonText: 'Tutup'
                         });
                     </script>
                 @endif

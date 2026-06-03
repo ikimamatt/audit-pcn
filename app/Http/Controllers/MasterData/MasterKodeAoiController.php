@@ -6,9 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterKodeAoi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\MasterData\StoreMasterKodeAoiRequest;
+use App\Http\Requests\MasterData\UpdateMasterKodeAoiRequest;
+
+use App\Services\MasterData\MasterKodeAoiService;
 
 class MasterKodeAoiController extends Controller
 {
+    protected $kodeAoiService;
+
+    public function __construct(MasterKodeAoiService $kodeAoiService)
+    {
+        $this->kodeAoiService = $kodeAoiService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -29,19 +40,9 @@ class MasterKodeAoiController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreMasterKodeAoiRequest $request)
     {
-        $request->validate([
-            'indikator_pengawasan' => 'required|string|max:255',
-            'kode_area_of_improvement' => 'required|string|max:255|unique:master_kode_aoi',
-            'deskripsi_area_of_improvement' => 'required|string',
-        ]);
-
-        MasterKodeAoi::create($request->only([
-            'indikator_pengawasan',
-            'kode_area_of_improvement',
-            'deskripsi_area_of_improvement',
-        ]));
+        $this->kodeAoiService->create($request->validated());
 
         return redirect()->route('master.kode-aoi.index')->with('success', 'Kode AOI berhasil ditambahkan!');
     }
@@ -57,17 +58,9 @@ class MasterKodeAoiController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, MasterKodeAoi $masterKodeAoi)
+    public function update(UpdateMasterKodeAoiRequest $request, MasterKodeAoi $masterKodeAoi)
     {
-        Log::info('Update MasterKodeAoi called', ['id' => $masterKodeAoi->id, 'request' => $request->all()]);
-        $validated = $request->validate([
-            'indikator_pengawasan' => 'required|string|max:255',
-            'kode_area_of_improvement' => 'required|string|max:255|unique:master_kode_aoi,kode_area_of_improvement,' . $masterKodeAoi->id,
-            'deskripsi_area_of_improvement' => 'required|string',
-        ]);
-
-        $masterKodeAoi->update($validated);
-        Log::info('Update MasterKodeAoi success', ['id' => $masterKodeAoi->id, 'updated' => $masterKodeAoi->toArray()]);
+        $this->kodeAoiService->update($masterKodeAoi, $request->validated());
 
         return redirect()->route('master.kode-aoi.index')->with('success', 'Kode AOI berhasil diperbarui!');
     }
@@ -77,7 +70,7 @@ class MasterKodeAoiController extends Controller
      */
     public function destroy(MasterKodeAoi $masterKodeAoi)
     {
-        $masterKodeAoi->delete();
+        $this->kodeAoiService->delete($masterKodeAoi);
 
         return redirect()->route('master.kode-aoi.index')->with('success', 'Kode AOI berhasil dihapus!');
     }

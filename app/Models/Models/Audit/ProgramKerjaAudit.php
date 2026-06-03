@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\EntryMeeting;
 use App\Models\WalkthroughAudit;
+use App\Traits\FilterableByAuditee;
 
 class ProgramKerjaAudit extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
 
     protected $table = 'program_kerja_audit';
     protected $guarded = [];

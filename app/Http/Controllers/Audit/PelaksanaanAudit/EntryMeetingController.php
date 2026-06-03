@@ -4,48 +4,45 @@ namespace App\Http\Controllers\Audit\PelaksanaanAudit;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreEntryMeetingRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateEntryMeetingRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
 use App\Models\EntryMeeting;
 use App\Models\MasterData\MasterAuditee;
 use App\Models\Models\Audit\ProgramKerjaAudit;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Audit\EntryMeetingService;
 use Carbon\Carbon;
 
 class EntryMeetingController extends Controller
 {
+    protected $entryMeetingService;
+
+    public function __construct(EntryMeetingService $entryMeetingService)
+    {
+        $this->entryMeetingService = $entryMeetingService;
+    }
+
     public function index(Request $request)
     {
-        // Simple approach - get all data and filter in memory
-        $data = EntryMeeting::with(['auditee', 'programKerjaAudit.perencanaanAudit'])->get();
+        // Pindahkan filter ke DB-level dengan scope forCurrentAuditee
+        $query = EntryMeeting::with(['auditee', 'programKerjaAudit.perencanaanAudit'])
+            ->forCurrentAuditee('programKerjaAudit.perencanaanAudit');
 
         // Filter by specific ID from details page
         if ($request->filled('id')) {
-            $data = $data->filter(function($item) use ($request) {
-                return $item->id == $request->id;
-            });
-        }
-
-        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
-        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-        if ($userAuditeeId !== null) {
-            $data = $data->filter(function($item) use ($userAuditeeId) {
-                return $item->auditee_id == $userAuditeeId;
-            });
+            $query->where('id', $request->id);
         }
 
         // Filter by month if provided
         if ($request->filled('bulan')) {
             $selectedMonth = Carbon::parse($request->bulan);
-            
-            $data = $data->filter(function($item) use ($selectedMonth) {
-                if (!$item->programKerjaAudit || !$item->programKerjaAudit->perencanaanAudit) {
-                    return false;
-                }
-                
-                $auditStart = Carbon::parse($item->programKerjaAudit->perencanaanAudit->tanggal_audit_mulai);
-                return $auditStart->year == $selectedMonth->year && 
-                       $auditStart->month == $selectedMonth->month;
+            $query->whereHas('programKerjaAudit.perencanaanAudit', function($q) use ($selectedMonth) {
+                $q->whereYear('tanggal_audit_mulai', $selectedMonth->year)
+                  ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
             });
         }
+
+        $data = $query->get();
 
         return view('audit.entry-meeting.index', compact('data'));
     }
@@ -80,28 +77,13 @@ class EntryMeetingController extends Controller
         return view('audit.entry-meeting.create', compact('auditees', 'programKerjaAudit'));
     }
 
-    public function store(Request $request)
+    public function store(StoreEntryMeetingRequest $request)
     {
-        $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'planned_meeting_date' => 'required|date',
-            'actual_meeting_date' => 'nullable|date',
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'file_undangan' => 'required|file',
-            'file_absensi' => 'required|file',
-        ]);
+        $data = $request->validated();
+        $data['file_undangan_file'] = $request->file('file_undangan');
+        $data['file_absensi_file'] = $request->file('file_absensi');
 
-        $undanganPath = $request->file('file_undangan')->store('entry_meeting', 'public');
-        $absensiPath = $request->file('file_absensi')->store('entry_meeting', 'public');
-        
-        EntryMeeting::create([
-            'program_kerja_audit_id' => $request->program_kerja_audit_id,
-            'tanggal' => $request->planned_meeting_date, // planned meeting date
-            'actual_meeting_date' => $request->actual_meeting_date,
-            'auditee_id' => $request->auditee_id,
-            'file_undangan' => $undanganPath,
-            'file_absensi' => $absensiPath,
-        ]);
+        $this->entryMeetingService->create($data);
 
         return redirect()->route('audit.entry-meeting.index')->with('success', 'Entry Meeting berhasil disimpan!');
     }
@@ -114,56 +96,32 @@ class EntryMeetingController extends Controller
         return view('audit.entry-meeting.edit', compact('item', 'auditees'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateEntryMeetingRequest $request, $id)
     {
         $item = EntryMeeting::findOrFail($id);
-        $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'planned_meeting_date' => 'required|date',
-            'actual_meeting_date' => 'nullable|date',
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'file_undangan' => 'nullable|file',
-            'file_absensi' => 'nullable|file',
-        ]);
 
-        $data = [
-            'program_kerja_audit_id' => $request->program_kerja_audit_id,
-            'tanggal' => $request->planned_meeting_date, // planned meeting date
-            'actual_meeting_date' => $request->actual_meeting_date,
-            'auditee_id' => $request->auditee_id,
-        ];
-
+        $data = $request->validated();
         if ($request->hasFile('file_undangan')) {
-            $data['file_undangan'] = $request->file('file_undangan')->store('entry_meeting', 'public');
+            $data['file_undangan_file'] = $request->file('file_undangan');
         }
         if ($request->hasFile('file_absensi')) {
-            $data['file_absensi'] = $request->file('file_absensi')->store('entry_meeting', 'public');
+            $data['file_absensi_file'] = $request->file('file_absensi');
         }
 
-        $item->update($data);
+        $this->entryMeetingService->update($item, $data);
         return redirect()->route('audit.entry-meeting.index')->with('success', 'Entry Meeting berhasil diupdate!');
     }
 
     public function destroy($id)
     {
         $item = EntryMeeting::findOrFail($id);
-        $item->delete();
+        $this->entryMeetingService->delete($item);
         return redirect()->route('audit.entry-meeting.index')->with('success', 'Entry Meeting berhasil dihapus!');
     }
 
-    public function approval($id, Request $request)
+    public function approval($id, ApprovalRequest $request)
     {
         $item = EntryMeeting::findOrFail($id);
-        
-        // Validasi alasan penolakan jika reject
-        if ($request->action == 'reject') {
-            $request->validate([
-                'rejection_reason' => 'required|string|min:10',
-            ], [
-                'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
-            ]);
-        }
 
         $result = \App\Helpers\ApprovalHelper::processApproval(
             $item,

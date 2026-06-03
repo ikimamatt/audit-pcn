@@ -4,41 +4,55 @@ namespace App\Http\Controllers\Audit\PelaporanAudit;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaporanAudit\StorePelaporanTemuanRequest;
+use App\Http\Requests\Audit\PelaporanAudit\UpdatePelaporanTemuanRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
 use App\Models\Models\Audit\PelaporanTemuan;
 use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\MasterData\MasterKodeAoi;
 use App\Models\MasterData\MasterKodeRisk;
-use App\Models\MasterData\MasterUser;
+use App\Services\Audit\PelaporanHasilAuditService;
+use App\Helpers\QueryHelper;
 
 class PelaporanTemuanController extends Controller
 {
+    protected $pelaporanService;
+
+    public function __construct(PelaporanHasilAuditService $pelaporanService)
+    {
+        $this->pelaporanService = $pelaporanService;
+    }
+
     public function index(Request $request)
     {
         $query = PelaporanTemuan::with(['pelaporanHasilAudit', 'kodeAoi', 'kodeRisk']);
         
         // Apply filters
         if ($request->filled('pelaporan')) {
-            $query->whereHas('pelaporanHasilAudit', function($q) use ($request) {
-                $q->where('nomor_lha_lhk', 'like', '%' . $request->pelaporan . '%');
+            $pelaporanSearch = QueryHelper::escapeLike($request->pelaporan);
+            $query->whereHas('pelaporanHasilAudit', function($q) use ($pelaporanSearch) {
+                $q->where('nomor_lha_lhk', 'like', '%' . $pelaporanSearch . '%');
             });
         }
         
         if ($request->filled('kode_aoi')) {
-            $query->whereHas('kodeAoi', function($q) use ($request) {
-                $q->where('kode_area_of_improvement', 'like', '%' . $request->kode_aoi . '%')
-                  ->orWhere('deskripsi_area_of_improvement', 'like', '%' . $request->kode_aoi . '%');
+            $aoiSearch = QueryHelper::escapeLike($request->kode_aoi);
+            $query->whereHas('kodeAoi', function($q) use ($aoiSearch) {
+                $q->where('kode_area_of_improvement', 'like', '%' . $aoiSearch . '%')
+                  ->orWhere('deskripsi_area_of_improvement', 'like', '%' . $aoiSearch . '%');
             });
         }
         
         if ($request->filled('kode_risk')) {
-            $query->whereHas('kodeRisk', function($q) use ($request) {
-                $q->where('kode_risiko', 'like', '%' . $request->kode_risk . '%')
-                  ->orWhere('deskripsi_risiko', 'like', '%' . $request->kode_risk . '%');
+            $riskSearch = QueryHelper::escapeLike($request->kode_risk);
+            $query->whereHas('kodeRisk', function($q) use ($riskSearch) {
+                $q->where('kode_risiko', 'like', '%' . $riskSearch . '%')
+                  ->orWhere('deskripsi_risiko', 'like', '%' . $riskSearch . '%');
             });
         }
         
         if ($request->filled('tahun')) {
-            $query->where('tahun', 'like', '%' . $request->tahun . '%');
+            $query->where('tahun', 'like', '%' . QueryHelper::escapeLike($request->tahun) . '%');
         }
         
         $data = $query->get();
@@ -54,17 +68,10 @@ class PelaporanTemuanController extends Controller
         return view('audit.pelaporan.temuan.create', compact('pelaporanList', 'kodeAoi', 'kodeRisk', 'selectedPelaporan'));
     }
 
-    public function store(Request $request)
+    public function store(StorePelaporanTemuanRequest $request)
     {
-        $request->validate([
-            'pelaporan_hasil_audit_id' => 'required|exists:pelaporan_hasil_audit,id',
-            'hasil_temuan' => 'required|string',
-            'kode_aoi_id' => 'required|exists:master_kode_aoi,id',
-            'kode_risk_id' => 'required|exists:master_kode_risk,id',
-            'nomor_iss' => 'required|string',
-            'tahun' => 'required|digits:4',
-        ]);
-        PelaporanTemuan::create($request->all());
+        // Standardise using service
+        $this->pelaporanService->storeTemuan($request->validated());
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data temuan audit berhasil disimpan!');
     }
 
@@ -77,41 +84,29 @@ class PelaporanTemuanController extends Controller
         return view('audit.pelaporan.temuan.edit', compact('item', 'pelaporanList', 'kodeAoi', 'kodeRisk'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePelaporanTemuanRequest $request, $id)
     {
-        $item = PelaporanTemuan::findOrFail($id);
-        $request->validate([
-            'pelaporan_hasil_audit_id' => 'required|exists:pelaporan_hasil_audit,id',
-            'hasil_temuan' => 'required|string',
-            'kode_aoi_id' => 'required|exists:master_kode_aoi,id',
-            'kode_risk_id' => 'required|exists:master_kode_risk,id',
-            'nomor_iss' => 'required|string',
-            'tahun' => 'required|digits:4',
-        ]);
-        $item->update($request->all());
+        // Use App\Models\Audit\PelaporanTemuan inside the service, but find/retrieve here
+        $item = \App\Models\Audit\PelaporanTemuan::findOrFail($id);
+        $this->pelaporanService->updateTemuan($item, $request->validated());
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data temuan audit berhasil diupdate!');
     }
 
     public function destroy($id)
     {
-        $item = PelaporanTemuan::findOrFail($id);
-        $item->delete();
+        $item = \App\Models\Audit\PelaporanTemuan::findOrFail($id);
+        $this->pelaporanService->deleteTemuan($item);
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data temuan audit berhasil dihapus!');
     }
 
-    public function approval($id, Request $request)
+    public function approval($id, ApprovalRequest $request)
     {
         $item = PelaporanTemuan::findOrFail($id);
-        if ($request->action == 'approve') {
-            $item->status_approval = 'approved';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-        } elseif ($request->action == 'reject') {
-            $item->status_approval = 'rejected';
-            $item->approved_by = auth()->id();
-            $item->approved_at = now();
-        }
-        $item->save();
-        return redirect()->back()->with('success', 'Status temuan audit berhasil diubah!');
+        $result = $this->pelaporanService->approveTemuan(
+            $item,
+            $request->action,
+            $request->rejection_reason ?? $request->alasan_reject ?? null
+        );
+        return redirect()->back()->with('success', $result['message']);
     }
 }

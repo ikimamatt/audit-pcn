@@ -20,6 +20,20 @@ use App\Models\PenutupLhaRekomendasi;
 
 class PersetujuanController extends Controller
 {
+    protected $persetujuanService;
+    protected $pelaporanService;
+    protected $exitMeetingService;
+
+    public function __construct(
+        \App\Services\Audit\PersetujuanService $persetujuanService,
+        \App\Services\Audit\PelaporanHasilAuditService $pelaporanService,
+        \App\Services\Audit\ExitMeetingService $exitMeetingService
+    ) {
+        $this->persetujuanService = $persetujuanService;
+        $this->pelaporanService = $pelaporanService;
+        $this->exitMeetingService = $exitMeetingService;
+    }
+
     public function index(Request $request)
     {
         if (AuthHelper::isAuditee()) {
@@ -29,242 +43,7 @@ class PersetujuanController extends Controller
         $userId = Auth::id();
         $isSuperAdmin = AuthHelper::isSuperAdmin();
 
-        // 1. Fetch PKAs
-        $pkas = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 2. Fetch Entry Meetings
-        $entryMeetings = EntryMeeting::with(['programKerjaAudit.perencanaanAudit.auditee', 'programKerjaAudit.perencanaanAudit.ketuaTim', 'programKerjaAudit.perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 3. Fetch Walkthroughs
-        $walkthroughs = WalkthroughAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 4. Fetch TOD BPM
-        $todBpms = TodBpmAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 5. Fetch TOEs
-        $toes = ToeAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 6. Fetch Exit Meetings (RealisasiAudit)
-        $exitMeetings = RealisasiAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 7. Fetch Pelaporan Hasil Audit (LHA/LHK)
-        $pelaporans = PelaporanHasilAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
-            ->whereIn('status_approval', ['pending', 'approved_level1'])
-            ->get();
-
-        // 8. Fetch Penutup LHA Rekomendasi
-        $penutupsQuery = PenutupLhaRekomendasi::with([
-            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee', 
-            'temuan.pelaporanHasilAudit.perencanaanAudit.ketuaTim', 
-            'temuan.pelaporanHasilAudit.perencanaanAudit.koordinator',
-            'picUsers'
-        ])
-            ->where(function($q) {
-                $q->whereIn('status_approval', ['pending', 'approved_level1'])
-                  ->orWhereNull('status_approval');
-            });
-
-        // Optimize: Filter at DB level for non-superadmins
-        if (!$isSuperAdmin) {
-            $penutupsQuery->whereHas('picUsers', function($q) use ($userId) {
-                $q->where('master_user_id', $userId)
-                  ->where(function($q2) {
-                      $q2->where(function($q3) {
-                          $q3->whereIn('penutup_lha_rekomendasi.status_approval', ['pending'])
-                             ->orWhereNull('penutup_lha_rekomendasi.status_approval');
-                      })->where('pic_type', 'approval_1_spi')
-                      ->orWhere(function($q3) {
-                          $q3->where('penutup_lha_rekomendasi.status_approval', 'approved_level1');
-                      })->where('pic_type', 'approval_2_spi');
-                  });
-            });
-        }
-
-        $penutups = $penutupsQuery->get();
-
-        $allPendingItems = collect();
-
-        // Helper function to process item mapping
-        $mapItem = function($item, $modelType, $docName, $perencanaan, $title, $detailUrl) use ($userId, $isSuperAdmin) {
-            if (!$perencanaan) return null;
-
-            $status = $item->status_approval ?? 'pending';
-            
-            // Check if user is allowed to approve/reject
-            $canApprove = false;
-            $canReject = false;
-            
-            if ($modelType === 'penutup_lha_rekomendasi') {
-                $isPic1 = $item->picUsers->where('id', $userId)->where('pivot.pic_type', 'approval_1_spi')->isNotEmpty();
-                $isPic2 = $item->picUsers->where('id', $userId)->where('pivot.pic_type', 'approval_2_spi')->isNotEmpty();
-
-                if ($status === 'pending') {
-                    $canApprove = ($isPic1 || $isSuperAdmin);
-                    $canReject = ($isPic1 || $isSuperAdmin);
-                } elseif ($status === 'approved_level1') {
-                    $canApprove = ($isPic2 || $isSuperAdmin);
-                    $canReject = ($isPic2 || $isSuperAdmin);
-                }
-                
-                $approvalLevel = $status === 'pending' ? 'Level 1 (Business Reviewer 1)' : 'Level 2 (Business Reviewer 2)';
-            } else {
-                $isKetua = (int)($perencanaan->ketua_tim_id ?? 0) === $userId;
-                $isKoordinator = (int)($perencanaan->koordinator_id ?? 0) === $userId;
-
-                if ($status === 'pending') {
-                    $canApprove = ($isKetua || $isSuperAdmin);
-                    $canReject = ($isKetua || $isSuperAdmin);
-                } elseif ($status === 'approved_level1') {
-                    $canApprove = ($isKoordinator || $isSuperAdmin);
-                    $canReject = ($isKoordinator || $isSuperAdmin);
-                }
-                
-                $approvalLevel = $status === 'pending' ? 'Level 1 (Ketua Tim)' : 'Level 2 (Koordinator)';
-            }
-
-            // If the user cannot approve/reject and is not super admin, we filter it out
-            if (!$canApprove && !$isSuperAdmin) {
-                return null;
-            }
-
-            return [
-                'id' => $item->id,
-                'model_type' => $modelType,
-                'document_name' => $docName,
-                'nomor_surat_tugas' => $perencanaan->nomor_surat_tugas ?? '-',
-                'auditee_name' => $perencanaan->auditee->divisi ?? '-',
-                'title' => $title,
-                'status_approval' => $status,
-                'approval_level' => $approvalLevel,
-                'date' => $item->updated_at ?? $item->created_at ?? now(),
-                'detail_url' => $detailUrl,
-                'can_approve' => $canApprove,
-                'can_reject' => $canReject,
-            ];
-        };
-
-        // Populate PKA
-        foreach ($pkas as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'pka', 
-                'Program Kerja Audit (PKA)', 
-                $item->perencanaanAudit, 
-                $item->judul_pka ?? 'Program Kerja Audit',
-                route('audit.pka.show', $item->id)
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate Entry Meeting
-        foreach ($entryMeetings as $item) {
-            $perencanaan = $item->programKerjaAudit->perencanaanAudit ?? null;
-            $mapped = $mapItem(
-                $item, 
-                'entry_meeting', 
-                'Entry Meeting', 
-                $perencanaan, 
-                'Dokumen Entry Meeting',
-                route('audit.entry-meeting.index', ['id' => $item->id])
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate Walkthrough
-        foreach ($walkthroughs as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'walkthrough', 
-                'Walkthrough Audit', 
-                $item->perencanaanAudit, 
-                'Walkthrough: ' . ($item->auditee_nama ?? 'Hasil Walkthrough'),
-                route('audit.walkthrough.index', ['id' => $item->id])
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate TOD BPM
-        foreach ($todBpms as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'tod_bpm', 
-                'TOD BPM Audit', 
-                $item->perencanaanAudit, 
-                'TOD BPM: ' . ($item->auditee_nama ?? 'Hasil TOD BPM'),
-                route('audit.tod-bpm.index', ['id' => $item->id])
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate TOE
-        foreach ($toes as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'toe', 
-                'TOE Audit', 
-                $item->perencanaanAudit, 
-                'TOE: ' . ($item->auditee_nama ?? 'Hasil TOE'),
-                route('audit.toe.index', ['id' => $item->id])
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate Exit Meeting
-        foreach ($exitMeetings as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'exit_meeting', 
-                'Exit Meeting', 
-                $item->perencanaanAudit, 
-                'Exit Meeting: ' . ($item->perencanaanAudit->auditee->divisi ?? 'Hasil Exit Meeting'),
-                route('audit.exit-meeting.index', ['id' => $item->id])
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate Pelaporan Hasil Audit (Judul LHA/LHK)
-        foreach ($pelaporans as $item) {
-            $mapped = $mapItem(
-                $item, 
-                'pelaporan_hasil_audit', 
-                'Pelaporan Hasil Audit (LHA/LHK)', 
-                $item->perencanaanAudit, 
-                'Nomor LHA/LHK: ' . ($item->nomor_lha_lhk ?? 'LHA/LHK'),
-                route('audit.pelaporan-hasil-audit.show', $item->id)
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Populate Penutup LHA Rekomendasi
-        foreach ($penutups as $item) {
-            $perencanaan = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
-            $rekomendasi = $item->rekomendasi ?? '-';
-            $truncatedRekomendasi = strlen($rekomendasi) > 60 ? substr($rekomendasi, 0, 60) . '...' : $rekomendasi;
-            $mapped = $mapItem(
-                $item, 
-                'penutup_lha_rekomendasi', 
-                'Pemantauan Hasil Audit', 
-                $perencanaan, 
-                'Rekomendasi: ' . $truncatedRekomendasi,
-                route('audit.penutup-lha-rekomendasi.show', $item->id)
-            );
-            if ($mapped) $allPendingItems->push($mapped);
-        }
-
-        // Sort items by date descending (most recent first)
-        $allPendingItems = $allPendingItems->sortByDesc('date')->values();
+        $allPendingItems = $this->persetujuanService->getPendingItems($userId, $isSuperAdmin);
 
         return view('audit.persetujuan.index', compact('allPendingItems'));
     }
@@ -308,53 +87,15 @@ class PersetujuanController extends Controller
 
         $item = $modelClass::findOrFail($id);
 
-        $result = ApprovalHelper::processApproval($item, $action, $reason);
+        if ($modelType === 'pelaporan_hasil_audit') {
+            $result = $this->pelaporanService->approve($item, $action, $reason);
+        } elseif ($modelType === 'exit_meeting') {
+            $result = $this->exitMeetingService->approve($item, $action, $reason);
+        } else {
+            $result = ApprovalHelper::processApproval($item, $action, $reason);
+        }
 
         if ($result['success']) {
-            $item->refresh();
-
-            // Custom post-processing logic (matching what is done in original controllers)
-            if ($modelType === 'pelaporan_hasil_audit') {
-                if ($action === 'approve' && $item->status_approval === 'approved') {
-                    if ($item->temuan && $item->temuan->count() > 0) {
-                        foreach ($item->temuan as $temuan) {
-                            $temuan->update([
-                                'status_approval' => 'approved',
-                                'approved_by' => auth()->id(),
-                                'approved_at' => now()
-                            ]);
-                        }
-                    }
-                } elseif ($action === 'reject' && $item->status_approval === 'rejected') {
-                    if ($item->temuan && $item->temuan->count() > 0) {
-                        foreach ($item->temuan as $temuan) {
-                            $temuan->update([
-                                'status_approval' => 'rejected',
-                                'approved_by' => auth()->id(),
-                                'approved_at' => now()
-                            ]);
-                        }
-                    }
-                }
-            } elseif ($modelType === 'exit_meeting') {
-                if ($action === 'approve' && $item->status_approval === 'approved') {
-                    $item->status = 'selesai';
-                    if (!$item->tanggal_selesai) {
-                        $item->tanggal_selesai = now()->toDateString();
-                    }
-                    $item->save();
-                } elseif ($action === 'reject') {
-                    if ($item->tanggal_mulai && $item->tanggal_selesai) {
-                        $item->status = 'selesai';
-                    } elseif ($item->tanggal_mulai && !$item->tanggal_selesai) {
-                        $item->status = 'on progress';
-                    } else {
-                        $item->status = 'belum';
-                    }
-                    $item->save();
-                }
-            }
-
             return back()->with('success', $result['message']);
         }
 

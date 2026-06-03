@@ -5,9 +5,20 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterKodeRisk;
 use Illuminate\Http\Request;
+use App\Http\Requests\MasterData\StoreMasterKodeRiskRequest;
+use App\Http\Requests\MasterData\UpdateMasterKodeRiskRequest;
+
+use App\Services\MasterData\MasterKodeRiskService;
 
 class MasterKodeRiskController extends Controller
 {
+    protected $kodeRiskService;
+
+    public function __construct(MasterKodeRiskService $kodeRiskService)
+    {
+        $this->kodeRiskService = $kodeRiskService;
+    }
+
     public function index()
     {
         $data = MasterKodeRisk::all();
@@ -19,21 +30,9 @@ class MasterKodeRiskController extends Controller
         return view('master-data.kode-risk.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreMasterKodeRiskRequest $request)
     {
-        $request->validate([
-            'kelompok_risiko' => 'required|string|max:255',
-            'kode_risiko' => 'required|string|max:255|unique:master_kode_risk',
-            'kelompok_risiko_detail' => 'required|string|max:255',
-            'deskripsi_risiko' => 'required|string',
-        ]);
-
-        MasterKodeRisk::create($request->only([
-            'kelompok_risiko',
-            'kode_risiko',
-            'kelompok_risiko_detail',
-            'deskripsi_risiko',
-        ]));
+        $this->kodeRiskService->create($request->validated());
 
         return redirect()->route('master.kode-risk.index')->with('success', 'Kode Risk berhasil ditambahkan!');
     }
@@ -43,21 +42,9 @@ class MasterKodeRiskController extends Controller
         return view('master-data.kode-risk.edit', compact('masterKodeRisk'));
     }
 
-    public function update(Request $request, MasterKodeRisk $masterKodeRisk)
+    public function update(UpdateMasterKodeRiskRequest $request, MasterKodeRisk $masterKodeRisk)
     {
-        $request->validate([
-            'kelompok_risiko' => 'required|string|max:255',
-            'kode_risiko' => 'required|string|max:255|unique:master_kode_risk,kode_risiko,' . $masterKodeRisk->id,
-            'kelompok_risiko_detail' => 'required|string|max:255',
-            'deskripsi_risiko' => 'required|string',
-        ]);
-
-        $masterKodeRisk->update($request->only([
-            'kelompok_risiko',
-            'kode_risiko',
-            'kelompok_risiko_detail',
-            'deskripsi_risiko',
-        ]));
+        $this->kodeRiskService->update($masterKodeRisk, $request->validated());
 
         return redirect()->route('master.kode-risk.index')->with('success', 'Kode Risk berhasil diperbarui!');
     }
@@ -65,7 +52,7 @@ class MasterKodeRiskController extends Controller
     public function destroy(MasterKodeRisk $masterKodeRisk)
     {
         try {
-            $masterKodeRisk->delete();
+            $this->kodeRiskService->delete($masterKodeRisk);
             return redirect()->route('master.kode-risk.index')->with('success', 'Kode Risk berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23000') {

@@ -5,20 +5,26 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterSubBidang;
 use Illuminate\Http\Request;
+use App\Http\Requests\MasterData\StoreMasterSubBidangRequest;
+use App\Http\Requests\MasterData\UpdateMasterSubBidangRequest;
+
+use App\Services\MasterData\MasterSubBidangService;
 
 class MasterSubBidangController extends Controller
 {
+    protected $subBidangService;
+
+    public function __construct(MasterSubBidangService $subBidangService)
+    {
+        $this->subBidangService = $subBidangService;
+    }
+
     /**
      * Store a new sub bidang (AJAX).
      */
-    public function store(Request $request)
+    public function store(StoreMasterSubBidangRequest $request)
     {
-        $request->validate([
-            'nama'             => 'required|string|max:255',
-            'master_bidang_id' => 'required|exists:master_auditee,id',
-        ]);
-
-        $subBidang = MasterSubBidang::create($request->only(['nama', 'master_bidang_id']));
+        $subBidang = $this->subBidangService->create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -30,13 +36,9 @@ class MasterSubBidangController extends Controller
     /**
      * Update sub bidang (AJAX).
      */
-    public function update(Request $request, MasterSubBidang $masterSubBidang)
+    public function update(UpdateMasterSubBidangRequest $request, MasterSubBidang $masterSubBidang)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-        ]);
-
-        $masterSubBidang->update($request->only(['nama']));
+        $this->subBidangService->update($masterSubBidang, $request->validated());
 
         return response()->json([
             'success' => true,
@@ -50,7 +52,7 @@ class MasterSubBidangController extends Controller
      */
     public function destroy(MasterSubBidang $masterSubBidang)
     {
-        $masterSubBidang->delete();
+        $this->subBidangService->delete($masterSubBidang);
 
         return response()->json([
             'success' => true,

@@ -4,10 +4,11 @@ namespace App\Models\Audit;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\FilterableByAuditee;
 
 class PelaporanHasilAudit extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
 
     protected $table = 'pelaporan_hasil_audit';
 

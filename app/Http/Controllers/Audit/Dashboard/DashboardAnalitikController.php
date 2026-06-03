@@ -23,7 +23,7 @@ class DashboardAnalitikController extends Controller
         $divisiId = $request->divisi_id;
         $areaId = $request->area_id;
 
-        $masterDivisi = MasterAuditee::select('id', 'nama_bidang as divisi')->orderBy('nama_bidang')->get();
+        $masterDivisi = MasterAuditee::select('id', 'nama_bidang')->orderBy('nama_bidang')->get();
         $masterArea = MasterArea::select('id', 'nama_area')->orderBy('nama_area')->get();
 
         // 1. KPI Summary Cards

@@ -7,7 +7,7 @@
             <div class="mb-0 border-0 p-md-5 p-lg-0 p-4">
 
                 <div class="mb-4 p-0 text-center">
-                    <a href="{{ route('any', 'index') }}" class="auth-logo">
+                    <a href="{{ route('root') }}" class="auth-logo">
                         <img src="/images/logo-dark.png" alt="logo-dark" class="mx-auto" height="28" />
                     </a>
                 </div>

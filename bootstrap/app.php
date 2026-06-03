@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'check.activity' => \App\Http\Middleware\CheckUserActivity::class,
             'role'           => \App\Http\Middleware\CheckRole::class,
+            'can-modify'     => \App\Http\Middleware\CheckCanModify::class,
         ]);
         
         // Apply middleware to web routes

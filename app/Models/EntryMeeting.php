@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\ProgramKerjaAudit;
+use App\Traits\FilterableByAuditee;
 
 class EntryMeeting extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
     protected $table = 'entry_meeting';
     protected $guarded = [];
 

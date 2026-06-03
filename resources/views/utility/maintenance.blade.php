@@ -3,7 +3,7 @@
 @section('content')
 <div class="row justify-content-center align-items-center">
     <div class="mb-4 text-center">
-        <a href="{{ route('any', 'index') }}" class="auth-logo">
+        <a href="{{ route('root') }}" class="auth-logo">
             <img src="/images/logo-dark.png" alt="logo-dark" class="mx-auto" height="28" />
         </a>
     </div>

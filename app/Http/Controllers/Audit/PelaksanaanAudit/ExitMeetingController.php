@@ -6,11 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\RealisasiAudit;
 use App\Models\Audit\PerencanaanAudit;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreExitMeetingRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateExitMeetingRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
+use App\Services\Audit\ExitMeetingService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class ExitMeetingController extends Controller
 {
+    protected $exitMeetingService;
+
+    public function __construct(ExitMeetingService $exitMeetingService)
+    {
+        $this->exitMeetingService = $exitMeetingService;
+    }
+
     public function index(Request $request)
     {
         $query = RealisasiAudit::with([
@@ -79,32 +89,17 @@ class ExitMeetingController extends Controller
         return view('audit.exit-meeting.create', compact('perencanaanAudits'));
     }
 
-    public function store(Request $request)
+    public function store(StoreExitMeetingRequest $request)
     {
-        $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'tanggal_mulai' => 'nullable|date',
-            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai', // Tanggal selesai harus setelah atau sama dengan tanggal mulai
-            'file_undangan' => 'required|file|mimes:pdf|max:5120', // 5MB = 5120 KB
-            'file_absensi' => 'required|file|mimes:pdf|max:5120', // 5MB = 5120 KB
-        ]);
-
-        $data = $request->all();
-        
-        // Handle file uploads
+        $data = $request->validated();
         if ($request->hasFile('file_undangan')) {
-            $data['file_undangan'] = $request->file('file_undangan')->store('exit_meeting/undangan', 'public');
+            $data['file_undangan_file'] = $request->file('file_undangan');
         }
-        
         if ($request->hasFile('file_absensi')) {
-            $data['file_absensi'] = $request->file('file_absensi')->store('exit_meeting/absensi', 'public');
+            $data['file_absensi_file'] = $request->file('file_absensi');
         }
 
-        $realisasiAudit = RealisasiAudit::create($data);
-        
-        // Update status berdasarkan tanggal secara otomatis
-        $this->updateStatusBasedOnDates($realisasiAudit);
-        $realisasiAudit->save();
+        $this->exitMeetingService->create($data);
 
         return redirect()->route('audit.exit-meeting.index')
                         ->with('success', 'Data exit meeting berhasil ditambahkan.');
@@ -117,42 +112,19 @@ class ExitMeetingController extends Controller
         return view('audit.exit-meeting.edit', compact('realisasiAudit', 'perencanaanAudits'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateExitMeetingRequest $request, $id)
     {
-        $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'tanggal_mulai' => 'nullable|date',
-            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai', // Tanggal selesai harus setelah atau sama dengan tanggal mulai
-            'file_undangan' => 'nullable|file|mimes:pdf|max:5120',
-            'file_absensi'  => 'nullable|file|mimes:pdf|max:5120',
-        ]);
-
-        $data = $request->all();
-
         $realisasiAudit = RealisasiAudit::findOrFail($id);
-
-        // Handle file uploads
+        
+        $data = $request->validated();
         if ($request->hasFile('file_undangan')) {
-            // Delete old file if exists
-            if ($realisasiAudit->file_undangan) {
-                \Storage::disk('public')->delete($realisasiAudit->file_undangan);
-            }
-            $data['file_undangan'] = $request->file('file_undangan')->store('exit_meeting/undangan', 'public');
+            $data['file_undangan_file'] = $request->file('file_undangan');
         }
-        
         if ($request->hasFile('file_absensi')) {
-            // Delete old file if exists
-            if ($realisasiAudit->file_absensi) {
-                \Storage::disk('public')->delete($realisasiAudit->file_absensi);
-            }
-            $data['file_absensi'] = $request->file('file_absensi')->store('exit_meeting/absensi', 'public');
+            $data['file_absensi_file'] = $request->file('file_absensi');
         }
 
-        $realisasiAudit->update($data);
-        
-        // Update status berdasarkan tanggal secara otomatis
-        $this->updateStatusBasedOnDates($realisasiAudit);
-        $realisasiAudit->save();
+        $this->exitMeetingService->update($realisasiAudit, $data);
 
         return redirect()->route('audit.exit-meeting.index')
                         ->with('success', 'Data exit meeting berhasil diperbarui.');
@@ -162,24 +134,13 @@ class ExitMeetingController extends Controller
     {
         try {
             $realisasiAudit = RealisasiAudit::findOrFail($id);
-            \Log::info("Attempting to delete RealisasiAudit ID: " . $id);
+            $this->exitMeetingService->delete($realisasiAudit);
             
-            $deleted = $realisasiAudit->delete();
-            \Log::info("Delete result: " . ($deleted ? 'SUCCESS' : 'FAILED'));
-            
-            if ($deleted) {
-                \Log::info("RealisasiAudit ID {$id} successfully deleted");
-                return redirect()->route('audit.exit-meeting.index')
-                                ->with('success', 'Data exit meeting berhasil dihapus.');
-            } else {
-                \Log::error("Failed to delete RealisasiAudit ID: " . $id);
-                return redirect()->route('audit.exit-meeting.index')
-                                ->with('error', 'Gagal menghapus data exit meeting.');
-            }
-        } catch (\Exception $e) {
-            \Log::error("Error deleting RealisasiAudit ID {$id}: " . $e->getMessage());
             return redirect()->route('audit.exit-meeting.index')
-                            ->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+                            ->with('success', 'Data exit meeting berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('audit.exit-meeting.index')
+                            ->with('error', 'Terjadi kesalahan saat menghapus data.');
         }
     }
 
@@ -209,9 +170,6 @@ class ExitMeetingController extends Controller
         // Ambil data realisasi audit dengan relasi
         $tabel = RealisasiAudit::with('perencanaanAudit.auditee')->get();
         
-        // Debug: Log data untuk memeriksa relasi
-        \Log::info('RealisasiAudit data:', $tabel->toArray());
-        
         // Hitung jumlah berdasarkan status
         $belum = RealisasiAudit::where('status', 'belum')->count();
         $selesai = RealisasiAudit::where('status', 'selesai')->count();
@@ -223,19 +181,9 @@ class ExitMeetingController extends Controller
         return view('audit.exit-meeting.pie', compact('tabel', 'belum', 'selesai', 'onprogress', 'periode'));
     }
 
-    public function approval($id, Request $request)
+    public function approval($id, ApprovalRequest $request)
     {
         $item = RealisasiAudit::findOrFail($id);
-        
-        // Validasi alasan penolakan jika reject
-        if ($request->action == 'reject') {
-            $request->validate([
-                'rejection_reason' => 'required|string|min:10',
-            ], [
-                'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
-            ]);
-        }
 
         $result = \App\Helpers\ApprovalHelper::processApproval(
             $item,
@@ -259,7 +207,7 @@ class ExitMeetingController extends Controller
             
             // Jika reject, update status berdasarkan tanggal
             if ($request->action == 'reject') {
-                $this->updateStatusBasedOnDates($item);
+                $this->exitMeetingService->updateStatusBasedOnDates($item);
                 $item->save();
             }
             
@@ -267,19 +215,5 @@ class ExitMeetingController extends Controller
         }
 
         return redirect()->back()->with('error', $result['message']);
-    }
-    
-    /**
-     * Update status berdasarkan tanggal secara otomatis
-     */
-    private function updateStatusBasedOnDates($item)
-    {
-        if ($item->tanggal_mulai && $item->tanggal_selesai) {
-            $item->status = 'selesai';
-        } elseif ($item->tanggal_mulai && !$item->tanggal_selesai) {
-            $item->status = 'on progress';
-        } else {
-            $item->status = 'belum';
-        }
     }
 } 

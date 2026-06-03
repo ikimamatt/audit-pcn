@@ -8,45 +8,42 @@ use App\Models\Audit\PerencanaanAudit;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Models\MasterData\MasterAuditee;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreWalkthroughRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateWalkthroughRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
+use App\Services\Audit\WalkthroughService;
 use Carbon\Carbon;
 
 class WalkthroughAuditController extends Controller
 {
+    protected $walkthroughService;
+
+    public function __construct(WalkthroughService $walkthroughService)
+    {
+        $this->walkthroughService = $walkthroughService;
+    }
+
     public function index(Request $request)
     {
-        // Simple approach - get all data and filter in memory
-        $data = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit.perencanaanAudit'])->get();
+        // Pindahkan filter ke DB-level dengan scope forCurrentAuditee
+        $query = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit.perencanaanAudit'])
+            ->forCurrentAuditee('perencanaanAudit');
 
         // Filter by specific ID from details page
         if ($request->filled('id')) {
-            $data = $data->filter(function($item) use ($request) {
-                return $item->id == $request->id;
-            });
-        }
-
-        // Filter by user's divisi/cabang (except for KSPI, ASMAN KSPI, Auditor)
-        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-        if ($userAuditeeId !== null) {
-            $data = $data->filter(function($item) use ($userAuditeeId) {
-                return $item->perencanaanAudit && $item->perencanaanAudit->auditee_id == $userAuditeeId;
-            });
+            $query->where('id', $request->id);
         }
 
         // Filter by month if provided
         if ($request->filled('bulan')) {
             $selectedMonth = Carbon::parse($request->bulan);
-            
-            $data = $data->filter(function($item) use ($selectedMonth) {
-                if (!$item->perencanaanAudit) {
-                    return false;
-                }
-                
-                $auditStart = Carbon::parse($item->perencanaanAudit->tanggal_audit_mulai);
-                return $auditStart->year == $selectedMonth->year && 
-                       $auditStart->month == $selectedMonth->month;
+            $query->whereHas('perencanaanAudit', function($q) use ($selectedMonth) {
+                $q->whereYear('tanggal_audit_mulai', $selectedMonth->year)
+                  ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
             });
         }
+
+        $data = $query->get();
 
         return view('audit.walkthrough.index', compact('data'));
     }
@@ -85,43 +82,14 @@ class WalkthroughAuditController extends Controller
         return view('audit.walkthrough.create', compact('programKerjaAudit', 'auditees'));
     }
 
-    public function store(Request $request)
+    public function store(StoreWalkthroughRequest $request)
     {
-        $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'planned_walkthrough_date' => 'required|date',
-            'actual_walkthrough_date' => 'nullable|date',
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'hasil_walkthrough' => 'required|string',
-            'file_bpm' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
-        ]);
-
-        // Ambil data PKA untuk mendapatkan planned date dari milestone
-        $pka = ProgramKerjaAudit::with(['milestones' => function($query) {
-            $query->where('nama_milestone', 'Walkthrough');
-        }])->findOrFail($request->program_kerja_audit_id);
-
-        $plannedDate = $pka->milestones->first()->tanggal_mulai ?? $request->planned_walkthrough_date;
-
-        // Ambil nama auditee dari master auditee
-        $auditee = MasterAuditee::findOrFail($request->auditee_id);
-
-        // Handle file upload
-        $fileBpmPath = null;
+        $data = $request->validated();
         if ($request->hasFile('file_bpm')) {
-            $fileBpmPath = $request->file('file_bpm')->store('walkthrough/bpm', 'public');
+            $data['file_bpm_file'] = $request->file('file_bpm');
         }
 
-        WalkthroughAudit::create([
-            'perencanaan_audit_id' => $pka->perencanaan_audit_id,
-            'program_kerja_audit_id' => $request->program_kerja_audit_id,
-            'planned_walkthrough_date' => $plannedDate,
-            'actual_walkthrough_date' => $request->actual_walkthrough_date,
-            'tanggal_walkthrough' => $request->actual_walkthrough_date ?? $plannedDate,
-            'auditee_nama' => $auditee->divisi,
-            'hasil_walkthrough' => $request->hasil_walkthrough,
-            'file_bpm' => $fileBpmPath,
-        ]);
+        $this->walkthroughService->create($data);
 
         return redirect()->route('audit.walkthrough.index')->with('success', 'Hasil walkthrough berhasil ditambahkan!');
     }
@@ -136,49 +104,16 @@ class WalkthroughAuditController extends Controller
         return view('audit.walkthrough.edit', compact('item', 'auditees'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateWalkthroughRequest $request, $id)
     {
         $item = WalkthroughAudit::findOrFail($id);
-        
-        $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'planned_walkthrough_date' => 'required|date',
-            'actual_walkthrough_date' => 'nullable|date',
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'hasil_walkthrough' => 'required|string',
-            'file_bpm' => 'nullable|file|mimes:pdf|max:5120', // Max 5MB
-        ]);
 
-        // Ambil data PKA untuk mendapatkan planned date dari milestone
-        $pka = ProgramKerjaAudit::with(['milestones' => function($query) {
-            $query->where('nama_milestone', 'Walkthrough');
-        }])->findOrFail($request->program_kerja_audit_id);
-
-        $plannedDate = $pka->milestones->first()->tanggal_mulai ?? $request->planned_walkthrough_date;
-
-        // Ambil nama auditee dari master auditee
-        $auditee = MasterAuditee::findOrFail($request->auditee_id);
-
-        // Handle file upload
-        $updateData = [
-            'perencanaan_audit_id' => $pka->perencanaan_audit_id,
-            'program_kerja_audit_id' => $request->program_kerja_audit_id,
-            'planned_walkthrough_date' => $plannedDate,
-            'actual_walkthrough_date' => $request->actual_walkthrough_date,
-            'tanggal_walkthrough' => $request->actual_walkthrough_date ?? $plannedDate,
-            'auditee_nama' => $auditee->divisi,
-            'hasil_walkthrough' => $request->hasil_walkthrough,
-        ];
-
+        $data = $request->validated();
         if ($request->hasFile('file_bpm')) {
-            // Hapus file lama jika ada
-            if ($item->file_bpm && Storage::disk('public')->exists($item->file_bpm)) {
-                Storage::disk('public')->delete($item->file_bpm);
-            }
-            $updateData['file_bpm'] = $request->file('file_bpm')->store('walkthrough/bpm', 'public');
+            $data['file_bpm_file'] = $request->file('file_bpm');
         }
 
-        $item->update($updateData);
+        $this->walkthroughService->update($item, $data);
 
         return redirect()->route('audit.walkthrough.index')->with('success', 'Hasil walkthrough berhasil diupdate!');
     }
@@ -186,23 +121,13 @@ class WalkthroughAuditController extends Controller
     public function destroy($id)
     {
         $item = WalkthroughAudit::findOrFail($id);
-        $item->delete();
+        $this->walkthroughService->delete($item);
         return redirect()->route('audit.walkthrough.index')->with('success', 'Data walkthrough berhasil dihapus!');
     }
 
-    public function approval(Request $request, $id)
+    public function approval(ApprovalRequest $request, $id)
     {
         $item = WalkthroughAudit::findOrFail($id);
-        
-        // Validasi alasan penolakan jika reject
-        if ($request->input('action') === 'reject') {
-            $request->validate([
-                'rejection_reason' => 'required|string|min:10',
-            ], [
-                'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
-            ]);
-        }
 
         $result = \App\Helpers\ApprovalHelper::processApproval(
             $item,

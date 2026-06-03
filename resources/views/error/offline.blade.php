@@ -3,7 +3,7 @@
 @section('content')    
 <div class="text-center">
     <div class="mb-4 text-center">
-        <a href="{{ route('any', 'index') }}" class="auth-logo">
+        <a href="{{ route('root') }}" class="auth-logo">
             <img src="/images/logo-dark.png" alt="logo-dark" class="mx-auto" height="28"/>
         </a>
     </div>
@@ -17,7 +17,7 @@
         <p class="text-muted">Internet connection is lost. Try checking the <br> signal and refresh the screen later.</p>
     </div>
 
-    <a class="btn btn-primary mt-3 me-1" href="{{ route('any', 'index') }}">Back to Home</a>
+    <a class="btn btn-primary mt-3 me-1" href="{{ route('root') }}">Back to Home</a>
 
 </div>
 @endsection

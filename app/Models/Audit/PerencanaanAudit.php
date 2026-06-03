@@ -8,11 +8,11 @@ use App\Models\MasterData\MasterAuditee;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\WalkthroughAudit;
-
+use App\Traits\FilterableByAuditee;
 
 class PerencanaanAudit extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
     protected $table = 'perencanaan_audit';
     protected $guarded = [];
     protected $casts = [

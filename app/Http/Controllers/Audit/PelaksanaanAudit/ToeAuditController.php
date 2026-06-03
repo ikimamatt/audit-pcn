@@ -4,42 +4,44 @@ namespace App\Http\Controllers\Audit\PelaksanaanAudit;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreToeRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateToeRequest;
+use App\Http\Requests\Audit\PelaporanAudit\ApprovalRequest;
 use App\Models\ToeAudit;
 use App\Models\Audit\PerencanaanAudit;
-use App\Models\ToeEvaluasi;
 use App\Models\TodBpmAudit;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Audit\ToeService;
 use Carbon\Carbon;
 
 class ToeAuditController extends Controller
 {
+    protected $toeService;
+
+    public function __construct(ToeService $toeService)
+    {
+        $this->toeService = $toeService;
+    }
+
     public function index(Request $request)
     {
-        $data = ToeAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko.kontrolList', 'pkaKontrol'])->get();
+        // Pindahkan filter ke DB-level dengan scope forCurrentAuditee
+        $query = ToeAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko.kontrolList', 'pkaKontrol'])
+            ->forCurrentAuditee('perencanaanAudit');
 
         // Filter by specific ID from details page
         if ($request->filled('id')) {
-            $data = $data->filter(function($item) use ($request) {
-                return $item->id == $request->id;
-            });
-        }
-
-        $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-        if ($userAuditeeId !== null) {
-            $data = $data->filter(fn($item) =>
-                $item->perencanaanAudit && $item->perencanaanAudit->auditee_id == $userAuditeeId
-            );
+            $query->where('id', $request->id);
         }
 
         if ($request->filled('bulan')) {
             $selectedMonth = Carbon::parse($request->bulan);
-            $data = $data->filter(function ($item) use ($selectedMonth) {
-                if (!$item->perencanaanAudit) return false;
-                $start = Carbon::parse($item->perencanaanAudit->tanggal_audit_mulai);
-                return $start->year == $selectedMonth->year && $start->month == $selectedMonth->month;
+            $query->whereHas('perencanaanAudit', function($q) use ($selectedMonth) {
+                $q->whereYear('tanggal_audit_mulai', $selectedMonth->year)
+                  ->whereMonth('tanggal_audit_mulai', $selectedMonth->month);
             });
         }
+
+        $data = $query->get();
 
         return view('audit.toe.index', compact('data'));
     }
@@ -51,65 +53,14 @@ class ToeAuditController extends Controller
         return view('audit.toe.create', compact('suratTugas', 'bpmList'));
     }
 
-    public function store(Request $request)
+    public function store(StoreToeRequest $request)
     {
-        $request->validate([
-            'perencanaan_audit_id'   => 'required|exists:perencanaan_audit,id',
-            'judul_bpm'              => 'required|string',
-            'pemilihan_sampel_audit' => 'nullable|string',
-            'pka_risiko_ids'         => 'nullable|array',
-            'pka_risiko_ids.*'       => 'exists:pka_risiko,id',
-            'pka_kontrol_ids'        => 'nullable|array',
-            'pka_kontrol_ids.*'      => 'exists:pka_kontrol,id',
-            'file_kka_toe'           => 'nullable|file|mimes:pdf|max:5120',
-            'hasil_evaluasi'         => 'required|string|in:Efektif,Tidak Efektif,Efektif Sebagian',
-        ]);
-
-        $fileKkaToePath = null;
+        $data = $request->validated();
         if ($request->hasFile('file_kka_toe')) {
-            $fileKkaToePath = $request->file('file_kka_toe')->store('toe/kka-toe', 'public');
+            $data['file_kka_toe_file'] = $request->file('file_kka_toe');
         }
 
-        DB::transaction(function () use ($request, $fileKkaToePath) {
-            $toe = ToeAudit::create([
-                'perencanaan_audit_id'   => $request->perencanaan_audit_id,
-                'judul_bpm'              => $request->judul_bpm,
-                'pengendalian_eksisting' => null,
-                'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
-                'resiko'                 => null,
-                'kontrol'                => null,
-                'file_kka_toe'           => $fileKkaToePath,
-            ]);
-
-            // Simpan pivot risiko
-            if ($request->filled('pka_risiko_ids')) {
-                foreach ($request->pka_risiko_ids as $risikoId) {
-                    DB::table('toe_risiko')->insert([
-                        'toe_audit_id'  => $toe->id,
-                        'pka_risiko_id' => $risikoId,
-                        'created_at'    => now(),
-                        'updated_at'    => now(),
-                    ]);
-                }
-            }
-
-            // Simpan pivot kontrol
-            if ($request->filled('pka_kontrol_ids')) {
-                foreach ($request->pka_kontrol_ids as $kontrolId) {
-                    DB::table('toe_kontrol')->insert([
-                        'toe_audit_id'   => $toe->id,
-                        'pka_kontrol_id' => $kontrolId,
-                        'created_at'     => now(),
-                        'updated_at'     => now(),
-                    ]);
-                }
-            }
-
-            ToeEvaluasi::create([
-                'toe_audit_id'   => $toe->id,
-                'hasil_evaluasi' => $request->hasil_evaluasi,
-            ]);
-        });
+        $this->toeService->create($data);
 
         return redirect()->route('audit.toe.index')->with('success', 'TOE berhasil disimpan!');
     }
@@ -158,75 +109,16 @@ class ToeAuditController extends Controller
         ));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateToeRequest $request, $id)
     {
         $item = ToeAudit::findOrFail($id);
 
-        $request->validate([
-            'perencanaan_audit_id'   => 'required|exists:perencanaan_audit,id',
-            'judul_bpm'              => 'required|string',
-            'pemilihan_sampel_audit' => 'nullable|string',
-            'pka_risiko_ids'         => 'nullable|array',
-            'pka_risiko_ids.*'       => 'exists:pka_risiko,id',
-            'pka_kontrol_ids'        => 'nullable|array',
-            'pka_kontrol_ids.*'      => 'exists:pka_kontrol,id',
-            'file_kka_toe'           => 'nullable|file|mimes:pdf|max:5120',
-            'hasil_evaluasi'         => 'required|string|in:Efektif,Tidak Efektif,Efektif Sebagian',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_kka_toe')) {
+            $data['file_kka_toe_file'] = $request->file('file_kka_toe');
+        }
 
-        DB::transaction(function () use ($request, $item) {
-            $data = [
-                'perencanaan_audit_id'   => $request->perencanaan_audit_id,
-                'judul_bpm'              => $request->judul_bpm,
-                'pemilihan_sampel_audit' => $request->pemilihan_sampel_audit,
-                'pengendalian_eksisting' => null,
-                'resiko'                 => null,
-                'kontrol'                => null,
-            ];
-
-            if ($request->hasFile('file_kka_toe')) {
-                if ($item->file_kka_toe && Storage::disk('public')->exists($item->file_kka_toe)) {
-                    Storage::disk('public')->delete($item->file_kka_toe);
-                }
-                $data['file_kka_toe'] = $request->file('file_kka_toe')->store('toe/kka-toe', 'public');
-            }
-
-            $item->update($data);
-
-            // Sync pivot risiko
-            DB::table('toe_risiko')->where('toe_audit_id', $item->id)->delete();
-            if ($request->filled('pka_risiko_ids')) {
-                foreach ($request->pka_risiko_ids as $risikoId) {
-                    DB::table('toe_risiko')->insert([
-                        'toe_audit_id'  => $item->id,
-                        'pka_risiko_id' => $risikoId,
-                        'created_at'    => now(),
-                        'updated_at'    => now(),
-                    ]);
-                }
-            }
-
-            // Sync pivot kontrol
-            DB::table('toe_kontrol')->where('toe_audit_id', $item->id)->delete();
-            if ($request->filled('pka_kontrol_ids')) {
-                foreach ($request->pka_kontrol_ids as $kontrolId) {
-                    DB::table('toe_kontrol')->insert([
-                        'toe_audit_id'   => $item->id,
-                        'pka_kontrol_id' => $kontrolId,
-                        'created_at'     => now(),
-                        'updated_at'     => now(),
-                    ]);
-                }
-            }
-
-            // Sync/Update Hasil Evaluasi
-            $firstEv = $item->evaluasi()->first();
-            if ($firstEv) {
-                $firstEv->update(['hasil_evaluasi' => $request->hasil_evaluasi]);
-            } else {
-                $item->evaluasi()->create(['hasil_evaluasi' => $request->hasil_evaluasi]);
-            }
-        });
+        $this->toeService->update($item, $data);
 
         return redirect()->route('audit.toe.index')->with('success', 'Data TOE berhasil diupdate!');
     }
@@ -234,22 +126,13 @@ class ToeAuditController extends Controller
     public function destroy($id)
     {
         $item = ToeAudit::findOrFail($id);
-        $item->delete();
+        $this->toeService->delete($item);
         return redirect()->route('audit.toe.index')->with('success', 'Data TOE berhasil dihapus!');
     }
 
-    public function approval($id, Request $request)
+    public function approval($id, ApprovalRequest $request)
     {
         $item = ToeAudit::findOrFail($id);
-
-        if ($request->action == 'reject') {
-            $request->validate([
-                'rejection_reason' => 'required|string|min:10',
-            ], [
-                'rejection_reason.required' => 'Alasan penolakan harus diisi',
-                'rejection_reason.min'      => 'Alasan penolakan minimal 10 karakter',
-            ]);
-        }
 
         $result = \App\Helpers\ApprovalHelper::processApproval(
             $item,

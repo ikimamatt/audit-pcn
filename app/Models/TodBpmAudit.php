@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\PkaRisiko;
 use App\Models\Models\Audit\PkaKontrol;
+use App\Traits\FilterableByAuditee;
 
 class TodBpmAudit extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterableByAuditee;
 
     protected $table   = 'tod_bpm_audit';
     protected $guarded = [];

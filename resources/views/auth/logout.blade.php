@@ -7,7 +7,7 @@
             <div class="mb-0 border-0 p-md-5 p-lg-0 p-4">
 
                 <div class="mb-4 p-0 text-center">
-                    <a href="{{ route('any', 'index') }}" class="auth-logo">
+                    <a href="{{ route('root') }}" class="auth-logo">
                         <img src="/images/logo-dark.png" alt="logo-dark" class="mx-auto" height="28"/>
                     </a>
                 </div>
@@ -18,7 +18,7 @@
                 </div>
             
                 <div class="text-center">
-                    <a href='{{ route('second', [ 'auth' , 'login']) }}' class="btn btn-primary mt-3 me-1"> Log In </a>
+                    <a href='{{ route('login') }}' class="btn btn-primary mt-3 me-1"> Log In </a>
                 </div>
 
                 <div class="maintenance-img text-center pt-4">

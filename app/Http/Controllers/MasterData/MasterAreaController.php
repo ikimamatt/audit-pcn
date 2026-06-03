@@ -6,9 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterArea;
 use App\Models\MasterData\MasterRegion;
 use Illuminate\Http\Request;
+use App\Http\Requests\MasterData\StoreMasterAreaRequest;
+use App\Http\Requests\MasterData\UpdateMasterAreaRequest;
+
+use App\Services\MasterData\MasterAreaService;
 
 class MasterAreaController extends Controller
 {
+    protected $areaService;
+
+    public function __construct(MasterAreaService $areaService)
+    {
+        $this->areaService = $areaService;
+    }
+
     public function index()
     {
         $data = MasterArea::with('region')->orderBy('kd_area')->get();
@@ -21,15 +32,9 @@ class MasterAreaController extends Controller
         return view('master-data.area.create', compact('regions'));
     }
 
-    public function store(Request $request)
+    public function store(StoreMasterAreaRequest $request)
     {
-        $request->validate([
-            'kd_area' => 'required|string|max:50|unique:master_area,kd_area',
-            'nama_area' => 'required|string|max:255',
-            'kd_region' => 'nullable|string|max:50|exists:master_region,kd_region',
-        ]);
-
-        MasterArea::create($request->only(['kd_area', 'nama_area', 'kd_region']));
+        $this->areaService->create($request->validated());
 
         return redirect()->route('master.area.index')
             ->with('success', 'Area berhasil ditambahkan!');
@@ -41,15 +46,9 @@ class MasterAreaController extends Controller
         return view('master-data.area.edit', compact('masterArea', 'regions'));
     }
 
-    public function update(Request $request, MasterArea $masterArea)
+    public function update(UpdateMasterAreaRequest $request, MasterArea $masterArea)
     {
-        $request->validate([
-            'kd_area' => 'required|string|max:50|unique:master_area,kd_area,' . $masterArea->id,
-            'nama_area' => 'required|string|max:255',
-            'kd_region' => 'nullable|string|max:50|exists:master_region,kd_region',
-        ]);
-
-        $masterArea->update($request->only(['kd_area', 'nama_area', 'kd_region']));
+        $this->areaService->update($masterArea, $request->validated());
 
         return redirect()->route('master.area.index')
             ->with('success', 'Area berhasil diperbarui!');
@@ -58,7 +57,7 @@ class MasterAreaController extends Controller
     public function destroy(MasterArea $masterArea)
     {
         try {
-            $masterArea->delete();
+            $this->areaService->delete($masterArea);
             return redirect()->route('master.area.index')
                 ->with('success', 'Area berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {

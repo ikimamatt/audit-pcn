@@ -23,7 +23,7 @@
             <div class="page-title-box">
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('any', 'index') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('root') }}">Home</a></li>
                         <li class="breadcrumb-item active">Dashboard Monitoring Tindak Lanjut</li>
                     </ol>
                 </div>

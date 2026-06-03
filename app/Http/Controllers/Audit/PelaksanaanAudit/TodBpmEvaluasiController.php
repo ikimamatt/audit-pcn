@@ -4,34 +4,37 @@ namespace App\Http\Controllers\Audit\PelaksanaanAudit;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreTodBpmEvaluasiRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateTodBpmEvaluasiRequest;
 use App\Models\TodBpmAudit;
 use App\Models\TodBpmEvaluasi;
+use App\Services\Audit\TodBpmService;
 
 class TodBpmEvaluasiController extends Controller
 {
+    protected $todBpmService;
+
+    public function __construct(TodBpmService $todBpmService)
+    {
+        $this->todBpmService = $todBpmService;
+    }
+
     public function index(Request $request)
     {
         $bpm = TodBpmAudit::with('evaluasi')->findOrFail($request->tod_bpm_audit_id);
         return view('audit.tod-bpm-evaluasi.index', compact('bpm'));
     }
 
-    public function store(Request $request)
+    public function store(StoreTodBpmEvaluasiRequest $request)
     {
-        $request->validate([
-            'tod_bpm_audit_id' => 'required|exists:tod_bpm_audit,id',
-            'hasil_evaluasi' => 'required|string',
-        ]);
-        TodBpmEvaluasi::create($request->only('tod_bpm_audit_id', 'hasil_evaluasi'));
+        $this->todBpmService->createEvaluasi($request->validated());
         return redirect()->route('audit.tod-bpm-evaluasi.index', ['tod_bpm_audit_id' => $request->tod_bpm_audit_id]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateTodBpmEvaluasiRequest $request, $id)
     {
         $item = TodBpmEvaluasi::findOrFail($id);
-        $request->validate([
-            'hasil_evaluasi' => 'required|string',
-        ]);
-        $item->update(['hasil_evaluasi' => $request->hasil_evaluasi]);
+        $this->todBpmService->updateEvaluasi($item, $request->validated());
         return redirect()->route('audit.tod-bpm-evaluasi.index', ['tod_bpm_audit_id' => $item->tod_bpm_audit_id]);
     }
 
@@ -39,7 +42,7 @@ class TodBpmEvaluasiController extends Controller
     {
         $item = TodBpmEvaluasi::findOrFail($id);
         $bpmId = $item->tod_bpm_audit_id;
-        $item->delete();
+        $this->todBpmService->deleteEvaluasi($item);
         return redirect()->route('audit.tod-bpm-evaluasi.index', ['tod_bpm_audit_id' => $bpmId]);
     }
 

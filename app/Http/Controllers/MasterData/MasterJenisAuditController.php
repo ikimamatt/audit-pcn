@@ -5,9 +5,20 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\MasterData\MasterJenisAudit;
 use Illuminate\Http\Request;
+use App\Http\Requests\MasterData\StoreMasterJenisAuditRequest;
+use App\Http\Requests\MasterData\UpdateMasterJenisAuditRequest;
+
+use App\Services\MasterData\MasterJenisAuditService;
 
 class MasterJenisAuditController extends Controller
 {
+    protected $jenisAuditService;
+
+    public function __construct(MasterJenisAuditService $jenisAuditService)
+    {
+        $this->jenisAuditService = $jenisAuditService;
+    }
+
     public function index()
     {
         $data = MasterJenisAudit::all();
@@ -19,14 +30,9 @@ class MasterJenisAuditController extends Controller
         return view('master-data.jenis-audit.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreMasterJenisAuditRequest $request)
     {
-        $request->validate([
-            'nama_jenis_audit' => 'required|string|max:255',
-            'kode' => 'nullable|string|max:255',
-        ]);
-
-        MasterJenisAudit::create($request->only(['nama_jenis_audit', 'kode']));
+        $this->jenisAuditService->create($request->validated());
 
         return redirect()->route('master.jenis-audit.index')->with('success', 'Jenis Audit berhasil ditambahkan!');
     }
@@ -36,14 +42,9 @@ class MasterJenisAuditController extends Controller
         return view('master-data.jenis-audit.edit', compact('masterJenisAudit'));
     }
 
-    public function update(Request $request, MasterJenisAudit $masterJenisAudit)
+    public function update(UpdateMasterJenisAuditRequest $request, MasterJenisAudit $masterJenisAudit)
     {
-        $request->validate([
-            'nama_jenis_audit' => 'required|string|max:255',
-            'kode' => 'nullable|string|max:255',
-        ]);
-
-        $masterJenisAudit->update($request->only(['nama_jenis_audit', 'kode']));
+        $this->jenisAuditService->update($masterJenisAudit, $request->validated());
 
         return redirect()->route('master.jenis-audit.index')->with('success', 'Jenis Audit berhasil diperbarui!');
     }
@@ -51,7 +52,7 @@ class MasterJenisAuditController extends Controller
     public function destroy(MasterJenisAudit $masterJenisAudit)
     {
         try {
-            $masterJenisAudit->delete();
+            $this->jenisAuditService->delete($masterJenisAudit);
             return redirect()->route('master.jenis-audit.index')->with('success', 'Jenis Audit berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23000') {

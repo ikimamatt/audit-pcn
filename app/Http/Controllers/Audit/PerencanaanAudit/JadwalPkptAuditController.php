@@ -6,9 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Models\Audit\JadwalPkptAudit;
 use App\Models\MasterData\MasterAuditee;
 use Illuminate\Http\Request;
+use App\Http\Requests\Audit\PerencanaanAudit\StoreJadwalPkptRequest;
+use App\Http\Requests\Audit\PerencanaanAudit\UpdateJadwalPkptRequest;
+use App\Services\Audit\PerencanaanAuditService;
 
 class JadwalPkptAuditController extends Controller
 {
+    protected $perencanaanService;
+
+    public function __construct(PerencanaanAuditService $perencanaanService)
+    {
+        $this->perencanaanService = $perencanaanService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -30,24 +40,9 @@ class JadwalPkptAuditController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreJadwalPkptRequest $request)
     {
-        $request->validate([
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'jenis_audit' => 'required',
-            'jumlah_auditor' => 'required|integer|min:1',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai', // Tanggal selesai harus setelah atau sama dengan tanggal mulai
-        ]);
-
-        JadwalPkptAudit::create([
-            'auditee_id' => $request->auditee_id,
-            'jenis_audit' => $request->jenis_audit,
-            'jumlah_auditor' => $request->jumlah_auditor,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-            'status_approval' => 'pending',
-        ]);
+        $this->perencanaanService->createJadwalPkpt($request->validated());
 
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil disimpan!');
     }
@@ -73,24 +68,10 @@ class JadwalPkptAuditController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(UpdateJadwalPkptRequest $request, $id)
     {
-        $request->validate([
-            'auditee_id' => 'required|exists:master_auditee,id',
-            'jenis_audit' => 'required',
-            'jumlah_auditor' => 'required|integer|min:1',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai', // Tanggal selesai harus setelah atau sama dengan tanggal mulai
-        ]);
-
         $item = JadwalPkptAudit::findOrFail($id);
-        $item->update([
-            'auditee_id' => $request->auditee_id,
-            'jenis_audit' => $request->jenis_audit,
-            'jumlah_auditor' => $request->jumlah_auditor,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-        ]);
+        $this->perencanaanService->updateJadwalPkpt($item, $request->validated());
 
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil diupdate!');
     }
@@ -101,8 +82,7 @@ class JadwalPkptAuditController extends Controller
     public function destroy($id)
     {
         $item = JadwalPkptAudit::findOrFail($id);
-        $item->delete();
+        $this->perencanaanService->deleteJadwalPkpt($item);
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil dihapus!');
     }
-
 }

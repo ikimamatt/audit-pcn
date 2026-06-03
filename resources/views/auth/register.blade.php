@@ -6,7 +6,7 @@
         <div class="col-md-7 mx-auto">
             <div class="mb-0 border-0 p-md-5 p-lg-0 p-4">
                 <div class="mb-4 p-0">
-                    <a href="{{ route('any', 'index') }}" class="auth-logo">
+                    <a href="{{ route('root') }}" class="auth-logo">
                         <img src="/images/logo-dark.png" alt="logo-dark" class="mx-auto" height="28"/>
                     </a>
                 </div>
@@ -51,7 +51,7 @@
                     <div class="saprator my-4"><span>or sign in with</span></div>
 
                     <div class="text-center text-muted mb-4">
-                        <p class="mb-0">Already have an account ?<a class='text-primary ms-2 fw-medium' href='{{ route('second', [ 'auth' , 'login']) }}'>Login here</a></p>
+                        <p class="mb-0">Already have an account ?<a class='text-primary ms-2 fw-medium' href='{{ route('login') }}'>Login here</a></p>
                     </div>
 
                     <div class="row">

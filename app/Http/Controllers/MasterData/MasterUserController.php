@@ -9,9 +9,21 @@ use App\Models\MasterData\MasterAksesUser;
 use App\Models\MasterData\MasterArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\MasterData\StoreMasterUserRequest;
+use App\Http\Requests\MasterData\UpdateMasterUserRequest;
+use App\Http\Requests\MasterData\ResetPasswordMasterUserRequest;
+
+use App\Services\MasterData\MasterUserService;
 
 class MasterUserController extends Controller
 {
+    protected $userService;
+
+    public function __construct(MasterUserService $userService)
+    {
+        $this->userService = $userService;
+    }
+
     public function index()
     {
         // Hide users with Superadmin access from the view
@@ -38,33 +50,9 @@ class MasterUserController extends Controller
         return view('master-data.user.create', compact('auditees', 'aksesUsers', 'areas'));
     }
 
-    public function store(Request $request)
+    public function store(StoreMasterUserRequest $request)
     {
-        $request->validate([
-            'nama'                 => 'required|string|max:255',
-            'username'             => 'required|string|max:255|unique:master_user,username',
-            'nip'                  => 'required|string|max:255',
-            'password'             => 'required|string|min:6',
-            'email'                => 'nullable|email|max:255',
-            'no_telpon'            => 'nullable|string|max:20',
-            'jabatan'              => 'nullable|string|max:255',
-            'master_auditee_id'    => 'required|exists:master_auditee,id',
-            'master_area_id'       => 'required|exists:master_area,id',
-            'master_akses_user_id' => 'required|exists:master_akses_user,id',
-        ]);
-
-        MasterUser::create([
-            'nama'                 => $request->nama,
-            'username'             => $request->username,
-            'nip'                  => $request->nip,
-            'password'             => Hash::make($request->password),
-            'email'                => $request->email,
-            'no_telpon'            => $request->no_telpon,
-            'jabatan'              => $request->jabatan,
-            'master_auditee_id'    => $request->master_auditee_id,
-            'master_area_id'       => $request->master_area_id,
-            'master_akses_user_id' => $request->master_akses_user_id,
-        ]);
+        $this->userService->create($request->validated());
 
         return redirect()->route('master.user.index')->with('success', 'User berhasil ditambahkan!');
     }
@@ -99,40 +87,9 @@ class MasterUserController extends Controller
         return view('master-data.user.edit', compact('masterUser', 'auditees', 'aksesUsers', 'areas'));
     }
 
-    public function update(Request $request, MasterUser $masterUser)
+    public function update(UpdateMasterUserRequest $request, MasterUser $masterUser)
     {
-        $request->validate([
-            'nama'                 => 'required|string|max:255',
-            'username'             => 'required|string|max:255|unique:master_user,username,' . $masterUser->id,
-            'nip'                  => 'required|string|max:255',
-            'email'                => 'nullable|email|max:255',
-            'no_telpon'            => 'nullable|string|max:20',
-            'jabatan'              => 'nullable|string|max:255',
-            'master_auditee_id'    => 'required|exists:master_auditee,id',
-            'master_area_id'       => 'required|exists:master_area,id',
-            'master_akses_user_id' => 'required|exists:master_akses_user,id',
-        ]);
-
-        $data = [
-            'nama'                 => $request->nama,
-            'username'             => $request->username,
-            'nip'                  => $request->nip,
-            'email'                => $request->email,
-            'no_telpon'            => $request->no_telpon,
-            'jabatan'              => $request->jabatan,
-            'master_auditee_id'    => $request->master_auditee_id,
-            'master_area_id'       => $request->master_area_id,
-            'master_akses_user_id' => $request->master_akses_user_id,
-        ];
-
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'string|min:6',
-            ]);
-            $data['password'] = Hash::make($request->password);
-        }
-
-        $masterUser->update($data);
+        $this->userService->update($masterUser, $request->validated());
 
         return redirect()->route('master.user.index')->with('success', 'User berhasil diperbarui!');
     }
@@ -146,7 +103,7 @@ class MasterUserController extends Controller
         }
         
         try {
-            $masterUser->delete();
+            $this->userService->delete($masterUser);
             return redirect()->route('master.user.index')->with('success', 'User berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23000') {
@@ -156,21 +113,9 @@ class MasterUserController extends Controller
         }
     }
 
-    public function resetPassword(Request $request, MasterUser $masterUser)
+    public function resetPassword(ResetPasswordMasterUserRequest $request, MasterUser $masterUser)
     {
-        // Prevent resetting Superadmin users
-        if ($masterUser->akses && $masterUser->akses->nama_akses === 'Superadmin') {
-            return redirect()->route('master.user.index')
-                ->with('error', 'Superadmin user password cannot be reset through this interface.');
-        }
-
-        $request->validate([
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        $masterUser->update([
-            'password' => Hash::make($request->password)
-        ]);
+        $this->userService->resetPassword($masterUser, $request->password);
 
         return redirect()->route('master.user.index')->with('success', 'Password user ' . $masterUser->nama . ' berhasil direset!');
     }
