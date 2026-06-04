@@ -33,84 +33,83 @@ class PenutupLhaRekomendasiController extends Controller
     }
     public function selectNomorSuratTugas(Request $request)
     {
-        // Ambil semua nomor surat tugas yang memiliki PelaporanHasilAudit dengan temuan yang sudah approved
-        $query = PerencanaanAudit::with(['pelaporanHasilAudit.temuan'])
-            ->whereHas('pelaporanHasilAudit.temuan', function($q) {
-                $q->where('status_approval', 'approved');
-            });
-            
-        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        // Single JOIN aggregate query replaces get() + map() + foreach loop
+        $query = \Illuminate\Support\Facades\DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', function ($join) {
+                $join->on('pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+                     ->where('pt.status_approval', '=', 'approved');
+            })
+            ->select(
+                'pa.id as perencanaan_audit_id',
+                'pa.nomor_surat_tugas',
+                'pa.jenis_audit',
+                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT pt.id) as count_temuan'),
+                \Illuminate\Support\Facades\DB::raw('GROUP_CONCAT(DISTINCT pha.nomor_lha_lhk SEPARATOR ", ") as nomor_lha_lhk')
+            )
+            ->groupBy('pa.id', 'pa.nomor_surat_tugas', 'pa.jenis_audit');
+
+        // Jika user adalah AUDITEE, filter berdasarkan divisi/cabang auditee & unit mereka
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
             $userUnitId = auth()->user()->master_area_id ?? null;
             if ($userAuditeeId !== null) {
-                $query->where('auditee_id', $userAuditeeId);
+                $query->where('pa.auditee_id', $userAuditeeId);
             }
             if ($userUnitId !== null) {
-                $query->where('area_id', $userUnitId);
+                $query->where('pa.area_id', $userUnitId);
             }
         }
         
         // Filter berdasarkan jenis audit
         if ($request->filled('jenis_audit')) {
-            $query->where('jenis_audit', $request->jenis_audit);
+            $query->where('pa.jenis_audit', $request->jenis_audit);
         }
         
         // Filter berdasarkan search (nomor surat tugas atau nomor LHA/LHK)
         if ($request->filled('search')) {
             $search = QueryHelper::escapeLike($request->search);
             $query->where(function($q) use ($search) {
-                $q->where('nomor_surat_tugas', 'like', '%' . $search . '%')
-                  ->orWhereHas('pelaporanHasilAudit', function($q2) use ($search) {
-                      $q2->where('nomor_lha_lhk', 'like', '%' . $search . '%');
-                  });
+                $q->where('pa.nomor_surat_tugas', 'like', '%' . $search . '%')
+                  ->orWhere('pha.nomor_lha_lhk', 'like', '%' . $search . '%');
             });
         }
         
-        $nomorSuratTugasList = $query->get()
-            ->map(function($perencanaan) {
-                $totalTemuan = 0;
-                $nomorLhaLhkList = [];
-                
-                foreach ($perencanaan->pelaporanHasilAudit as $lha) {
-                    $approvedTemuan = $lha->temuan->where('status_approval', 'approved');
-                    $totalTemuan += $approvedTemuan->count();
-                    if ($lha->nomor_lha_lhk) {
-                        $nomorLhaLhkList[] = $lha->nomor_lha_lhk;
-                    }
-                }
-                
+        $nomorSuratTugasList = $query->orderBy('pa.nomor_surat_tugas')->get()
+            ->map(function($row) {
                 return [
-                    'nomor_surat_tugas' => $perencanaan->nomor_surat_tugas,
-                    'perencanaan_audit_id' => $perencanaan->id,
-                    'jenis_audit' => $perencanaan->jenis_audit,
-                    'nomor_lha_lhk' => implode(', ', array_unique($nomorLhaLhkList)),
-                    'count_temuan' => $totalTemuan,
+                    'nomor_surat_tugas'    => $row->nomor_surat_tugas,
+                    'perencanaan_audit_id' => $row->perencanaan_audit_id,
+                    'jenis_audit'          => $row->jenis_audit,
+                    'nomor_lha_lhk'        => $row->nomor_lha_lhk ?? '',
+                    'count_temuan'         => (int) $row->count_temuan,
                 ];
             })
-            ->sortBy('nomor_surat_tugas')
             ->values();
         
         // Ambil daftar jenis audit untuk filter dropdown
-        $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan', function($q) {
-                $q->where('status_approval', 'approved');
+        $jenisAuditQuery = \Illuminate\Support\Facades\DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', function ($join) {
+                $join->on('pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+                     ->where('pt.status_approval', '=', 'approved');
             });
             
         if (\App\Helpers\AuthHelper::isAuditee()) {
             $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
             $userUnitId = auth()->user()->master_area_id ?? null;
             if ($userAuditeeId !== null) {
-                $jenisAuditQuery->where('auditee_id', $userAuditeeId);
+                $jenisAuditQuery->where('pa.auditee_id', $userAuditeeId);
             }
             if ($userUnitId !== null) {
-                $jenisAuditQuery->where('area_id', $userUnitId);
+                $jenisAuditQuery->where('pa.area_id', $userUnitId);
             }
         }
         
         $jenisAuditList = $jenisAuditQuery
             ->distinct()
-            ->pluck('jenis_audit')
-            ->sort()
+            ->orderBy('pa.jenis_audit')
+            ->pluck('pa.jenis_audit')
             ->values();
         
         return view('audit.pelaporan.penutup-lha.select-nomor-surat-tugas', compact('nomorSuratTugasList', 'jenisAuditList'));

@@ -19,64 +19,63 @@ class MonitoringService
      */
     public function getSelectNomorSuratTugasList(?int $userAreaId, ?string $search, ?string $jenisAudit): array
     {
-        $query = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
-        
+        // Single JOIN query replaces get() + map() with N+1 count sub-query
+        $query = DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', 'pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+            ->join('penutup_lha_rekomendasi as plr', 'pt.id', '=', 'plr.pelaporan_isi_lha_id')
+            ->select(
+                'pa.id as perencanaan_audit_id',
+                'pa.nomor_surat_tugas',
+                'pa.jenis_audit',
+                DB::raw('COUNT(DISTINCT plr.id) as count_rekomendasi'),
+                DB::raw('GROUP_CONCAT(DISTINCT pha.nomor_lha_lhk SEPARATOR ", ") as nomor_lha_lhk')
+            )
+            ->groupBy('pa.id', 'pa.nomor_surat_tugas', 'pa.jenis_audit')
+            ->having('count_rekomendasi', '>', 0);
+
         if ($userAreaId) {
-            $query->where('area_id', $userAreaId);
+            $query->where('pa.area_id', $userAreaId);
         }
-        
+
         if ($jenisAudit) {
-            $query->where('jenis_audit', $jenisAudit);
+            $query->where('pa.jenis_audit', $jenisAudit);
         }
-        
+
         if ($search) {
             $escapedSearch = \App\Helpers\QueryHelper::escapeLike($search);
-            $query->where(function($q) use ($escapedSearch) {
-                $q->where('nomor_surat_tugas', 'like', '%' . $escapedSearch . '%')
-                  ->orWhereHas('pelaporanHasilAudit', function($q2) use ($escapedSearch) {
-                      $q2->where('nomor_lha_lhk', 'like', '%' . $escapedSearch . '%');
-                  });
+            $query->where(function ($q) use ($escapedSearch) {
+                $q->where('pa.nomor_surat_tugas', 'like', '%' . $escapedSearch . '%')
+                  ->orWhere('pha.nomor_lha_lhk', 'like', '%' . $escapedSearch . '%');
             });
         }
-        
-        $perencanaanList = $query->with(['pelaporanHasilAudit'])->get();
-        
-        $nomorSuratTugasList = $perencanaanList
-            ->map(function($perencanaan) {
-                $rekomendasiQuery = PenutupLhaRekomendasi::whereHas('temuan.pelaporanHasilAudit', function($q) use ($perencanaan) {
-                    $q->where('perencanaan_audit_id', $perencanaan->id);
-                });
-                
-                $totalRekomendasi = $rekomendasiQuery->count();
-                
-                $nomorLhaLhkList = $perencanaan->pelaporanHasilAudit
-                    ->pluck('nomor_lha_lhk')
-                    ->filter()
-                    ->unique()
-                    ->values()
-                    ->toArray();
-                
+
+        $nomorSuratTugasList = $query->orderBy('pa.nomor_surat_tugas')->get()
+            ->map(function ($row) {
                 return [
-                    'nomor_surat_tugas' => $perencanaan->nomor_surat_tugas,
-                    'perencanaan_audit_id' => $perencanaan->id,
-                    'jenis_audit' => $perencanaan->jenis_audit,
-                    'nomor_lha_lhk' => implode(', ', $nomorLhaLhkList),
-                    'count_rekomendasi' => $totalRekomendasi,
+                    'nomor_surat_tugas'    => $row->nomor_surat_tugas,
+                    'perencanaan_audit_id' => $row->perencanaan_audit_id,
+                    'jenis_audit'          => $row->jenis_audit,
+                    'nomor_lha_lhk'        => $row->nomor_lha_lhk ?? '',
+                    'count_rekomendasi'    => (int) $row->count_rekomendasi,
                 ];
             })
-            ->where('count_rekomendasi', '>', 0)
-            ->sortBy('nomor_surat_tugas')
             ->values();
 
         // Get audit types
-        $jenisAuditQuery = PerencanaanAudit::whereHas('pelaporanHasilAudit.temuan.penutupLhaRekomendasi');
+        $jenisAuditQuery = DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', 'pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+            ->join('penutup_lha_rekomendasi as plr', 'pt.id', '=', 'plr.pelaporan_isi_lha_id');
+
         if ($userAreaId) {
-            $jenisAuditQuery->where('area_id', $userAreaId);
+            $jenisAuditQuery->where('pa.area_id', $userAreaId);
         }
+
         $jenisAuditList = $jenisAuditQuery
             ->distinct()
-            ->pluck('jenis_audit')
-            ->sort()
+            ->orderBy('pa.jenis_audit')
+            ->pluck('pa.jenis_audit')
             ->values();
 
         return compact('nomorSuratTugasList', 'jenisAuditList');
@@ -200,81 +199,95 @@ class MonitoringService
         $currentMonth = Carbon::create($selectedYear, Carbon::now()->month, 1);
         $currentMonthName = Carbon::now()->format('M');
 
-        $auditeeQuery = MasterAuditee::whereHas('perencanaanAudit', function($query) {
-            $query->whereHas('pelaporanHasilAudit', function($q) {
-                $q->where('status_approval', 'approved');
-            });
-        });
-        
-        if ($userAuditeeId !== null) {
-            $auditeeQuery->where('id', $userAuditeeId);
-        }
-        
-        $auditees = $auditeeQuery->get();
+        // 1. Get per-auditee summary in a single aggregate query (replaces 3× get() + nested filter)
+        $summaryQuery = DB::table('master_auditee as ma')
+            ->join('perencanaan_audit as pa', 'pa.auditee_id', '=', 'ma.id')
+            ->join('pelaporan_hasil_audit as pha', function ($join) {
+                $join->on('pha.perencanaan_audit_id', '=', 'pa.id')
+                     ->where('pha.status_approval', '=', 'approved');
+            })
+            ->leftJoin('pelaporan_temuan as pt', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->leftJoin('penutup_lha_rekomendasi as plr', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+            ->select(
+                'ma.id as auditee_id',
+                'ma.divisi',
+                DB::raw('COUNT(DISTINCT pt.id) as aoi'),
+                DB::raw('COUNT(DISTINCT plr.id) as rekom'),
+                DB::raw('COUNT(DISTINCT CASE WHEN plr.status_tindak_lanjut = "closed" THEN plr.id END) as tl_real')
+            )
+            ->groupBy('ma.id', 'ma.divisi');
 
-        // N+1 Optimization: Batch load all PelaporanTemuan and PenutupLhaRekomendasi
-        $temuanQuery = PelaporanTemuan::whereHas('pelaporanHasilAudit', function($q) {
-            $q->where('status_approval', 'approved');
-        });
         if ($userAuditeeId !== null) {
-            $temuanQuery->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
+            $summaryQuery->where('ma.id', $userAuditeeId);
         }
-        $allTemuan = $temuanQuery->with(['pelaporanHasilAudit.perencanaanAudit'])->get();
 
-        $rekomendasiQuery = PenutupLhaRekomendasi::query();
-        if ($userAuditeeId !== null) {
-            $rekomendasiQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
-            });
+        $summaryRows = $summaryQuery->get();
+
+        // 2. Get monthly target/real counts in a single query per auditee
+        $auditeeIds = $summaryRows->pluck('auditee_id')->toArray();
+
+        $monthlyTarget = collect();
+        $monthlyReal = collect();
+
+        if (!empty($auditeeIds)) {
+            $monthlyTarget = DB::table('penutup_lha_rekomendasi as plr')
+                ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+                ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+                ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+                ->whereIn('pa.auditee_id', $auditeeIds)
+                ->whereNotNull('plr.target_waktu')
+                ->whereYear('plr.target_waktu', $selectedYear)
+                ->select(
+                    'pa.auditee_id',
+                    DB::raw('MONTH(plr.target_waktu) as bulan'),
+                    DB::raw('COUNT(*) as total')
+                )
+                ->groupBy('pa.auditee_id', DB::raw('MONTH(plr.target_waktu)'))
+                ->get()
+                ->groupBy('auditee_id');
+
+            $monthlyReal = DB::table('penutup_lha_rekomendasi as plr')
+                ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+                ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+                ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+                ->whereIn('pa.auditee_id', $auditeeIds)
+                ->where('plr.status_tindak_lanjut', 'closed')
+                ->whereNotNull('plr.real_waktu')
+                ->whereYear('plr.real_waktu', $selectedYear)
+                ->select(
+                    'pa.auditee_id',
+                    DB::raw('MONTH(plr.real_waktu) as bulan'),
+                    DB::raw('COUNT(*) as total')
+                )
+                ->groupBy('pa.auditee_id', DB::raw('MONTH(plr.real_waktu)'))
+                ->get()
+                ->groupBy('auditee_id');
         }
-        $allRekomendasi = $rekomendasiQuery->with(['temuan.pelaporanHasilAudit.perencanaanAudit'])->get();
-
-        $auditeeData = [];
-        $no = 1;
 
         $monthsMapping = [
             'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mei' => 5, 'jun' => 6,
             'jul' => 7, 'ags' => 8, 'sep' => 9, 'okt' => 10, 'nov' => 11, 'des' => 12
         ];
 
-        foreach ($auditees as $auditee) {
-            $auditeeTemuan = $allTemuan->filter(function($t) use ($auditee) {
-                return $t->pelaporanHasilAudit->perencanaanAudit->auditee_id == $auditee->id;
-            });
+        $auditeeData = [];
+        $no = 1;
 
-            $auditeeRekomendasi = $allRekomendasi->filter(function($r) use ($auditee) {
-                return $r->temuan && $r->temuan->pelaporanHasilAudit->perencanaanAudit->auditee_id == $auditee->id;
-            });
-
-            $aoiCount = $auditeeTemuan->count();
-            $rekomCount = $auditeeRekomendasi->count();
+        foreach ($summaryRows as $row) {
+            $aoiCount = (int) $row->aoi;
+            $rekomCount = (int) $row->rekom;
+            $tindakLanjutReal = (int) $row->tl_real;
             $tindakLanjutTarget = $rekomCount;
-            
-            $tindakLanjutReal = $auditeeRekomendasi->filter(function($r) {
-                return $r->status_tindak_lanjut === 'closed';
-            })->count();
-
             $sisaTarget = $tindakLanjutTarget - $tindakLanjutReal;
-            $sisaReal = 0;
 
-            // Monthly calculation in memory
+            // Build monthly data from pre-fetched aggregates
+            $targetForAuditee = $monthlyTarget->get($row->auditee_id, collect());
+            $realForAuditee = $monthlyReal->get($row->auditee_id, collect());
+
             $bulanan = [];
             foreach ($monthsMapping as $monthKey => $monthNumber) {
-                $target = $auditeeRekomendasi->filter(function($r) use ($monthNumber, $selectedYear) {
-                    if (!$r->target_waktu) return false;
-                    $dt = Carbon::parse($r->target_waktu);
-                    return $dt->year == $selectedYear && $dt->month == $monthNumber;
-                })->count();
-
-                $real = $auditeeRekomendasi->filter(function($r) use ($monthNumber, $selectedYear) {
-                    if (!$r->real_waktu || $r->status_tindak_lanjut !== 'closed') return false;
-                    $dt = Carbon::parse($r->real_waktu);
-                    return $dt->year == $selectedYear && $dt->month == $monthNumber;
-                })->count();
-
-                $bulanan[$monthKey] = compact('target', 'real');
+                $target = $targetForAuditee->firstWhere('bulan', $monthNumber)->total ?? 0;
+                $real = $realForAuditee->firstWhere('bulan', $monthNumber)->total ?? 0;
+                $bulanan[$monthKey] = ['target' => (int) $target, 'real' => (int) $real];
             }
 
             // Semesters
@@ -291,13 +304,13 @@ class MonitoringService
 
             $auditeeData[] = [
                 'no' => $no++,
-                'objek_pemeriksaan' => $auditee->divisi,
+                'objek_pemeriksaan' => $row->divisi,
                 'aoi' => $aoiCount,
                 'rekom' => $rekomCount,
                 'tindak_lanjut_target' => $tindakLanjutTarget,
                 'tindak_lanjut_real' => $tindakLanjutReal,
                 'sisa_target' => $sisaTarget,
-                'sisa_real' => $sisaReal,
+                'sisa_real' => 0,
                 'bulanan' => $bulanan,
                 'semester' => [
                     'smt1' => ['target' => $smt1Target, 'real' => $smt1Real],
@@ -322,6 +335,7 @@ class MonitoringService
             'years'
         );
     }
+
 
     private function calculateTotalData(array $auditeeData): array
     {

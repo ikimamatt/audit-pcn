@@ -8,6 +8,13 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
+// ─── Refresh dashboard cache setiap 15 menit ───
+Schedule::command('dashboard:refresh-cache')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/dashboard-cache.log'))
+    ->description('Refresh semua cache data dashboard (analitik, PKPT, rekapitulasi)');
+
 // ─── Jadwal pengingat rekomendasi audit ───
 // Kirim email H-30, H-7, H-3 setiap hari pukul 08:00 WIB
 // (Server UTC → 08:00 WIB = 00:00 UTC)
