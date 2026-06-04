@@ -101,7 +101,7 @@
 
 @section('script')
 <script>
-$(document).ready(function () {
+window.addEventListener('load', function () {
     const hierarkiContainer  = document.getElementById('hierarki-container');
     const apiUrl             = "{{ url('audit/pka/hierarki-flat') }}";
     const selectedRisikoIds  = @json($selectedRisikoIds);

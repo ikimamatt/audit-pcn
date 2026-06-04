@@ -243,7 +243,7 @@
 
 @section('script')
 <script>
-$(document).ready(function() {
+window.addEventListener('load', function() {
     // Handle ISS selection change
     $('#pelaporan_isi_lha_id').change(function() {
         const selectedOption = $(this).find('option:selected');

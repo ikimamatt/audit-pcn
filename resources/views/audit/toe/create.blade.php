@@ -96,7 +96,7 @@
 
 @section('script')
 <script>
-$(document).ready(function () {
+window.addEventListener('load', function () {
     const allBpmData        = @json($bpmJson);
     const apiUrl            = "{{ url('audit/pka/hierarki-flat') }}";
     const hierarkiContainer = document.getElementById('hierarki-container');

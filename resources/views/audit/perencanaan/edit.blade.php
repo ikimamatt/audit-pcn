@@ -168,82 +168,82 @@
 
 @section('script')
 <script>
-    $(document).ready(function() {
+    window.addEventListener('load', function() {
         // Inisialisasi Select2 pada elemen yang sudah ada
         $('.auditor-select').select2({
             placeholder: "Pilih Auditor",
             allowClear: true
         });
-    });
 
-    // Ruang lingkup dinamis
-    document.getElementById('btn-add-rl').onclick = function() {
-        var list = document.getElementById('ruang-lingkup-list');
-        var item = document.createElement('div');
-        item.className = 'input-group mb-2 ruang-lingkup-item';
-        item.innerHTML = '<input type="text" name="ruang_lingkup[]" class="form-control" required> <button type="button" class="btn btn-danger btn-remove-rl">-</button>';
-        list.appendChild(item);
-        item.querySelector('.btn-remove-rl').onclick = function() { item.remove(); };
-    };
-    document.querySelectorAll('.btn-remove-rl').forEach(function(btn) {
-        btn.onclick = function() { btn.closest('.ruang-lingkup-item').remove(); };
-    });
-    
-    // Auditor dinamis
-    document.getElementById('btn-add-auditor').onclick = function() {
-        var list = document.getElementById('auditor-list');
-        var item = document.createElement('div');
-        item.className = 'input-group mb-2 auditor-item';
-        
-        // Buat select dropdown dengan opsi auditor
-        var selectHtml = '<select name="auditor[]" class="form-select auditor-select" required><option value="">Pilih Auditor</option>';
-        @foreach($auditors as $auditor)
-            selectHtml += '<option value="{{ $auditor->id }}" data-nama="{{ $auditor->nama }}" data-nip="{{ $auditor->nip }}">{{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses ? (str_contains(strtoupper($auditor->akses->nama_akses), "VIEW BOD") ? "VIEW BOD/BOC" : $auditor->akses->nama_akses) : "-" }})</option>';
-        @endforeach
-        selectHtml += '</select>';
-        
-        item.innerHTML = selectHtml + ' <button type="button" class="btn btn-danger btn-remove-auditor">-</button>';
-        list.appendChild(item);
-        
-        // Inisialisasi Select2 untuk elemen yang baru ditambahkan
-        $(item).find('.auditor-select').select2({
-            placeholder: "Pilih Auditor",
-            allowClear: true
+        // Ruang lingkup dinamis
+        document.getElementById('btn-add-rl').onclick = function() {
+            var list = document.getElementById('ruang-lingkup-list');
+            var item = document.createElement('div');
+            item.className = 'input-group mb-2 ruang-lingkup-item';
+            item.innerHTML = '<input type="text" name="ruang_lingkup[]" class="form-control" required> <button type="button" class="btn btn-danger btn-remove-rl">-</button>';
+            list.appendChild(item);
+            item.querySelector('.btn-remove-rl').onclick = function() { item.remove(); };
+        };
+        document.querySelectorAll('.btn-remove-rl').forEach(function(btn) {
+            btn.onclick = function() { btn.closest('.ruang-lingkup-item').remove(); };
         });
         
-        // Event handler untuk remove button
-        item.querySelector('.btn-remove-auditor').onclick = function() { 
-            // Destroy Select2 sebelum menghapus elemen
-            $(item).find('.auditor-select').select2('destroy');
-            item.remove(); 
-            // Update visibility tombol remove untuk item pertama
+        // Auditor dinamis
+        document.getElementById('btn-add-auditor').onclick = function() {
+            var list = document.getElementById('auditor-list');
+            var item = document.createElement('div');
+            item.className = 'input-group mb-2 auditor-item';
+            
+            // Buat select dropdown dengan opsi auditor
+            var selectHtml = '<select name="auditor[]" class="form-select auditor-select" required><option value="">Pilih Auditor</option>';
+            @foreach($auditors as $auditor)
+                selectHtml += '<option value="{{ $auditor->id }}" data-nama="{{ $auditor->nama }}" data-nip="{{ $auditor->nip }}">{{ $auditor->nama }} - {{ $auditor->nip }} ({{ $auditor->akses ? (str_contains(strtoupper($auditor->akses->nama_akses), "VIEW BOD") ? "VIEW BOD/BOC" : $auditor->akses->nama_akses) : "-" }})</option>';
+            @endforeach
+            selectHtml += '</select>';
+            
+            item.innerHTML = selectHtml + ' <button type="button" class="btn btn-danger btn-remove-auditor">-</button>';
+            list.appendChild(item);
+            
+            // Inisialisasi Select2 untuk elemen yang baru ditambahkan
+            $(item).find('.auditor-select').select2({
+                placeholder: "Pilih Auditor",
+                allowClear: true
+            });
+            
+            // Event handler untuk remove button
+            item.querySelector('.btn-remove-auditor').onclick = function() { 
+                // Destroy Select2 sebelum menghapus elemen
+                $(item).find('.auditor-select').select2('destroy');
+                item.remove(); 
+                // Update visibility tombol remove untuk item pertama
+                updateRemoveButtons();
+            };
+            
+            // Update visibility tombol remove
             updateRemoveButtons();
         };
         
         // Update visibility tombol remove
-        updateRemoveButtons();
-    };
-    
-    // Update visibility tombol remove
-    function updateRemoveButtons() {
-        var items = document.querySelectorAll('.auditor-item');
-        items.forEach(function(item, index) {
-            var removeBtn = item.querySelector('.btn-remove-auditor');
-            if (removeBtn) {
-                removeBtn.style.display = items.length > 1 ? 'block' : 'none';
-            }
+        function updateRemoveButtons() {
+            var items = document.querySelectorAll('.auditor-item');
+            items.forEach(function(item, index) {
+                var removeBtn = item.querySelector('.btn-remove-auditor');
+                if (removeBtn) {
+                    removeBtn.style.display = items.length > 1 ? 'block' : 'none';
+                }
+            });
+        }
+        
+        // Event handler untuk remove button yang sudah ada
+        document.querySelectorAll('.btn-remove-auditor').forEach(function(btn) {
+            btn.onclick = function() { 
+                btn.closest('.auditor-item').remove(); 
+                updateRemoveButtons();
+            };
         });
-    }
-    
-    // Event handler untuk remove button yang sudah ada
-    document.querySelectorAll('.btn-remove-auditor').forEach(function(btn) {
-        btn.onclick = function() { 
-            btn.closest('.auditor-item').remove(); 
-            updateRemoveButtons();
-        };
+        
+        // Inisialisasi visibility tombol remove saat halaman dimuat
+        updateRemoveButtons();
     });
-    
-    // Inisialisasi visibility tombol remove saat halaman dimuat
-    updateRemoveButtons();
 </script>
 @endsection 

@@ -110,7 +110,7 @@
 
 @section('script')
 <script>
-$(document).ready(function () {
+window.addEventListener('load', function () {
     const hierarkiContainer  = document.getElementById('hierarki-container');
     const walkthroughs       = @json($walkthroughs);
     const apiUrl             = "{{ url('audit/pka/hierarki-flat') }}";

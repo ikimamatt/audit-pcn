@@ -17,16 +17,19 @@ Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
     ->group(function () {
         // Kode AOI
         Route::resource('kode-aoi', MasterKodeAoiController::class)
+            ->except(['show'])
             ->names('kode-aoi')
             ->parameters(['kode-aoi' => 'masterKodeAoi']);
 
         // Kode Risk
         Route::resource('kode-risk', MasterKodeRiskController::class)
+            ->except(['show'])
             ->names('kode-risk')
             ->parameters(['kode-risk' => 'masterKodeRisk']);
 
         // Bidang (formerly Auditee)
         Route::resource('auditee', MasterAuditeeController::class)
+            ->except(['show'])
             ->names('auditee')
             ->parameters(['auditee' => 'masterAuditee']);
 
@@ -44,6 +47,7 @@ Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
 
         // User
         Route::resource('user', MasterUserController::class)
+            ->except(['show'])
             ->names('user')
             ->parameters(['user' => 'masterUser']);
         Route::post('user/{masterUser}/reset-password', [MasterUserController::class, 'resetPassword'])
@@ -54,11 +58,13 @@ Route::middleware(['auth', 'role:KSPI,ASMAN SPI,SUPER ADMIN'])
 
         // Jenis Audit
         Route::resource('jenis-audit', MasterJenisAuditController::class)
+            ->except(['show'])
             ->names('jenis-audit')
             ->parameters(['jenis-audit' => 'masterJenisAudit']);
 
         // Area
         Route::resource('area', MasterAreaController::class)
+            ->except(['show'])
             ->names('area')
             ->parameters(['area' => 'masterArea']);
     });

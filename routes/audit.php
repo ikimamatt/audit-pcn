@@ -36,6 +36,11 @@ use App\Http\Controllers\Audit\Dashboard\RekapitulasiAktivitasAuditController;
 // ============================================================
 // AUDIT ROUTES
 // ============================================================
+Route::pattern('pkpt', '[0-9]+');
+Route::pattern('pka', '[0-9]+');
+Route::pattern('tod_bpm', '[0-9]+');
+Route::pattern('toe', '[0-9]+');
+
 Route::prefix('audit')->name('audit.')->group(function () {
 
     // ----------------------------------------------------------
@@ -82,7 +87,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // --- Perencanaan Audit ---
         Route::get('perencanaan/get-nomor-surat-tugas', [PerencanaanAuditController::class, 'getNomorSuratTugas'])->name('perencanaan.get-nomor-surat-tugas');
-        Route::resource('perencanaan', PerencanaanAuditController::class)->only(['index', 'show']);
+        Route::resource('perencanaan', PerencanaanAuditController::class)->only(['index']);
 
         // --- Jadwal PKPT ---
         Route::resource('pkpt', JadwalPkptAuditController::class)->only(['index', 'show']);
@@ -93,11 +98,11 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('pka/{pka}/download', [ProgramKerjaAuditController::class, 'download'])->name('pka.download');
 
         // --- Walkthrough ---
-        Route::resource('walkthrough', WalkthroughAuditController::class)->only(['index', 'show']);
+        Route::resource('walkthrough', WalkthroughAuditController::class)->only(['index']);
 
         // --- TOD BPM ---
         Route::resource('tod-bpm', TodBpmAuditController::class)->only(['index', 'show']);
-        Route::resource('tod-bpm-evaluasi', TodBpmEvaluasiController::class)->only(['index', 'show']);
+        Route::resource('tod-bpm-evaluasi', TodBpmEvaluasiController::class)->only(['index']);
         Route::get('tod-bpm-evaluasi-modal/{bpmId}', [TodBpmEvaluasiController::class, 'modal'])->name('tod-bpm-evaluasi.modal');
 
         // --- TOE ---
@@ -106,7 +111,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('toe-evaluasi-modal/{toeId}', [ToeEvaluasiController::class, 'modal'])->name('toe-evaluasi.modal');
 
         // --- Entry Meeting ---
-        Route::resource('entry-meeting', EntryMeetingController::class)->only(['index', 'show']);
+        Route::resource('entry-meeting', EntryMeetingController::class)->only(['index']);
 
         // --- Exit Meeting ---
         Route::resource('exit-meeting', ExitMeetingController::class)->only(['index']);

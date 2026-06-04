@@ -226,7 +226,7 @@
     @vite([ 'resources/js/pages/datatable.init.js'])
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
+window.addEventListener('load', function() {
     // Auto-hide alerts after 5 seconds
     setTimeout(function() {
         $('.alert').fadeOut('slow');

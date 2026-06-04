@@ -179,7 +179,7 @@
 
 @section('script')
 <script>
-$(document).ready(function () {
+window.addEventListener('load', function () {
 
     let pbCounter       = 0;
     let risikoCounters  = {};
