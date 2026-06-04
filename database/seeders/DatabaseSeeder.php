@@ -57,37 +57,37 @@ class DatabaseSeeder extends Seeder
         // ========================================
         
         // ── Perencanaan Audit ──────────────────────────────────────
-        // `$this->call(PerencanaanAuditSeeder::class);
-        // $this->call(RealisasiAuditSeeder::class);
+        $this->call(PerencanaanAuditSeeder::class);
+        $this->call(RealisasiAuditSeeder::class);
 
-        // // ── Program Kerja Audit (PKA) ──────────────────────────────
-        // // ProgramKerjaAuditSeeder sudah termasuk:
-        // //   - pka_proses_bisnis, pka_risiko, pka_kontrol (hierarki baru)
-        // //   - pka_dokumen
-        // // PkaMilestoneSeeder: milestone per PKA
-        // $this->call(ProgramKerjaAuditSeeder::class);
-        // $this->call(PkaMilestoneSeeder::class);
+        // ── Program Kerja Audit (PKA) ──────────────────────────────
+        // ProgramKerjaAuditSeeder sudah termasuk:
+        //   - pka_proses_bisnis, pka_risiko, pka_kontrol (hierarki baru)
+        //   - pka_dokumen
+        // PkaMilestoneSeeder: milestone per PKA
+        $this->call(ProgramKerjaAuditSeeder::class);
+        $this->call(PkaMilestoneSeeder::class);
 
-        // // ── Walkthrough (bergantung pada milestone Walkthrough di PKA) ──
-        // $this->call(WalkthroughAuditSeeder::class);
+        // ── Walkthrough (bergantung pada milestone Walkthrough di PKA) ──
+        $this->call(WalkthroughAuditSeeder::class);
 
-        // // ── TOD (bergantung pada Walkthrough + PKA hierarki) ──────
-        // // TodBpmAuditSeeder sudah termasuk tod_bpm_risiko, tod_bpm_kontrol, tod_bpm_evaluasi
-        // $this->call(TodBpmAuditSeeder::class);
+        // ── TOD (bergantung pada Walkthrough + PKA hierarki) ──────
+        // TodBpmAuditSeeder sudah termasuk tod_bpm_risiko, tod_bpm_kontrol, tod_bpm_evaluasi
+        $this->call(TodBpmAuditSeeder::class);
 
-        // // ── TOE (bergantung pada TOD + PKA hierarki) ──────────────
-        // // ToeAuditSeeder sudah termasuk toe_risiko, toe_kontrol, toe_evaluasi
-        // $this->call(ToeAuditSeeder::class);
+        // ── TOE (bergantung pada TOD + PKA hierarki) ──────────────
+        // ToeAuditSeeder sudah termasuk toe_risiko, toe_kontrol, toe_evaluasi
+        $this->call(ToeAuditSeeder::class);
 
-        // // ── Modul selanjutnya ─────────────────────────────────────
-        // $this->call(EntryMeetingSeeder::class);
-        // $this->call(JadwalPkptAuditSeeder::class);
-        // $this->call([
-        //     PelaporanHasilAuditSeeder::class,
-        //     PelaporanTemuanSeeder::class,
-        // ]);
+        // ── Modul selanjutnya ─────────────────────────────────────
+        $this->call(EntryMeetingSeeder::class);
+        $this->call(JadwalPkptAuditSeeder::class);
+        $this->call([
+            PelaporanHasilAuditSeeder::class,
+            PelaporanTemuanSeeder::class,
+        ]);
 
-        // // ── Dashboard Analytical Dummy Data ───────────────────────
-        // $this->call(DashboardDummySeeder::class);`
+        // ── Dashboard Analytical Dummy Data ───────────────────────
+        $this->call(DashboardDummySeeder::class);
     }
 }
