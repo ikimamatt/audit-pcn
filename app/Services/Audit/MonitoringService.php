@@ -210,12 +210,12 @@ class MonitoringService
             ->leftJoin('penutup_lha_rekomendasi as plr', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
             ->select(
                 'ma.id as auditee_id',
-                'ma.divisi',
+                'ma.nama_bidang as divisi',
                 DB::raw('COUNT(DISTINCT pt.id) as aoi'),
                 DB::raw('COUNT(DISTINCT plr.id) as rekom'),
                 DB::raw('COUNT(DISTINCT CASE WHEN plr.status_tindak_lanjut = "closed" THEN plr.id END) as tl_real')
             )
-            ->groupBy('ma.id', 'ma.divisi');
+            ->groupBy('ma.id', 'ma.nama_bidang');
 
         if ($userAuditeeId !== null) {
             $summaryQuery->where('ma.id', $userAuditeeId);
