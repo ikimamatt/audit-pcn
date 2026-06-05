@@ -18,9 +18,20 @@ class UpdateProgramKerjaAuditRequest extends FormRequest
             'tanggal_pka'          => 'required|date',
             'no_pka'               => 'required',
             'judul_pka'            => 'required|string',
-            'proses_bisnis'        => 'required|array|min:1',
-            'proses_bisnis.*.nama' => 'required|string',
-            'dokumen.*'            => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
+            'proses_bisnis'          => 'required|array|min:1',
+            'proses_bisnis.*.nama'   => 'required|string',
+            'proses_bisnis.*.risiko' => 'nullable|array',
+            'informasi_umum'         => 'nullable|string',
+            'kpi_tidak_tercapai'     => 'nullable|string',
+            'data_awal_dokumen'      => 'nullable|array',
+            'data_awal_dokumen.*.nama_dokumen'  => 'nullable|string',
+            'data_awal_dokumen.*.ruang_lingkup' => 'nullable|string',
+            'data_awal_dokumen.*.periode'       => 'nullable|string',
+            'milestone'              => 'nullable|array',
+            'milestone.*'            => 'nullable|array',
+            'milestone.*.mulai'      => 'nullable|date',
+            'milestone.*.selesai'    => 'nullable|date',
+            'dokumen.*'              => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
         ];
     }
 }
