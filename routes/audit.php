@@ -77,6 +77,10 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // Monitoring & Progress Tindak Lanjut
         Route::get('monitoring-tindak-lanjut', [MonitoringTindakLanjutController::class, 'index'])->name('monitoring-tindak-lanjut.index');
         Route::get('progress-tindak-lanjut', [ProgressTindakLanjutController::class, 'index'])->name('progress-tindak-lanjut.index');
+
+        // Pemantauan & Penutup LHA Rekomendasi Approval (Akses Auditee PIC)
+        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
+        Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
     });
 
     // ----------------------------------------------------------
@@ -188,7 +192,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // --- Penutup LHA Rekomendasi ---
         Route::resource('penutup-lha-rekomendasi', PenutupLhaRekomendasiController::class)->except(['index', 'show']);
-        Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
         Route::get('penutup-lha-tindak-lanjut/{id}/edit', [PenutupLhaRekomendasiController::class, 'editTindakLanjut'])->name('penutup-lha-tindak-lanjut.edit');
         Route::put('penutup-lha-tindak-lanjut/{id}', [PenutupLhaRekomendasiController::class, 'updateTindakLanjut'])->name('penutup-lha-tindak-lanjut.update');
         Route::delete('penutup-lha-tindak-lanjut/{id}', [PenutupLhaRekomendasiController::class, 'destroyTindakLanjut'])->name('penutup-lha-tindak-lanjut.destroy');
@@ -196,7 +199,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // --- Pemantauan ---
         Route::get('pemantauan/{id}/edit', [PemantauanAuditController::class, 'edit'])->name('pemantauan.edit');
         Route::put('pemantauan/{id}', [PemantauanAuditController::class, 'update'])->name('pemantauan.update');
-        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
         Route::post('pemantauan/{id}/kirim-reminder', [PemantauanAuditController::class, 'sendReminder'])->name('pemantauan.send-reminder');
 
         // --- Persetujuan Dokumen ---

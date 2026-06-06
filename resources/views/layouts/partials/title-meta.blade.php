@@ -6,4 +6,4 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
 <!-- App favicon -->
-<link rel="shortcut icon" href="/images/logo-pln.png">
+<link rel="shortcut icon" href="/images/logo-pln-sm.png?v=2">

@@ -49,7 +49,7 @@ class RealisasiAudit extends Model
 
     public function approver()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by');
     }
 
     // Scope untuk data yang sudah approved

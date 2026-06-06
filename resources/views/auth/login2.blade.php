@@ -6,7 +6,7 @@
   <div class="absolute top-0 left-0 p-8">
     <img
       src="{{ asset('images/logo.png') }}"
-      alt="PLN Nusa Daya logo"
+      alt="PLN Paguntaka Cahaya Nusantara logo"
       class="w-30 h-20 object-contain"
     />
   </div>
@@ -30,7 +30,7 @@
         @csrf
         <div class="text-center mb-6">
           <div class="text-xs text-gray-600 font-normal mb-1 uppercase tracking-widest">
-            NUSA DAYA EXCELLENCE TOOLS
+            PAGUNTAKA CAHAYA NUSANTARA EXCELLENCE TOOLS
           </div>
           <h1 class="text-gray-900 font-extrabold text-xl">
             ASKA

@@ -418,9 +418,9 @@
         {{-- ══ Header ══ --}}
         <div class="header">
             <div>
-                <img src="{{ $message->embed(public_path('images/logo-pln.png')) }}" alt="Logo PLN NUSA DAYA">
+                <img src="{{ $message->embed(public_path('images/logo-pln.png')) }}" alt="Logo PLN Paguntaka Cahaya Nusantara">
             </div>
-            <div class="logo-text">PT PLN Nusa Daya · SPI</div>
+            <div class="logo-text">PT PLN Paguntaka Cahaya Nusantara · SPI</div>
             <h1>🔔 Pengingat Tindak Lanjut</h1>
             <div class="subtitle">Rekomendasi Audit Internal</div>
         </div>
@@ -535,9 +535,9 @@
         {{-- ══ Footer ══ --}}
         <div class="footer">
             <p class="company">Satuan Pengawas Internal (SPI)</p>
-            <p>PLN NUSA DAYA</p>
+            <p>PLN Paguntaka Cahaya Nusantara</p>
             <p style="margin-top: 8px; color: #94a3b8; font-size: 12px;">Email ini dikirim secara otomatis oleh sistem
-                Audit PLN Nusa Daya. Mohon tidak membalas email ini.</p>
+                Audit PLN Paguntaka Cahaya Nusantara. Mohon tidak membalas email ini.</p>
         </div>
 
     </div>

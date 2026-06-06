@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PLN Nusa Daya - Asset Tracking Platform Login</title>
+  <title>PLN Paguntaka Cahaya Nusantara - Asset Tracking Platform Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
@@ -17,7 +17,11 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      body {
+        overflow: hidden;
+      }
     }
   </style>
 </head>

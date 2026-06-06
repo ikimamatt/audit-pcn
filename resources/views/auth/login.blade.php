@@ -1,11 +1,11 @@
 @extends('layouts.auth', ['title' => 'Login'])
 
 @section('content')
-  <div class="absolute top-0 left-0 p-6">
+  <div class="absolute top-0 left-0 p-4 md:p-6 z-10">
     <img
-      src="{{ asset('images/logo-pln.png') }}"
-      alt="PLN Nusa Daya logo"
-      class="w-72 h-52 object-contain"
+      src="{{ asset('images/logo-pln.png?v=2') }}"
+      alt="PLN Paguntaka Cahaya Nusantara logo"
+      class="w-40 md:w-64 h-auto object-contain"
     />
   </div>
 

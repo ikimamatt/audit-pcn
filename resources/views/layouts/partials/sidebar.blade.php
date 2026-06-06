@@ -8,18 +8,18 @@
             <div class="logo-box" style="margin-bottom: 20px;">
                 <a href="{{ route('root') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln-sm.png?v=2" alt="" height="30">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png?v=2" alt="" height="45">
                     </span>
                 </a>
                 <a href="{{ route('root') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln-sm.png?v=2" alt="" height="30">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png?v=2" alt="" height="45">
                     </span>
                 </a>
             </div>
