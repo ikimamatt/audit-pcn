@@ -1,0 +1,21 @@
+# =============================================
+# Service API Configuration — ERP PLN
+# =============================================
+# Tambahkan entry berikut ke file config/service-api.yaml
+# yang sudah ada di repository ERP PLN.
+#
+# Format: nama_service -> konfigurasi per environment
+
+audit:
+  local:
+    url: "http://127.0.0.1:8001/api/audit"
+    timeout: 30
+  development:
+    url: "http://audit-pcn.dev.internal/api/audit"
+    timeout: 30
+  staging:
+    url: "http://audit-pcn.staging.internal/api/audit"
+    timeout: 30
+  production:
+    url: "https://audit-pcn.plnnd.co.id/api/audit"
+    timeout: 30

@@ -146,7 +146,7 @@ class ExitMeetingService
                 if ($action === 'approve' && $item->status_approval === 'approved') {
                     $item->status = 'selesai';
                     if (!$item->tanggal_selesai) {
-                        $item->tanggal_selesai = now()->toDateString();
+                        $item->tanggal_selesai = now();
                     }
                     $item->save();
                 } elseif ($action === 'reject') {
