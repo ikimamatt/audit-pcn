@@ -49,15 +49,11 @@ class PenutupLhaRekomendasiController extends Controller
             )
             ->groupBy('pa.id', 'pa.nomor_surat_tugas', 'pa.jenis_audit');
 
-        // Jika user adalah AUDITEE, filter berdasarkan divisi/cabang auditee & unit mereka
+        // Jika user adalah AUDITEE, filter berdasarkan unit (area) mereka
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
-            if ($userAuditeeId !== null) {
-                $query->where('pa.auditee_id', $userAuditeeId);
-            }
-            if ($userUnitId !== null) {
-                $query->where('pa.area_id', $userUnitId);
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            if ($userAreaId !== null) {
+                $query->where('pa.area_id', $userAreaId);
             }
         }
         
@@ -96,13 +92,9 @@ class PenutupLhaRekomendasiController extends Controller
             });
             
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
-            if ($userAuditeeId !== null) {
-                $jenisAuditQuery->where('pa.auditee_id', $userAuditeeId);
-            }
-            if ($userUnitId !== null) {
-                $jenisAuditQuery->where('pa.area_id', $userUnitId);
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            if ($userAreaId !== null) {
+                $jenisAuditQuery->where('pa.area_id', $userAreaId);
             }
         }
         
@@ -135,16 +127,12 @@ class PenutupLhaRekomendasiController extends Controller
             });
         }
         
-        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan unit (area) mereka
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
-            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId, $userUnitId) {
-                if ($userAuditeeId !== null) {
-                    $q->where('auditee_id', $userAuditeeId);
-                }
-                if ($userUnitId !== null) {
-                    $q->where('area_id', $userUnitId);
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                if ($userAreaId !== null) {
+                    $q->where('area_id', $userAreaId);
                 }
             });
         }
@@ -173,13 +161,9 @@ class PenutupLhaRekomendasiController extends Controller
         if ($nomorSuratTugas) {
             $paQuery = \App\Models\Audit\PerencanaanAudit::where('nomor_surat_tugas', $nomorSuratTugas);
             if (\App\Helpers\AuthHelper::isAuditee()) {
-                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                $userUnitId = auth()->user()->master_area_id ?? null;
-                if ($userAuditeeId !== null) {
-                    $paQuery->where('auditee_id', $userAuditeeId);
-                }
-                if ($userUnitId !== null) {
-                    $paQuery->where('area_id', $userUnitId);
+                $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+                if ($userAreaId !== null) {
+                    $paQuery->where('area_id', $userAreaId);
                 }
             }
             $perencanaanAudit = $paQuery->first();
@@ -264,16 +248,12 @@ class PenutupLhaRekomendasiController extends Controller
             });
         }
         
-        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan divisi/cabang auditee & unit mereka
+        // Jika user adalah AUDITEE, filter semua rekomendasi berdasarkan unit (area) mereka
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
-            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId, $userUnitId) {
-                if ($userAuditeeId !== null) {
-                    $q->where('auditee_id', $userAuditeeId);
-                }
-                if ($userUnitId !== null) {
-                    $q->where('area_id', $userUnitId);
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
+            $query->whereHas('pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                if ($userAreaId !== null) {
+                    $q->where('area_id', $userAreaId);
                 }
             });
         }
@@ -398,10 +378,9 @@ class PenutupLhaRekomendasiController extends Controller
             'picUsers.auditee'
         ])->findOrFail($id);
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
             $pa = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
-            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
+            if (!$pa || ($userAreaId !== null && $pa->area_id != $userAreaId)) {
                 abort(403, 'Anda tidak memiliki akses untuk melihat rekomendasi ini.');
             }
         }

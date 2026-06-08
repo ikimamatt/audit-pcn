@@ -50,7 +50,7 @@ class PelaporanHasilAuditController extends Controller
         
         $data = $query->orderBy('created_at', 'desc')->get();
         
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')
+        $suratTugas = PerencanaanAudit::with('auditee')
             ->forCurrentAuditee('self')
             ->orderBy('nomor_surat_tugas')
             ->get();
@@ -73,7 +73,7 @@ class PelaporanHasilAuditController extends Controller
         }
 
         // Ambil data perencanaan audit (surat tugas)
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
@@ -100,10 +100,9 @@ class PelaporanHasilAuditController extends Controller
     {
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk', 'perencanaanAudit'])->findOrFail($id);
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-            $userUnitId = auth()->user()->master_area_id ?? null;
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
             $pa = $item->perencanaanAudit ?? null;
-            if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
+            if (!$pa || ($userAreaId !== null && $pa->area_id != $userAreaId)) {
                 abort(403, 'Anda tidak memiliki akses untuk melihat dokumen ini.');
             }
         }
@@ -117,7 +116,7 @@ class PelaporanHasilAuditController extends Controller
         }
 
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
-        $suratTugas = \App\Models\Audit\PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
+        $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
@@ -126,7 +125,7 @@ class PelaporanHasilAuditController extends Controller
 
     public function editTemuan($id)
     {
-        $temuan = \App\Models\Audit\PelaporanTemuan::findOrFail($id);
+        $temuan = PelaporanTemuan::findOrFail($id);
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         return response()->json(['temuan' => $temuan, 'kodeAoi' => $kodeAoi, 'kodeRisk' => $kodeRisk]);
@@ -149,7 +148,7 @@ class PelaporanHasilAuditController extends Controller
     public function updateTemuan(UpdatePelaporanTemuanRequest $request, $id)
     {
         try {
-            $temuan = \App\Models\Audit\PelaporanTemuan::findOrFail($id);
+            $temuan = PelaporanTemuan::findOrFail($id);
             
             $this->pelaporanService->updateTemuan($temuan, $request->validated());
 
@@ -181,7 +180,7 @@ class PelaporanHasilAuditController extends Controller
 
     public function destroyTemuan($id)
     {
-        $temuan = \App\Models\Audit\PelaporanTemuan::findOrFail($id);
+        $temuan = PelaporanTemuan::findOrFail($id);
         $audit_id = $temuan->pelaporan_hasil_audit_id;
         $this->pelaporanService->deleteTemuan($temuan);
         return redirect()->route('audit.pelaporan-hasil-audit.index', ['audit_id' => $audit_id])->with('success', 'Data temuan audit berhasil dihapus!');
@@ -236,10 +235,9 @@ class PelaporanHasilAuditController extends Controller
             ])->findOrFail($id);
             
             if (\App\Helpers\AuthHelper::isAuditee()) {
-                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                $userUnitId = auth()->user()->master_area_id ?? null;
+                $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
                 $pa = $pelaporan->perencanaanAudit ?? null;
-                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
+                if (!$pa || ($userAreaId !== null && $pa->area_id != $userAreaId)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'
@@ -295,17 +293,16 @@ class PelaporanHasilAuditController extends Controller
     public function getTemuanById($id)
     {
         try {
-            $temuan = \App\Models\Audit\PelaporanTemuan::with([
+            $temuan = PelaporanTemuan::with([
                 'kodeAoi', 
                 'kodeRisk', 
                 'pelaporanHasilAudit.perencanaanAudit'
             ])->findOrFail($id);
             
             if (\App\Helpers\AuthHelper::isAuditee()) {
-                $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
-                $userUnitId = auth()->user()->master_area_id ?? null;
+                $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
                 $pa = $temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
-                if (!$pa || ($userAuditeeId !== null && $pa->auditee_id != $userAuditeeId) || ($userUnitId !== null && $pa->area_id != $userUnitId)) {
+                if (!$pa || ($userAreaId !== null && $pa->area_id != $userAreaId)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Anda tidak memiliki akses untuk melihat temuan ini.'
@@ -341,7 +338,7 @@ class PelaporanHasilAuditController extends Controller
     public function getAllTemuanForPenutup()
     {
         try {
-            $temuanList = \App\Models\Audit\PelaporanTemuan::with(['pelaporanHasilAudit'])
+            $temuanList = PelaporanTemuan::with(['pelaporanHasilAudit'])
                 ->where('status_approval', 'approved')
                 ->get();
             

@@ -20,22 +20,15 @@ trait FilterableByAuditee
         }
 
         $areaId = AuthHelper::getUserAreaId();
-        $auditeeId = AuthHelper::getUserAuditeeId();
 
         if ($relation === 'self') {
-            if ($auditeeId !== null) {
-                $query->where('auditee_id', $auditeeId);
-            }
             if ($areaId !== null) {
                 $query->where('area_id', $areaId);
             }
             return $query;
         }
 
-        return $query->whereHas($relation, function ($q) use ($areaId, $auditeeId) {
-            if ($auditeeId !== null) {
-                $q->where('auditee_id', $auditeeId);
-            }
+        return $query->whereHas($relation, function ($q) use ($areaId) {
             if ($areaId !== null) {
                 $q->where('area_id', $areaId);
             }

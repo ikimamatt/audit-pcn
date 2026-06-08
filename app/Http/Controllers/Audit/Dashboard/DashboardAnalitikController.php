@@ -372,7 +372,7 @@ class DashboardAnalitikController extends Controller
      */
     public function agingDetail(Request $request)
     {
-        $bucket = $request->get('bucket', '');
+        $bucket = $request->input('bucket', '');
 
         $bucketSql = match ($bucket) {
             'Sesuai Target' => 'plr.target_waktu >= NOW()',

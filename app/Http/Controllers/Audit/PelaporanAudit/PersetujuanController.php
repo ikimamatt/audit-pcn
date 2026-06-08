@@ -36,10 +36,6 @@ class PersetujuanController extends Controller
 
     public function index(Request $request)
     {
-        if (AuthHelper::isAuditee()) {
-            abort(403, 'Auditee tidak memiliki akses ke halaman ini.');
-        }
-
         $userId = Auth::id();
         $isSuperAdmin = AuthHelper::isSuperAdmin();
 
@@ -50,8 +46,8 @@ class PersetujuanController extends Controller
 
     public function proses(Request $request)
     {
-        if (AuthHelper::isAuditee()) {
-            abort(403);
+        if (AuthHelper::isAuditee() && $request->input('model_type') !== 'penutup_lha_rekomendasi') {
+            abort(403, 'Anda tidak memiliki wewenang untuk memproses persetujuan dokumen ini.');
         }
 
         $request->validate([

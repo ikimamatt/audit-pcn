@@ -22,7 +22,7 @@ class RoutingController extends BaseController
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index(Request $request)
     {
@@ -40,8 +40,8 @@ class RoutingController extends BaseController
 
     public function perencanaanAuditForm()
     {
-        $auditees = \App\Models\MasterAuditee::all();
-        $auditors = \App\Models\MasterUser::with('akses')->whereHas('akses', function($q) {
+        $auditees = \App\Models\MasterData\MasterAuditee::all();
+        $auditors = \App\Models\MasterData\MasterUser::with('akses')->whereHas('akses', function($q) {
             $q->where('nama_akses', 'Auditor');
         })->get();
         return view('audit.perencanaan.create', compact('auditees', 'auditors'));

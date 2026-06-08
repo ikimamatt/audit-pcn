@@ -63,12 +63,14 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('pemantauan/select-nomor-surat-tugas', [PemantauanAuditController::class, 'selectNomorSuratTugas'])->name('pemantauan.select-nomor-surat-tugas');
         Route::get('pemantauan', [PemantauanAuditController::class, 'index'])->name('pemantauan.index');
         Route::get('pemantauan/{id}/tindak-lanjut', [PemantauanAuditController::class, 'tindakLanjutIndex'])->name('pemantauan.tindak-lanjut.index');
+        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
 
         // Penutup LHA Rekomendasi (view only)
         Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
         Route::get('penutup-lha-rekomendasi/get-iss-data', [PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
         Route::get('penutup-lha-rekomendasi', [PenutupLhaRekomendasiController::class, 'index'])->name('penutup-lha-rekomendasi.index');
         Route::get('penutup-lha-rekomendasi/{penutup_lha_rekomendasi}', [PenutupLhaRekomendasiController::class, 'show'])->name('penutup-lha-rekomendasi.show')->where('penutup_lha_rekomendasi', '[0-9]+');
+        Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
 
         // Tindak Lanjut Form untuk PIC Business Contact (AUDITEE)
         Route::get('penutup-lha-rekomendasi/{rekomendasi}/tindak-lanjut', [PenutupLhaRekomendasiController::class, 'tindakLanjutForm'])->name('penutup-lha-rekomendasi.tindak-lanjut.form');
@@ -77,6 +79,10 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // Monitoring & Progress Tindak Lanjut
         Route::get('monitoring-tindak-lanjut', [MonitoringTindakLanjutController::class, 'index'])->name('monitoring-tindak-lanjut.index');
         Route::get('progress-tindak-lanjut', [ProgressTindakLanjutController::class, 'index'])->name('progress-tindak-lanjut.index');
+
+        // Persetujuan Dokumen
+        Route::get('persetujuan', [PersetujuanController::class, 'index'])->name('persetujuan.index');
+        Route::post('persetujuan/proses', [PersetujuanController::class, 'proses'])->name('persetujuan.proses');
     });
 
     // ----------------------------------------------------------
@@ -128,9 +134,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('rekapitulasi-aktivitas', [RekapitulasiAktivitasAuditController::class, 'index'])->name('rekapitulasi-aktivitas.index');
         Route::get('dashboard', [DashboardAnalitikController::class, 'index'])->name('dashboard');
         Route::get('dashboard/aging-detail', [DashboardAnalitikController::class, 'agingDetail'])->name('dashboard.aging-detail');
-
-        // --- Persetujuan Dokumen ---
-        Route::get('persetujuan', [PersetujuanController::class, 'index'])->name('persetujuan.index');
     });
 
     // ----------------------------------------------------------
@@ -188,7 +191,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // --- Penutup LHA Rekomendasi ---
         Route::resource('penutup-lha-rekomendasi', PenutupLhaRekomendasiController::class)->except(['index', 'show']);
-        Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
         Route::get('penutup-lha-tindak-lanjut/{id}/edit', [PenutupLhaRekomendasiController::class, 'editTindakLanjut'])->name('penutup-lha-tindak-lanjut.edit');
         Route::put('penutup-lha-tindak-lanjut/{id}', [PenutupLhaRekomendasiController::class, 'updateTindakLanjut'])->name('penutup-lha-tindak-lanjut.update');
         Route::delete('penutup-lha-tindak-lanjut/{id}', [PenutupLhaRekomendasiController::class, 'destroyTindakLanjut'])->name('penutup-lha-tindak-lanjut.destroy');
@@ -196,10 +198,6 @@ Route::prefix('audit')->name('audit.')->group(function () {
         // --- Pemantauan ---
         Route::get('pemantauan/{id}/edit', [PemantauanAuditController::class, 'edit'])->name('pemantauan.edit');
         Route::put('pemantauan/{id}', [PemantauanAuditController::class, 'update'])->name('pemantauan.update');
-        Route::post('pemantauan/{id}/update-status', [PemantauanAuditController::class, 'updateStatus'])->name('pemantauan.update-status');
         Route::post('pemantauan/{id}/kirim-reminder', [PemantauanAuditController::class, 'sendReminder'])->name('pemantauan.send-reminder');
-
-        // --- Persetujuan Dokumen ---
-        Route::post('persetujuan/proses', [PersetujuanController::class, 'proses'])->name('persetujuan.proses');
     });
 });
