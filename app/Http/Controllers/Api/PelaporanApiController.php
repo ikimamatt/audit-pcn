@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\Audit\PelaporanTemuan;
+use App\Http\Requests\Audit\PelaporanAudit\StorePelaporanHasilAuditRequest;
+use App\Http\Requests\Audit\PelaporanAudit\UpdatePelaporanHasilAuditRequest;
+use App\Http\Requests\Audit\PelaporanAudit\UpdatePelaporanTemuanRequest;
 use App\Services\Audit\PelaporanHasilAuditService;
 use App\Services\Audit\NomorGeneratorService;
 use Illuminate\Http\JsonResponse;
@@ -46,28 +49,21 @@ class PelaporanApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StorePelaporanHasilAuditRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'nomor_lha_lhk'        => 'nullable|string',
-            'jenis_lha_lhk'        => 'nullable|string',
-            'jenis_audit_id'       => 'nullable|exists:master_jenis_audit,id',
-        ]);
-
         try {
-            $item = $this->pelaporanService->create($validated);
+            $item = $this->pelaporanService->create($request->validated());
             return $this->success($item, 'Pelaporan Hasil Audit berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdatePelaporanHasilAuditRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -78,15 +74,8 @@ class PelaporanApiController extends BaseApiController
             return $this->error('Pelaporan Hasil Audit tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'perencanaan_audit_id' => 'sometimes|exists:perencanaan_audit,id',
-            'nomor_lha_lhk'        => 'nullable|string',
-            'jenis_lha_lhk'        => 'nullable|string',
-            'jenis_audit_id'       => 'nullable|exists:master_jenis_audit,id',
-        ]);
-
         try {
-            $this->pelaporanService->update($item, $validated);
+            $this->pelaporanService->update($item, $request->validated());
             return $this->success($item->fresh(), 'Pelaporan Hasil Audit berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);
@@ -163,7 +152,7 @@ class PelaporanApiController extends BaseApiController
     /**
      * Update temuan.
      */
-    public function updateTemuan(Request $request, int $id): JsonResponse
+    public function updateTemuan(UpdatePelaporanTemuanRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -174,19 +163,7 @@ class PelaporanApiController extends BaseApiController
             return $this->error('Temuan tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'hasil_temuan'  => 'nullable|string',
-            'kode_aoi_id'   => 'nullable|exists:master_kode_aoi,id',
-            'kode_risk_id'  => 'nullable|exists:master_kode_risk,id',
-            'permasalahan'  => 'nullable|string',
-            'penyebab'      => 'nullable|string',
-            'kriteria'      => 'nullable|string',
-            'dampak_terjadi'=> 'nullable|string',
-            'dampak_potensi'=> 'nullable|string',
-            'signifikan'    => 'nullable|string',
-        ]);
-
-        $item->update($validated);
+        $item->update($request->validated());
         return $this->success($item->fresh(), 'Temuan berhasil diupdate.');
     }
 

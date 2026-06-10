@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Models\Models\Audit\PkaDokumen;
 use App\Models\Audit\PerencanaanAudit;
+use App\Http\Requests\Audit\PerencanaanAudit\StoreProgramKerjaAuditRequest;
+use App\Http\Requests\Audit\PerencanaanAudit\UpdateProgramKerjaAuditRequest;
 use App\Services\Audit\ProgramKerjaAuditService;
 use App\Services\Audit\PkaDocumentService;
 use Illuminate\Http\JsonResponse;
@@ -45,31 +47,26 @@ class ProgramKerjaAuditApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreProgramKerjaAuditRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'no_pka'               => 'required|string',
-            'tujuan_audit'         => 'nullable|string',
-            'sasaran_audit'        => 'nullable|string',
-            'ruang_lingkup_audit'  => 'nullable|string',
-            'metodologi_audit'     => 'nullable|string',
-            'waktu_audit'          => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('dokumen')) {
+            $data['dokumen_files'] = $request->file('dokumen');
+        }
 
         try {
-            $pka = $this->pkaService->create($validated);
+            $pka = $this->pkaService->create($data);
             return $this->success($pka, 'Program Kerja Audit berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateProgramKerjaAuditRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -80,18 +77,13 @@ class ProgramKerjaAuditApiController extends BaseApiController
             return $this->error('Program Kerja Audit tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'perencanaan_audit_id' => 'sometimes|exists:perencanaan_audit,id',
-            'no_pka'               => 'sometimes|string',
-            'tujuan_audit'         => 'nullable|string',
-            'sasaran_audit'        => 'nullable|string',
-            'ruang_lingkup_audit'  => 'nullable|string',
-            'metodologi_audit'     => 'nullable|string',
-            'waktu_audit'          => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('dokumen')) {
+            $data['dokumen_files'] = $request->file('dokumen');
+        }
 
         try {
-            $this->pkaService->update($pka, $validated);
+            $this->pkaService->update($pka, $data);
             return $this->success($pka->fresh(), 'Program Kerja Audit berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

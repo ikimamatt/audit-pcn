@@ -7,6 +7,8 @@ use App\Models\MasterData\MasterAuditee;
 use App\Models\MasterData\MasterUser;
 use App\Models\MasterData\MasterJenisAudit;
 use App\Models\MasterData\MasterArea;
+use App\Http\Requests\Audit\PerencanaanAudit\StorePerencanaanRequest;
+use App\Http\Requests\Audit\PerencanaanAudit\UpdatePerencanaanRequest;
 use App\Services\Audit\PerencanaanAuditService;
 use App\Services\Audit\NomorGeneratorService;
 use Illuminate\Http\JsonResponse;
@@ -62,29 +64,14 @@ class PerencanaanAuditApiController extends BaseApiController
     /**
      * Simpan perencanaan audit baru.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StorePerencanaanRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'nomor_surat_tugas'   => 'required|string',
-            'auditee_id'          => 'required|exists:master_auditee,id',
-            'jenis_audit_id'      => 'nullable|exists:master_jenis_audit,id',
-            'area_id'             => 'nullable|exists:master_area,id',
-            'judul_penugasan'     => 'required|string',
-            'ruang_lingkup'       => 'nullable|array',
-            'tanggal_audit_mulai' => 'required|date',
-            'tanggal_audit_sampai'=> 'required|date|after_or_equal:tanggal_audit_mulai',
-            'periode_audit'       => 'nullable|string',
-            'koordinator_id'      => 'nullable|exists:master_user,id',
-            'ketua_tim_id'        => 'nullable|exists:master_user,id',
-            'auditor'             => 'nullable|array',
-        ]);
-
         try {
-            $perencanaan = $this->perencanaanService->create($validated);
+            $perencanaan = $this->perencanaanService->create($request->validated());
             return $this->success($perencanaan, 'Data perencanaan audit berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
@@ -94,7 +81,7 @@ class PerencanaanAuditApiController extends BaseApiController
     /**
      * Update perencanaan audit.
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdatePerencanaanRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -105,23 +92,8 @@ class PerencanaanAuditApiController extends BaseApiController
             return $this->error('Data perencanaan audit tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'nomor_surat_tugas'   => 'sometimes|string',
-            'auditee_id'          => 'sometimes|exists:master_auditee,id',
-            'jenis_audit_id'      => 'nullable|exists:master_jenis_audit,id',
-            'area_id'             => 'nullable|exists:master_area,id',
-            'judul_penugasan'     => 'sometimes|string',
-            'ruang_lingkup'       => 'nullable|array',
-            'tanggal_audit_mulai' => 'sometimes|date',
-            'tanggal_audit_sampai'=> 'sometimes|date',
-            'periode_audit'       => 'nullable|string',
-            'koordinator_id'      => 'nullable|exists:master_user,id',
-            'ketua_tim_id'        => 'nullable|exists:master_user,id',
-            'auditor'             => 'nullable|array',
-        ]);
-
         try {
-            $this->perencanaanService->update($item, $validated);
+            $this->perencanaanService->update($item, $request->validated());
             return $this->success($item->fresh(), 'Data perencanaan audit berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

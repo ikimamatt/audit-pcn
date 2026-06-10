@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\RealisasiAudit;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreExitMeetingRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateExitMeetingRequest;
 use App\Services\Audit\ExitMeetingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,30 +46,29 @@ class ExitMeetingApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreExitMeetingRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'perencanaan_audit_id' => 'required|exists:perencanaan_audit,id',
-            'tanggal_exit'         => 'required|date',
-            'tempat'               => 'nullable|string',
-            'agenda'               => 'nullable|string',
-            'peserta'              => 'nullable|string',
-            'catatan'              => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_undangan')) {
+            $data['file_undangan_file'] = $request->file('file_undangan');
+        }
+        if ($request->hasFile('file_absensi')) {
+            $data['file_absensi_file'] = $request->file('file_absensi');
+        }
 
         try {
-            $item = $this->exitMeetingService->create($validated);
+            $item = $this->exitMeetingService->create($data);
             return $this->success($item, 'Exit Meeting berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateExitMeetingRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -78,16 +79,16 @@ class ExitMeetingApiController extends BaseApiController
             return $this->error('Exit Meeting tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'tanggal_exit' => 'sometimes|date',
-            'tempat'       => 'nullable|string',
-            'agenda'       => 'nullable|string',
-            'peserta'      => 'nullable|string',
-            'catatan'      => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_undangan')) {
+            $data['file_undangan_file'] = $request->file('file_undangan');
+        }
+        if ($request->hasFile('file_absensi')) {
+            $data['file_absensi_file'] = $request->file('file_absensi');
+        }
 
         try {
-            $this->exitMeetingService->update($item, $validated);
+            $this->exitMeetingService->update($item, $data);
             return $this->success($item->fresh(), 'Exit Meeting berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

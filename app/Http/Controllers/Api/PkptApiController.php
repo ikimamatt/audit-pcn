@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Models\Audit\JadwalPkptAudit;
 use App\Models\MasterData\MasterAuditee;
+use App\Http\Requests\Audit\PerencanaanAudit\StoreJadwalPkptRequest;
+use App\Http\Requests\Audit\PerencanaanAudit\UpdateJadwalPkptRequest;
 use App\Services\Audit\PerencanaanAuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,28 +31,21 @@ class PkptApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreJadwalPkptRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'auditee_id'     => 'required|exists:master_auditee,id',
-            'bulan_rencana'  => 'nullable|string',
-            'uraian_program' => 'required|string',
-            'tahun_program'  => 'nullable|integer',
-        ]);
-
         try {
-            $item = $this->perencanaanService->createJadwalPkpt($validated);
+            $item = $this->perencanaanService->createJadwalPkpt($request->validated());
             return $this->success($item, 'Jadwal PKPT berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateJadwalPkptRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -61,15 +56,8 @@ class PkptApiController extends BaseApiController
             return $this->error('Jadwal PKPT tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'auditee_id'     => 'sometimes|exists:master_auditee,id',
-            'bulan_rencana'  => 'nullable|string',
-            'uraian_program' => 'sometimes|string',
-            'tahun_program'  => 'nullable|integer',
-        ]);
-
         try {
-            $this->perencanaanService->updateJadwalPkpt($item, $validated);
+            $this->perencanaanService->updateJadwalPkpt($item, $request->validated());
             return $this->success($item->fresh(), 'Jadwal PKPT berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

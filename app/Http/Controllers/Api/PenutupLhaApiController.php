@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\PenutupLhaRekomendasi;
 use App\Models\PenutupLhaTindakLanjut;
+use App\Http\Requests\Audit\PelaporanAudit\StorePenutupLhaRekomendasiRequest;
+use App\Http\Requests\Audit\PelaporanAudit\UpdatePenutupLhaRekomendasiRequest;
+use App\Http\Requests\Audit\TindakLanjut\StoreTindakLanjutRequest;
 use App\Services\Audit\PenutupLhaRekomendasiService;
+use App\Services\Audit\TindakLanjutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PenutupLhaApiController extends BaseApiController
 {
     public function __construct(
-        protected PenutupLhaRekomendasiService $penutupService
+        protected PenutupLhaRekomendasiService $penutupService,
+        protected TindakLanjutService $tindakLanjutService
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -39,30 +44,21 @@ class PenutupLhaApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StorePenutupLhaRekomendasiRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'pelaporan_isi_lha_id' => 'required|exists:pelaporan_temuan,id',
-            'rekomendasi'          => 'required|string',
-            'rencana_aksi'         => 'nullable|string',
-            'eviden_rekomendasi'   => 'nullable|string',
-            'pic_rekomendasi'      => 'nullable|string',
-            'target_waktu'         => 'nullable|date',
-        ]);
-
         try {
-            $item = $this->penutupService->create($validated);
+            $item = $this->penutupService->create($request->validated());
             return $this->success($item, 'Penutup LHA Rekomendasi berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdatePenutupLhaRekomendasiRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -73,16 +69,8 @@ class PenutupLhaApiController extends BaseApiController
             return $this->error('Penutup LHA Rekomendasi tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'rekomendasi'        => 'sometimes|string',
-            'rencana_aksi'       => 'nullable|string',
-            'eviden_rekomendasi' => 'nullable|string',
-            'pic_rekomendasi'    => 'nullable|string',
-            'target_waktu'       => 'nullable|date',
-        ]);
-
         try {
-            $this->penutupService->update($item, $validated);
+            $this->penutupService->update($item, $request->validated());
             return $this->success($item->fresh(), 'Penutup LHA Rekomendasi berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);
@@ -147,22 +135,23 @@ class PenutupLhaApiController extends BaseApiController
         ]);
     }
 
-    public function tindakLanjutStore(Request $request, int $rekomendasiId): JsonResponse
+    public function tindakLanjutStore(StoreTindakLanjutRequest $request, int $rekomendasiId): JsonResponse
     {
         $rekomendasi = PenutupLhaRekomendasi::find($rekomendasiId);
         if (! $rekomendasi) {
             return $this->error('Rekomendasi tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'uraian_tindak_lanjut' => 'required|string',
-            'tanggal_tindak_lanjut'=> 'required|date',
-            'bukti_tindak_lanjut'  => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_eviden')) {
+            $data['file_eviden_file'] = $request->file('file_eviden');
+        }
 
-        $validated['penutup_lha_rekomendasi_id'] = $rekomendasiId;
-
-        $item = PenutupLhaTindakLanjut::create($validated);
-        return $this->success($item, 'Tindak lanjut berhasil disimpan.', 201);
+        try {
+            $item = $this->tindakLanjutService->storeTindakLanjut($rekomendasiId, $data);
+            return $this->success($item, 'Tindak lanjut berhasil disimpan.', 201);
+        } catch (\Exception $e) {
+            return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
+        }
     }
 }

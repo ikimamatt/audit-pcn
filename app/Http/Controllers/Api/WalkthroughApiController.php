@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\WalkthroughAudit;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreWalkthroughRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateWalkthroughRequest;
 use App\Services\Audit\WalkthroughService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,30 +39,26 @@ class WalkthroughApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreWalkthroughRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'perencanaan_audit_id'   => 'required|exists:perencanaan_audit,id',
-            'tanggal_walkthrough'    => 'required|date',
-            'proses_bisnis'          => 'nullable|string',
-            'hasil_walkthrough'      => 'nullable|string',
-            'catatan'                => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_bpm')) {
+            $data['file_bpm_file'] = $request->file('file_bpm');
+        }
 
         try {
-            $item = $this->walkthroughService->create($validated);
+            $item = $this->walkthroughService->create($data);
             return $this->success($item, 'Walkthrough berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateWalkthroughRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -71,15 +69,13 @@ class WalkthroughApiController extends BaseApiController
             return $this->error('Data walkthrough tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'tanggal_walkthrough' => 'sometimes|date',
-            'proses_bisnis'       => 'nullable|string',
-            'hasil_walkthrough'   => 'nullable|string',
-            'catatan'             => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_bpm')) {
+            $data['file_bpm_file'] = $request->file('file_bpm');
+        }
 
         try {
-            $this->walkthroughService->update($item, $validated);
+            $this->walkthroughService->update($item, $data);
             return $this->success($item->fresh(), 'Walkthrough berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

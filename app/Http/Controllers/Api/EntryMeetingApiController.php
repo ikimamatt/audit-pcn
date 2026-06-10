@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\EntryMeeting;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreEntryMeetingRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateEntryMeetingRequest;
 use App\Services\Audit\EntryMeetingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,30 +39,29 @@ class EntryMeetingApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreEntryMeetingRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'tanggal_entry'          => 'required|date',
-            'tempat'                 => 'nullable|string',
-            'agenda'                 => 'nullable|string',
-            'peserta'                => 'nullable|string',
-            'catatan'                => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_undangan')) {
+            $data['file_undangan_file'] = $request->file('file_undangan');
+        }
+        if ($request->hasFile('file_absensi')) {
+            $data['file_absensi_file'] = $request->file('file_absensi');
+        }
 
         try {
-            $item = $this->entryMeetingService->create($validated);
+            $item = $this->entryMeetingService->create($data);
             return $this->success($item, 'Entry Meeting berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateEntryMeetingRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -71,16 +72,16 @@ class EntryMeetingApiController extends BaseApiController
             return $this->error('Entry Meeting tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'tanggal_entry' => 'sometimes|date',
-            'tempat'        => 'nullable|string',
-            'agenda'        => 'nullable|string',
-            'peserta'       => 'nullable|string',
-            'catatan'       => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_undangan')) {
+            $data['file_undangan_file'] = $request->file('file_undangan');
+        }
+        if ($request->hasFile('file_absensi')) {
+            $data['file_absensi_file'] = $request->file('file_absensi');
+        }
 
         try {
-            $this->entryMeetingService->update($item, $validated);
+            $this->entryMeetingService->update($item, $data);
             return $this->success($item->fresh(), 'Entry Meeting berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);

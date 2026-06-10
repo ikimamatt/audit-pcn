@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\ToeAudit;
 use App\Models\ToeEvaluasi;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreToeRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateToeRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreToeEvaluasiRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateToeEvaluasiRequest;
 use App\Services\Audit\ToeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,31 +42,26 @@ class ToeApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreToeRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'perencanaan_audit_id'   => 'required|exists:perencanaan_audit,id',
-            'proses_bisnis'          => 'nullable|string',
-            'risiko'                 => 'nullable|string',
-            'kontrol'               => 'nullable|string',
-            'toe'                    => 'nullable|string',
-            'sumber_data'            => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_kka_toe')) {
+            $data['file_kka_toe_file'] = $request->file('file_kka_toe');
+        }
 
         try {
-            $item = $this->toeService->create($validated);
+            $item = $this->toeService->create($data);
             return $this->success($item, 'TOE berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateToeRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -73,16 +72,13 @@ class ToeApiController extends BaseApiController
             return $this->error('TOE tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'proses_bisnis' => 'nullable|string',
-            'risiko'        => 'nullable|string',
-            'kontrol'       => 'nullable|string',
-            'toe'           => 'nullable|string',
-            'sumber_data'   => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_kka_toe')) {
+            $data['file_kka_toe_file'] = $request->file('file_kka_toe');
+        }
 
         try {
-            $this->toeService->update($item, $validated);
+            $this->toeService->update($item, $data);
             return $this->success($item->fresh(), 'TOE berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);
@@ -140,23 +136,17 @@ class ToeApiController extends BaseApiController
         return $this->success($evaluasi);
     }
 
-    public function evaluasiStore(Request $request): JsonResponse
+    public function evaluasiStore(StoreToeEvaluasiRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'toe_audit_id'   => 'required|exists:toe_audit,id',
-            'hasil_evaluasi' => 'nullable|string',
-            'kesimpulan'     => 'nullable|string',
-        ]);
-
-        $item = ToeEvaluasi::create($validated);
+        $item = ToeEvaluasi::create($request->validated());
         return $this->success($item, 'Evaluasi TOE berhasil disimpan.', 201);
     }
 
-    public function evaluasiUpdate(Request $request, int $id): JsonResponse
+    public function evaluasiUpdate(UpdateToeEvaluasiRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -167,7 +157,7 @@ class ToeApiController extends BaseApiController
             return $this->error('Evaluasi tidak ditemukan.', 404);
         }
 
-        $item->update($request->only(['hasil_evaluasi', 'kesimpulan']));
+        $item->update($request->validated());
         return $this->success($item->fresh(), 'Evaluasi TOE berhasil diupdate.');
     }
 

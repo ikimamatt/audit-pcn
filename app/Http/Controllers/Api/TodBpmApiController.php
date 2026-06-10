@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\TodBpmAudit;
 use App\Models\TodBpmEvaluasi;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreTodBpmRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateTodBpmRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\StoreTodBpmEvaluasiRequest;
+use App\Http\Requests\Audit\PelaksanaanAudit\UpdateTodBpmEvaluasiRequest;
 use App\Services\Audit\TodBpmService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,31 +42,26 @@ class TodBpmApiController extends BaseApiController
         return $this->success($item);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreTodBpmRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'program_kerja_audit_id' => 'required|exists:program_kerja_audit,id',
-            'perencanaan_audit_id'   => 'required|exists:perencanaan_audit,id',
-            'proses_bisnis'          => 'nullable|string',
-            'risiko'                 => 'nullable|string',
-            'kontrol'               => 'nullable|string',
-            'tod'                    => 'nullable|string',
-            'sumber_data'            => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_kka_tod')) {
+            $data['file_kka_tod_file'] = $request->file('file_kka_tod');
+        }
 
         try {
-            $item = $this->todBpmService->create($validated);
+            $item = $this->todBpmService->create($data);
             return $this->success($item, 'TOD BPM berhasil disimpan.', 201);
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateTodBpmRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -73,16 +72,13 @@ class TodBpmApiController extends BaseApiController
             return $this->error('TOD BPM tidak ditemukan.', 404);
         }
 
-        $validated = $request->validate([
-            'proses_bisnis' => 'nullable|string',
-            'risiko'        => 'nullable|string',
-            'kontrol'       => 'nullable|string',
-            'tod'           => 'nullable|string',
-            'sumber_data'   => 'nullable|string',
-        ]);
+        $data = $request->validated();
+        if ($request->hasFile('file_kka_tod')) {
+            $data['file_kka_tod_file'] = $request->file('file_kka_tod');
+        }
 
         try {
-            $this->todBpmService->update($item, $validated);
+            $this->todBpmService->update($item, $data);
             return $this->success($item->fresh(), 'TOD BPM berhasil diupdate.');
         } catch (\Exception $e) {
             return $this->error('Gagal mengupdate data: ' . $e->getMessage(), 500);
@@ -140,23 +136,17 @@ class TodBpmApiController extends BaseApiController
         return $this->success($evaluasi);
     }
 
-    public function evaluasiStore(Request $request): JsonResponse
+    public function evaluasiStore(StoreTodBpmEvaluasiRequest $request): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
         }
 
-        $validated = $request->validate([
-            'tod_bpm_audit_id' => 'required|exists:tod_bpm_audit,id',
-            'hasil_evaluasi'   => 'nullable|string',
-            'kesimpulan'       => 'nullable|string',
-        ]);
-
-        $item = TodBpmEvaluasi::create($validated);
+        $item = TodBpmEvaluasi::create($request->validated());
         return $this->success($item, 'Evaluasi TOD BPM berhasil disimpan.', 201);
     }
 
-    public function evaluasiUpdate(Request $request, int $id): JsonResponse
+    public function evaluasiUpdate(UpdateTodBpmEvaluasiRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -167,7 +157,7 @@ class TodBpmApiController extends BaseApiController
             return $this->error('Evaluasi tidak ditemukan.', 404);
         }
 
-        $item->update($request->only(['hasil_evaluasi', 'kesimpulan']));
+        $item->update($request->validated());
         return $this->success($item->fresh(), 'Evaluasi TOD BPM berhasil diupdate.');
     }
 

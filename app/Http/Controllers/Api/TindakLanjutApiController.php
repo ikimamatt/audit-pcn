@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\PenutupLhaRekomendasi;
+use App\Http\Requests\Audit\TindakLanjut\UpdatePemantauanRekomendasiRequest;
 use App\Services\Audit\MonitoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,7 +104,7 @@ class TindakLanjutApiController extends BaseApiController
     /**
      * Edit rekomendasi pemantauan.
      */
-    public function editPemantauan(Request $request, int $id): JsonResponse
+    public function editPemantauan(UpdatePemantauanRekomendasiRequest $request, int $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -114,10 +115,7 @@ class TindakLanjutApiController extends BaseApiController
             return $this->error('Rekomendasi tidak ditemukan.', 404);
         }
 
-        $item->update($request->only([
-            'rekomendasi', 'rencana_aksi', 'eviden_rekomendasi',
-            'pic_rekomendasi', 'target_waktu',
-        ]));
+        $item->update($request->validated());
 
         return $this->success($item->fresh(), 'Rekomendasi berhasil diupdate.');
     }
