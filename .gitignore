@@ -19,19 +19,10 @@ yarn-error.log
 .agents
 INTEGRASI EXTERNAL APLIKASI KE APLIKASI ERP PLN*.html
 *.html
-
-# Archive / build artifacts
 *.zip
 node_modules.zip
 public/build.zip
-
-# Duplicate lockfiles (pilih satu package manager)
 bun.lockb
-yarn.lock
-
-# SQL dumps (bukan migration Laravel)
 /database/migrations/*.sql
 /master_bidang*.sql
-
-# Scratch / debug scripts
 /scratch/
