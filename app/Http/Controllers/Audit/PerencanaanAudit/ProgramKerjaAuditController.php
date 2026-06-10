@@ -189,7 +189,7 @@ class ProgramKerjaAuditController extends Controller
         try {
             $tempPath = $this->documentService->generate($id);
             return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
-        } catch (\FileNotFoundException $e) {
+        } catch (\RuntimeException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat men-generate dokumen.');

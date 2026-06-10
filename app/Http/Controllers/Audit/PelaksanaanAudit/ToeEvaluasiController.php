@@ -48,7 +48,7 @@ class ToeEvaluasiController extends Controller
 
     public function modal($toeId)
     {
-        $toe = \App\Models\ToeAudit::with('evaluasi')->findOrFail($toeId);
+        $toe = ToeAudit::with('evaluasi')->findOrFail($toeId);
         return view('audit.toe-evaluasi/_modal', compact('toe'));
     }
 } 

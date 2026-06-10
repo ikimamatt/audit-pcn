@@ -21,16 +21,16 @@ class ProgressTindakLanjutController extends Controller
         $selectedStatus = $request->filled('status') ? $request->status : 'all';
         $selectedAuditee = $request->filled('auditee_id') ? $request->auditee_id : null;
         
-        $userAuditeeId = null;
+        $userAreaId = null;
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
         }
 
         $data = $this->monitoringService->getProgressData(
             $selectedYear,
             $selectedStatus,
             $selectedAuditee,
-            $userAuditeeId
+            $userAreaId
         );
 
         return view('audit.progress-tindak-lanjut.index', $data);

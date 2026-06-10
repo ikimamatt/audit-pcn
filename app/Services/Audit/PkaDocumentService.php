@@ -29,10 +29,10 @@ class PkaDocumentService
             'dokumen',
         ])->findOrFail($id);
 
-        $templatePath = base_path('Template Program Kerja Audit.docx');
+        $templatePath = resource_path('templates/template_pka.docx');
 
         if (!file_exists($templatePath)) {
-            throw new \RuntimeException('Template dokumen "Template Program Kerja Audit.docx" tidak ditemukan di root folder.');
+            throw new \RuntimeException('Template dokumen "template_pka.docx" tidak ditemukan di resources/templates/.');
         }
 
         // Format data

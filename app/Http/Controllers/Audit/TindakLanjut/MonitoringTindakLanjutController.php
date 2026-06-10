@@ -20,12 +20,12 @@ class MonitoringTindakLanjutController extends Controller
     {
         $selectedYear = $request->input('year', Carbon::now()->year);
         
-        $userAuditeeId = null;
+        $userAreaId = null;
         if (\App\Helpers\AuthHelper::isAuditee()) {
-            $userAuditeeId = \App\Helpers\AuthHelper::getUserAuditeeId();
+            $userAreaId = \App\Helpers\AuthHelper::getUserAreaId();
         }
 
-        $data = $this->monitoringService->getMonitoringData($selectedYear, $userAuditeeId);
+        $data = $this->monitoringService->getMonitoringData($selectedYear, $userAreaId);
 
         return view('audit.monitoring-tindak-lanjut.index', $data);
     }

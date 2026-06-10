@@ -13,7 +13,7 @@ class MasterUnitSeeder extends Seeder
         $this->command->info('🌱 Seeding Master Region, Area and Sub-Bidang from SQL files...');
 
         // 1. Seed master_region
-        $regionSqlPath = base_path('master_region (UP).sql');
+        $regionSqlPath = database_path('sql/master_region.sql');
         if (File::exists($regionSqlPath)) {
             $sql = File::get($regionSqlPath);
             // Split SQL statements by semicolon
@@ -31,7 +31,7 @@ class MasterUnitSeeder extends Seeder
         }
 
         // 2. Seed master_area
-        $areaSqlPath = base_path('master_area (UL).sql');
+        $areaSqlPath = database_path('sql/master_area.sql');
         if (File::exists($areaSqlPath)) {
             $sql = File::get($areaSqlPath);
             // Split SQL statements by semicolon
@@ -49,7 +49,7 @@ class MasterUnitSeeder extends Seeder
         }
 
         // 3. Seed master_sub_bidang
-        $subBidangSqlPath = base_path('master_sub_bidang.sql');
+        $subBidangSqlPath = database_path('sql/master_sub_bidang.sql');
         if (File::exists($subBidangSqlPath)) {
             $sql = File::get($subBidangSqlPath);
             // Split SQL statements by semicolon

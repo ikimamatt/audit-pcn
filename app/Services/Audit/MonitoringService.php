@@ -194,7 +194,7 @@ class MonitoringService
      * Get aggregated monitoring data.
      * Fixes N+1 issue by using memory-level collections.
      */
-    public function getMonitoringData(int $selectedYear, ?int $userAuditeeId): array
+    public function getMonitoringData(int $selectedYear, ?int $userAreaId): array
     {
         $currentMonth = Carbon::create($selectedYear, Carbon::now()->month, 1);
         $currentMonthName = Carbon::now()->format('M');
@@ -217,8 +217,10 @@ class MonitoringService
             )
             ->groupBy('ma.id', 'ma.nama_bidang');
 
-        if ($userAuditeeId !== null) {
-            $summaryQuery->where('ma.id', $userAuditeeId);
+        if ($userAreaId !== null) {
+            $summaryQuery
+                ->join('perencanaan_audit as pa_filter', 'pa_filter.auditee_id', '=', 'ma.id')
+                ->where('pa_filter.area_id', $userAreaId);
         }
 
         $summaryRows = $summaryQuery->get();
@@ -433,7 +435,7 @@ class MonitoringService
      * Get progress dashboard data.
      * Fixes N+1 issue by using grouping and raw aggregations.
      */
-    public function getProgressData(int $selectedYear, string $selectedStatus, ?int $selectedAuditee, ?int $userAuditeeId): array
+    public function getProgressData(int $selectedYear, string $selectedStatus, ?int $selectedAuditee, ?int $userAreaId): array
     {
         // 1. Base Query for Recommendation Data table
         $query = PenutupLhaRekomendasi::with([
@@ -447,9 +449,9 @@ class MonitoringService
             });
         }
         
-        if ($userAuditeeId !== null) {
-            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
+        if ($userAreaId !== null) {
+            $query->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                $q->where('area_id', $userAreaId);
             });
         }
         
@@ -461,9 +463,9 @@ class MonitoringService
 
         // 2. Summary Counts (Optimized: 1 query instead of 4)
         $summaryQuery = PenutupLhaRekomendasi::query();
-        if ($userAuditeeId !== null) {
-            $summaryQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
+        if ($userAreaId !== null) {
+            $summaryQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                $q->where('area_id', $userAreaId);
             });
         }
         $stats = $summaryQuery->selectRaw("
@@ -486,9 +488,9 @@ class MonitoringService
 
         // 3. Progress per Auditee (Top 10) (Optimized: query relationships instead of loading everything)
         $auditeeProgressQuery = PenutupLhaRekomendasi::with('temuan.pelaporanHasilAudit.perencanaanAudit.auditee');
-        if ($userAuditeeId !== null) {
-            $auditeeProgressQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
+        if ($userAreaId !== null) {
+            $auditeeProgressQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                $q->where('area_id', $userAreaId);
             });
         }
         $auditeeProgress = $auditeeProgressQuery->get()
@@ -527,9 +529,9 @@ class MonitoringService
                 $q->where('auditee_id', $selectedAuditee);
             });
         }
-        if ($userAuditeeId !== null) {
-            $bulananQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAuditeeId) {
-                $q->where('auditee_id', $userAuditeeId);
+        if ($userAreaId !== null) {
+            $bulananQuery->whereHas('temuan.pelaporanHasilAudit.perencanaanAudit', function($q) use ($userAreaId) {
+                $q->where('area_id', $userAreaId);
             });
         }
         $bulananRaw = $bulananQuery->selectRaw("

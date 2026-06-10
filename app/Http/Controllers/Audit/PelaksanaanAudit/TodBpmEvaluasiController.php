@@ -48,7 +48,7 @@ class TodBpmEvaluasiController extends Controller
 
     public function modal($bpmId)
     {
-        $bpm = \App\Models\TodBpmAudit::with('evaluasi')->findOrFail($bpmId);
+        $bpm = TodBpmAudit::with('evaluasi')->findOrFail($bpmId);
         return view('audit.tod-bpm-evaluasi/_modal', compact('bpm'));
     }
 }
