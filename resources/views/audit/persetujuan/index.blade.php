@@ -329,7 +329,7 @@
 <script>
     window.addEventListener('load', function() {
         const table = $('#persetujuanTable').DataTable({
-            responsive: true,
+            responsive: false,
             pageLength: 25,
             order: [[6, 'desc']], // Order by Tanggal Pengajuan descending
             columnDefs: [
