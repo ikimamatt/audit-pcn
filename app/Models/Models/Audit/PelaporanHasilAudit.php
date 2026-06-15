@@ -54,4 +54,8 @@ class PelaporanHasilAudit extends Model
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by');
     }
 
+    public function jenisAudit()
+    {
+        return $this->belongsTo(\App\Models\MasterData\MasterJenisAudit::class, 'jenis_audit_id');
+    }
 }

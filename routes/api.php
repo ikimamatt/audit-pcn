@@ -43,7 +43,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 |
 */
 
-Route::middleware(['erp.header.validate'])->prefix('audit')->name('api.audit.')->group(function () {
+Route::middleware(['erp.header.validate'])->prefix('v1/audit')->name('api.audit.')->group(function () {
 
     // ── Health Check ─────────────────────────────────────────────
     Route::get('/health', function () {

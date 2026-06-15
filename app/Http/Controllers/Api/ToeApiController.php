@@ -20,7 +20,7 @@ class ToeApiController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
-        $query = ToeAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit']);
+        $query = ToeAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol']);
 
         if ($request->filled('bulan')) {
             $query->whereHas('perencanaanAudit', function ($q) use ($request) {
@@ -35,7 +35,7 @@ class ToeApiController extends BaseApiController
 
     public function show(int $id): JsonResponse
     {
-        $item = ToeAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit', 'evaluasi'])->find($id);
+        $item = ToeAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol'])->find($id);
         if (! $item) {
             return $this->error('TOE tidak ditemukan.', 404);
         }

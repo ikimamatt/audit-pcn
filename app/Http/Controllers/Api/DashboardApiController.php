@@ -181,9 +181,9 @@ class DashboardApiController extends BaseApiController
      */
     public function pkpt(Request $request): JsonResponse
     {
-        $data = DB::table('jadwal_pkpt_audit')
-            ->leftJoin('master_auditee', 'jadwal_pkpt_audit.auditee_id', '=', 'master_auditee.id')
-            ->select('jadwal_pkpt_audit.*', 'master_auditee.nama_bidang')
+        $data = DB::table('jadwal_pkpt_audits')
+            ->leftJoin('master_auditee', 'jadwal_pkpt_audits.auditee_id', '=', 'master_auditee.id')
+            ->select('jadwal_pkpt_audits.*', 'master_auditee.nama_bidang')
             ->get();
 
         return $this->success($data);

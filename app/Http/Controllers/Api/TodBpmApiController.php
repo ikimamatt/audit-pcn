@@ -20,7 +20,7 @@ class TodBpmApiController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
-        $query = TodBpmAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit']);
+        $query = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol']);
 
         if ($request->filled('bulan')) {
             $query->whereHas('perencanaanAudit', function ($q) use ($request) {
@@ -35,7 +35,7 @@ class TodBpmApiController extends BaseApiController
 
     public function show(int $id): JsonResponse
     {
-        $item = TodBpmAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit', 'evaluasi'])->find($id);
+        $item = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol'])->find($id);
         if (! $item) {
             return $this->error('TOD BPM tidak ditemukan.', 404);
         }
