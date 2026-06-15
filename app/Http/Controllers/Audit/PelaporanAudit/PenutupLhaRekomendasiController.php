@@ -484,4 +484,38 @@ class PenutupLhaRekomendasiController extends Controller
         return redirect()->route('audit.penutup-lha-rekomendasi.show', $rekomendasiId)
             ->with('success', 'Tindak lanjut berhasil dihapus!');
     }
+
+    public function myReminders()
+    {
+        $userId = \App\Helpers\AuthHelper::getCurrentUserId();
+        if (!$userId) {
+            return response()->json([]);
+        }
+
+        $reminders = PenutupLhaRekomendasi::whereIn('status_tindak_lanjut', ['open', 'on_progress'])
+            ->whereHas('picUsers', function ($q) use ($userId) {
+                $q->where('master_user_id', $userId)
+                  ->where('pic_type', 'business_contact');
+            })
+            ->whereIn('status_approval', ['approved', 'rejected', 'rejected_level1'])
+            ->with(['temuan.pelaporanHasilAudit.perencanaanAudit'])
+            ->get()
+            ->map(function ($item) {
+                $pa = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+                $pha = $item->temuan->pelaporanHasilAudit ?? null;
+                $pt = $item->temuan ?? null;
+
+                return [
+                    'id' => $item->id,
+                    'rekomendasi' => $item->rekomendasi,
+                    'target_waktu' => $item->target_waktu,
+                    'nomor_surat_tugas' => $pa ? $pa->nomor_surat_tugas : '-',
+                    'nomor_lha_lhk' => $pha ? $pha->nomor_lha_lhk : '-',
+                    'nomor_iss' => $pt ? $pt->nomor_iss : '-',
+                    'link' => route('audit.penutup-lha-rekomendasi.tindak-lanjut.form', ['rekomendasi' => $item->id]),
+                ];
+            });
+
+        return response()->json($reminders);
+    }
 } 

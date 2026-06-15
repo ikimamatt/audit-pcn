@@ -71,6 +71,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('penutup-lha-rekomendasi', [PenutupLhaRekomendasiController::class, 'index'])->name('penutup-lha-rekomendasi.index');
         Route::get('penutup-lha-rekomendasi/{penutup_lha_rekomendasi}', [PenutupLhaRekomendasiController::class, 'show'])->name('penutup-lha-rekomendasi.show')->where('penutup_lha_rekomendasi', '[0-9]+');
         Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
+        Route::get('my-reminders', [PenutupLhaRekomendasiController::class, 'myReminders'])->name('my-reminders');
 
         // Tindak Lanjut Form untuk PIC Business Contact (AUDITEE)
         Route::get('penutup-lha-rekomendasi/{rekomendasi}/tindak-lanjut', [PenutupLhaRekomendasiController::class, 'tindakLanjutForm'])->name('penutup-lha-rekomendasi.tindak-lanjut.form');

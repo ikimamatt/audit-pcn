@@ -199,4 +199,33 @@ class TindakLanjutApiControllerTest extends AuditApiTestCase
 
         $this->assertEquals('approved_level1', $wt->fresh()->status_approval);
     }
+
+    /**
+     * Test the my-reminders web endpoint.
+     */
+    public function test_my_reminders_web_endpoint(): void
+    {
+        // Set recommendation status to approved (which represents ready-for-followup in production)
+        $this->rekomendasi->update(['status_approval' => 'approved']);
+
+        // Login as the Business Contact (Wahyu Kurniawan)
+        $headers = $this->auditeeHeaders();
+
+        // Check if the my-reminders endpoint returns our pending recommendation
+        $response = $this->getJson('/audit/my-reminders', $headers);
+        
+        $response->assertStatus(200);
+        
+        // Assert recommendation is in the list
+        $data = $response->json();
+        $this->assertNotEmpty($data);
+        $this->assertEquals($this->rekomendasi->id, $data[0]['id']);
+        $this->assertEquals('Rekomendasi kas harian TL', $data[0]['rekomendasi']);
+        
+        // If we log in as another user, e.g. Auditor, it should be empty (since auditor is not the BC)
+        $auditorHeaders = $this->auditorHeaders();
+        $responseAuditor = $this->getJson('/audit/my-reminders', $auditorHeaders);
+        $responseAuditor->assertStatus(200);
+        $this->assertEmpty($responseAuditor->json());
+    }
 }

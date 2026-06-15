@@ -484,6 +484,9 @@
         </div>
     </div>
 </div>
+@auth
+    @include('layouts.partials/reminders-popup')
+@endauth
 
 </body>
 </html>
