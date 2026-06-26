@@ -49,5 +49,5 @@ return [
     |--------------------------------------------------------------------------
     */
     'gateway_internal_key' => env('INTERNAL_SERVICE_KEY', ''),
-    'gateway_jwt_secret'   => env('JWT_SECRET', ''),
+    'gateway_jwt_secret' => env('JWT_SECRET', ''),
 ];
