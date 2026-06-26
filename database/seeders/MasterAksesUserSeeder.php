@@ -9,7 +9,6 @@ class MasterAksesUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 6 Role baku sistem RBAC
         $aksesList = [
             'KSPI',
             'ASMAN SPI',
@@ -20,10 +19,14 @@ class MasterAksesUserSeeder extends Seeder
         ];
 
         foreach ($aksesList as $akses) {
-            DB::table('master_akses_user')->updateOrInsert(
-                ['nama_akses' => $akses],
-                ['nama_akses' => $akses]
-            );
+            if (!DB::table('master_akses_user')->where('nama_akses', $akses)->exists()) {
+                DB::table('master_akses_user')->insert([
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'nama_akses' => $akses,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         echo "✅ MasterAksesUser seeder berhasil dijalankan (6 role baku)." . PHP_EOL;

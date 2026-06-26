@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Support\Facades\DB;
+
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\ExitMeetingUpload;
@@ -14,6 +16,8 @@ class ExitMeetingUploadSeeder extends Seeder
      */
     public function run(): void
     {
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
         $sampleData = [
             [
                 'nomor_exit_meeting' => 'EM-001/AUDIT/2024',
@@ -26,8 +30,8 @@ class ExitMeetingUploadSeeder extends Seeder
                 'file_path' => 'uploads/exit-meeting/em-001-audit-2024.pdf',
                 'keterangan' => 'Exit meeting untuk audit keuangan tahun 2024',
                 'status' => 'approved',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subDays(5),
                 'approval_notes' => 'Dokumen lengkap dan sesuai prosedur',
                 'created_at' => Carbon::now()->subDays(10),
@@ -44,7 +48,7 @@ class ExitMeetingUploadSeeder extends Seeder
                 'file_path' => 'uploads/exit-meeting/em-002-audit-2024.pdf',
                 'keterangan' => 'Exit meeting untuk audit operasional semester I 2024',
                 'status' => 'pending',
-                'uploaded_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
                 'created_at' => Carbon::now()->subDays(3),
                 'updated_at' => Carbon::now()->subDays(3),
             ],
@@ -59,8 +63,8 @@ class ExitMeetingUploadSeeder extends Seeder
                 'file_path' => 'uploads/exit-meeting/em-003-audit-2024.pdf',
                 'keterangan' => 'Exit meeting untuk audit compliance Q1 2024',
                 'status' => 'approved',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subDays(1),
                 'approval_notes' => 'Dokumen sudah sesuai standar audit compliance',
                 'created_at' => Carbon::now()->subDays(7),
@@ -77,7 +81,7 @@ class ExitMeetingUploadSeeder extends Seeder
                 'file_path' => 'uploads/exit-meeting/em-004-audit-2024.pdf',
                 'keterangan' => 'Exit meeting untuk audit IT Q1 2024',
                 'status' => 'pending',
-                'uploaded_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
                 'created_at' => Carbon::now()->subDays(1),
                 'updated_at' => Carbon::now()->subDays(1),
             ],
@@ -92,8 +96,8 @@ class ExitMeetingUploadSeeder extends Seeder
                 'file_path' => 'uploads/exit-meeting/em-005-audit-2024.pdf',
                 'keterangan' => 'Exit meeting untuk audit risiko tahun 2024',
                 'status' => 'rejected',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subHours(6),
                 'approval_notes' => 'Dokumen perlu perbaikan format dan konten',
                 'created_at' => Carbon::now()->subDays(2),

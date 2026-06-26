@@ -55,7 +55,9 @@ class PkaHierarkiSeeder extends Seeder
 
             // ── 3. Insert pka_proses_bisnis ───────────────────────────────
             foreach ($prosesBisnisRaw as $urutanPb => $namaPb) {
-                $pbId = DB::table('pka_proses_bisnis')->insertGetId([
+                $pbId = (string) \Illuminate\Support\Str::uuid();
+                DB::table('pka_proses_bisnis')->insert([
+                    'id' => $pbId,
                     'program_kerja_audit_id' => $pka->id,
                     'nama_proses_bisnis'     => $namaPb,
                     'urutan'                 => $urutanPb + 1,
@@ -76,7 +78,9 @@ class PkaHierarkiSeeder extends Seeder
                     }
 
                     // ── 5. Insert pka_risiko ──────────────────────────────
-                    $risikoId = DB::table('pka_risiko')->insertGetId([
+                    $risikoId = (string) \Illuminate\Support\Str::uuid();
+                    DB::table('pka_risiko')->insert([
+                        'id' => $risikoId,
                         'pka_proses_bisnis_id' => $pbId,
                         'deskripsi_risiko'     => $risiko->deskripsi_resiko,
                         'penyebab_risiko'      => $risiko->penyebab_resiko ?? null,
@@ -91,6 +95,8 @@ class PkaHierarkiSeeder extends Seeder
                     $pengendalian = trim($risiko->pengendalian_eksisting ?? '');
                     if ($pengendalian !== '') {
                         DB::table('pka_kontrol')->insert([
+                            'id' => (string) \Illuminate\Support\Str::uuid(),
+                            'id' => (string) \Illuminate\Support\Str::uuid(),
                             'pka_risiko_id'      => $risikoId,
                             'deskripsi_kontrol'  => $pengendalian,
                             'urutan'             => 1,

@@ -23,10 +23,14 @@ return new class extends Migration
         ];
 
         foreach ($aksesList as $akses) {
-            DB::table('master_akses_user')->updateOrInsert(
-                ['nama_akses' => $akses],
-                ['nama_akses' => $akses]
-            );
+            if (!DB::table('master_akses_user')->where('nama_akses', $akses)->exists()) {
+                DB::table('master_akses_user')->insert([
+                    'id'         => (string) \Illuminate\Support\Str::uuid(),
+                    'nama_akses' => $akses,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 

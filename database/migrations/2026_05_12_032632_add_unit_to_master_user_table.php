@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('master_user', function (Blueprint $table) {
-            $table->unsignedBigInteger('master_area_id')->nullable()->after('master_auditee_id');
+            $table->uuid('master_area_id')->nullable()->after('master_auditee_id');
             $table->foreign('master_area_id')
                   ->references('id')->on('master_area')
                   ->nullOnDelete();

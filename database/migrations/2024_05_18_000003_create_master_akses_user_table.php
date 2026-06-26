@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_akses_user', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->string('nama_akses');
             $table->timestamps();
         });

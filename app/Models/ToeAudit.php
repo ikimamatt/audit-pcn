@@ -8,8 +8,10 @@ use App\Models\Models\Audit\PkaRisiko;
 use App\Models\Models\Audit\PkaKontrol;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class ToeAudit extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
 
     protected $table   = 'toe_audit';

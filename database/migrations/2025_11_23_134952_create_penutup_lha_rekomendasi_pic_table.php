@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('penutup_lha_rekomendasi_pic', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('penutup_lha_rekomendasi_id')->constrained('penutup_lha_rekomendasi')->onDelete('cascade');
-            $table->foreignId('master_user_id')->constrained('master_user')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('penutup_lha_rekomendasi_id')->constrained('penutup_lha_rekomendasi')->onDelete('cascade');
+            $table->foreignUuid('master_user_id')->constrained('master_user')->onDelete('cascade');
             $table->timestamps();
             
             // Ensure unique combination

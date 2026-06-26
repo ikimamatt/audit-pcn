@@ -10,8 +10,10 @@ use App\Models\Models\Audit\PelaporanHasilAudit;
 use App\Models\WalkthroughAudit;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class PerencanaanAudit extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
     protected $table = 'perencanaan_audit';
     protected $guarded = [];

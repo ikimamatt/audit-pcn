@@ -23,7 +23,7 @@ class TindakLanjutService
      * @param array $data
      * @return PenutupLhaTindakLanjut
      */
-    public function storeTindakLanjut(int $rekomendasiId, array $data): PenutupLhaTindakLanjut
+    public function storeTindakLanjut(string $rekomendasiId, array $data): PenutupLhaTindakLanjut
     {
         return DB::transaction(function () use ($rekomendasiId, $data) {
             $rekomendasi = PenutupLhaRekomendasi::findOrFail($rekomendasiId);
@@ -70,7 +70,7 @@ class TindakLanjutService
      * @param array $data
      * @return PenutupLhaTindakLanjut
      */
-    public function updateTindakLanjut(int $id, array $data): PenutupLhaTindakLanjut
+    public function updateTindakLanjut(string $id, array $data): PenutupLhaTindakLanjut
     {
         return DB::transaction(function () use ($id, $data) {
             $tindakLanjut = PenutupLhaTindakLanjut::with(['rekomendasi'])->findOrFail($id);
@@ -110,7 +110,7 @@ class TindakLanjutService
      * @param int $id
      * @return int The recommendation ID for redirect
      */
-    public function destroyTindakLanjut(int $id): int
+    public function destroyTindakLanjut(string $id): string
     {
         return DB::transaction(function () use ($id) {
             $tindakLanjut = PenutupLhaTindakLanjut::findOrFail($id);

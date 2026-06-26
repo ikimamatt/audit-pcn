@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('program_kerja_audit', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('perencanaan_audit_id'); // relasi ke surat tugas
+            $table->uuid('id')->primary();
+            $table->uuid('perencanaan_audit_id'); // relasi ke surat tugas
             $table->date('tanggal_pka');
             $table->string('no_pka');
             $table->string('judul_pka')->nullable();

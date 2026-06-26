@@ -43,16 +43,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 |
 */
 
-Route::middleware(['erp.header.validate'])->prefix('v1/audit')->name('api.audit.')->group(function () {
+// ── Health Check (Public / No Auth) ─────────────────────────
+Route::get('v1/audit/health', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Audit Service is running.',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+})->name('api.audit.health');
 
-    // ── Health Check ─────────────────────────────────────────────
-    Route::get('/health', function () {
-        return response()->json([
-            'success' => true,
-            'message' => 'Audit PCN Service is running.',
-            'timestamp' => now()->toIso8601String(),
-        ]);
-    })->name('health');
+Route::middleware(['gateway.validate'])->prefix('v1/audit')->name('api.audit.')->group(function () {
 
     // ── Dashboard ────────────────────────────────────────────────
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
@@ -136,6 +136,8 @@ Route::middleware(['erp.header.validate'])->prefix('v1/audit')->name('api.audit.
     // ── Penutup LHA Rekomendasi ──────────────────────────────────
     Route::prefix('penutup-lha')->name('penutup-lha.')->group(function () {
         Route::get('/', [PenutupLhaApiController::class, 'index'])->name('index');
+        Route::get('/select-nomor-surat-tugas', [PenutupLhaApiController::class, 'selectNomorSuratTugas'])->name('select-nst');
+        Route::get('/my-reminders', [PenutupLhaApiController::class, 'myReminders'])->name('my-reminders');
         Route::post('/', [PenutupLhaApiController::class, 'store'])->name('store');
         Route::get('/{id}', [PenutupLhaApiController::class, 'show'])->name('show');
         Route::put('/{id}', [PenutupLhaApiController::class, 'update'])->name('update');

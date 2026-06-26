@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class RealisasiAudit extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
 
     protected $fillable = [

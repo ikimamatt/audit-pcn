@@ -555,8 +555,18 @@
             tlChart.setOption({
                 tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, ...tooltipConfig },
                 legend: { top: 'bottom', icon: 'circle' },
-                grid: { left: '3%', right: '4%', bottom: '15%', top: '5%', containLabel: true },
-                xAxis: { type: 'category', data: @json($stackedCategories), axisLabel: { fontFamily: fontFamily, interval: 0, rotate: 15 } },
+                grid: { left: '3%', right: '4%', bottom: '20%', top: '5%', containLabel: true },
+                xAxis: { 
+                    type: 'category', 
+                    data: @json($stackedCategories), 
+                    axisLabel: { 
+                        fontFamily: fontFamily, 
+                        interval: 0, 
+                        rotate: 30,
+                        width: 90,
+                        overflow: 'truncate'
+                    } 
+                },
                 yAxis: { type: 'value' },
                 series: [
                     { name: 'Closed', type: 'bar', stack: 'total', data: @json($stackedClosed), itemStyle: { color: '#10b981' } },

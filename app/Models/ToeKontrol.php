@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\PkaKontrol;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class ToeKontrol extends Model
 {
+    use HasUuids;
     protected $table   = 'toe_kontrol';
     protected $guarded = [];
 

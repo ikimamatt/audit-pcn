@@ -19,18 +19,26 @@ class ProgramKerjaAuditApiController extends BaseApiController
         protected PkaDocumentService $documentService
     ) {}
 
-    public function index(): JsonResponse
+    /**
+     * Daftar PKA (server-side paginated via Stored Procedure).
+     *
+     * Query params: page, limit, search (nomor_surat_tugas), status
+     */
+    public function index(Request $request): JsonResponse
     {
-        $data = ProgramKerjaAudit::with([
-            'perencanaanAudit.auditee',
-            'perencanaanAudit.area',
-            'risks', 'milestones', 'dokumen',
-        ])->get();
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        return $this->success($data);
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
+
+        [$total, $rows] = $this->callSP('sp_get_pka', [
+            $perPage, $offset, $search, $status,
+        ]);
+
+        return $this->successPaginated($rows, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = ProgramKerjaAudit::with([
             'perencanaanAudit.auditee',
@@ -66,7 +74,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
         }
     }
 
-    public function update(UpdateProgramKerjaAuditRequest $request, int $id): JsonResponse
+    public function update(UpdateProgramKerjaAuditRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -90,7 +98,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -112,7 +120,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
     /**
      * Approval dokumen PKA.
      */
-    public function approvalDokumen(Request $request, int $pkaId, int $dokId): JsonResponse
+    public function approvalDokumen(Request $request, string $pkaId, string $dokId): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -137,7 +145,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
     /**
      * Approval keseluruhan PKA.
      */
-    public function approvalMain(Request $request, int $id): JsonResponse
+    public function approvalMain(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -162,7 +170,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
     /**
      * Flat list Risiko + Kontrol dari PKA terkait surat tugas.
      */
-    public function getHierarkiFlat(int $perencanaanId): JsonResponse
+    public function getHierarkiFlat(string $perencanaanId): JsonResponse
     {
         $data = $this->pkaService->getHierarkiFlat($perencanaanId);
         return $this->success($data);
@@ -171,7 +179,7 @@ class ProgramKerjaAuditApiController extends BaseApiController
     /**
      * Cek relasi sebelum hapus.
      */
-    public function checkRelations(int $id): JsonResponse
+    public function checkRelations(string $id): JsonResponse
     {
         $item = ProgramKerjaAudit::with([
             'entryMeeting', 'walkthroughAudit',

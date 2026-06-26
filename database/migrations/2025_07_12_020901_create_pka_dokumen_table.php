@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pka_dokumen', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('program_kerja_audit_id');
+            $table->uuid('id')->primary();
+            $table->uuid('program_kerja_audit_id');
             $table->string('nama_dokumen');
             $table->string('file_path');
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 

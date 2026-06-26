@@ -22,8 +22,12 @@ class DashboardApiController extends BaseApiController
         $divisiId  = $request->divisi_id;
         $areaId    = $request->area_id;
 
-        $masterDivisi = MasterAuditee::select('id', 'nama_bidang')->orderBy('nama_bidang')->get();
-        $masterArea   = MasterArea::select('id', 'nama_area')->orderBy('nama_area')->get();
+        $masterDivisi = cache()->remember('dashboard_master_divisi', 3600, function () {
+            return MasterAuditee::select('id', 'nama_bidang')->orderBy('nama_bidang')->get();
+        });
+        $masterArea = cache()->remember('dashboard_master_area', 3600, function () {
+            return MasterArea::select('id', 'nama_area')->orderBy('nama_area')->get();
+        });
 
         $hasFilters = $startDate || $endDate || $divisiId || $areaId;
 

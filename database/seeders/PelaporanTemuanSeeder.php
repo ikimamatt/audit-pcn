@@ -10,13 +10,18 @@ class PelaporanTemuanSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('pelaporan_temuan')->insert([
+        $lhaIds = DB::table('pelaporan_hasil_audit')->pluck('id')->toArray();
+        $aoiIds = DB::table('master_kode_aoi')->pluck('id')->toArray();
+        $riskIds = DB::table('master_kode_risk')->pluck('id')->toArray();
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
+        $insertData = [
             [
                 'nomor_urut_iss' => 1,
-                'pelaporan_hasil_audit_id' => 1,
+                'pelaporan_hasil_audit_id' => $lhaIds[0] ?? null,
                 'hasil_temuan' => 'Dokumentasi transaksi keuangan tidak lengkap dan tidak sesuai dengan standar akuntansi yang berlaku. Beberapa transaksi tidak memiliki bukti pendukung yang memadai.',
-                'kode_aoi_id' => 1,
-                'kode_risk_id' => 1,
+                'kode_aoi_id' => $aoiIds[0] ?? null,
+                'kode_risk_id' => $riskIds[0] ?? null,
                 'nomor_iss' => 'ISS.001/PO PCN/SPI.01.02/01/01/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Kurangnya pemahaman karyawan terhadap SOP yang berlaku.',
@@ -26,17 +31,17 @@ class PelaporanTemuanSeeder extends Seeder
                 'dampak_potensi' => 'Potensi kerugian finansial dan reputasi perusahaan.',
                 'signifikan' => 'Tinggi',
                 'status_approval' => 'approved',
-                'approved_by' => 1,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'nomor_urut_iss' => 2,
-                'pelaporan_hasil_audit_id' => 1,
+                'pelaporan_hasil_audit_id' => $lhaIds[0] ?? null,
                 'hasil_temuan' => 'Proses approval transaksi keuangan tidak dilakukan sesuai dengan hierarki yang telah ditetapkan. Beberapa transaksi dengan nilai besar tidak mendapat approval dari level manajemen yang sesuai.',
-                'kode_aoi_id' => 2,
-                'kode_risk_id' => 2,
+                'kode_aoi_id' => $aoiIds[1] ?? null,
+                'kode_risk_id' => $riskIds[1] ?? null,
                 'nomor_iss' => 'ISS.001/PO PCN/SPI.01.02/01/02/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Proses approval transaksi keuangan tidak sesuai hierarki.',
@@ -46,17 +51,17 @@ class PelaporanTemuanSeeder extends Seeder
                 'dampak_potensi' => 'Potensi fraud dan kerugian finansial.',
                 'signifikan' => 'Tinggi',
                 'status_approval' => 'approved',
-                'approved_by' => 1,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'nomor_urut_iss' => 3,
-                'pelaporan_hasil_audit_id' => 2,
+                'pelaporan_hasil_audit_id' => $lhaIds[1] ?? null,
                 'hasil_temuan' => 'Sistem pengendalian risiko operasional belum terintegrasi dengan baik. Identifikasi dan penilaian risiko tidak dilakukan secara sistematis dan berkelanjutan.',
-                'kode_aoi_id' => 3,
-                'kode_risk_id' => 3,
+                'kode_aoi_id' => $aoiIds[2] ?? null,
+                'kode_risk_id' => $riskIds[2] ?? null,
                 'nomor_iss' => 'ISS.002/PO PCN/SPI.01.03/01/01/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Sistem pengendalian risiko operasional belum optimal.',
@@ -73,10 +78,10 @@ class PelaporanTemuanSeeder extends Seeder
             ],
             [
                 'nomor_urut_iss' => 4,
-                'pelaporan_hasil_audit_id' => 2,
+                'pelaporan_hasil_audit_id' => $lhaIds[1] ?? null,
                 'hasil_temuan' => 'Monitoring dan pelaporan risiko tidak dilakukan secara real-time. Informasi risiko tidak tersedia secara tepat waktu untuk pengambilan keputusan manajemen.',
-                'kode_aoi_id' => 4,
-                'kode_risk_id' => 4,
+                'kode_aoi_id' => $aoiIds[3] ?? null,
+                'kode_risk_id' => $riskIds[3] ?? null,
                 'nomor_iss' => 'ISS.002/PO PCN/SPI.01.03/01/02/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Monitoring dan pelaporan risiko tidak real-time.',
@@ -93,10 +98,10 @@ class PelaporanTemuanSeeder extends Seeder
             ],
             [
                 'nomor_urut_iss' => 5,
-                'pelaporan_hasil_audit_id' => 3,
+                'pelaporan_hasil_audit_id' => $lhaIds[2] ?? null,
                 'hasil_temuan' => 'Kepatuhan terhadap regulasi sektor keuangan belum optimal. Beberapa ketentuan regulator tidak diimplementasikan dengan baik dalam proses bisnis.',
-                'kode_aoi_id' => 5,
-                'kode_risk_id' => 5,
+                'kode_aoi_id' => $aoiIds[4] ?? null,
+                'kode_risk_id' => $riskIds[4] ?? null,
                 'nomor_iss' => 'ISS.003/PO PCN/SPI.01.04/01/01/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Kepatuhan terhadap regulasi sektor keuangan belum optimal.',
@@ -106,17 +111,17 @@ class PelaporanTemuanSeeder extends Seeder
                 'dampak_potensi' => 'Potensi sanksi regulator dan kerugian reputasi.',
                 'signifikan' => 'Tinggi',
                 'status_approval' => 'approved',
-                'approved_by' => 1,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'nomor_urut_iss' => 6,
-                'pelaporan_hasil_audit_id' => 3,
+                'pelaporan_hasil_audit_id' => $lhaIds[2] ?? null,
                 'hasil_temuan' => 'Sistem pelaporan kepatuhan tidak terintegrasi dan tidak menyediakan informasi yang komprehensif. Pelaporan kepada regulator sering terlambat dan tidak akurat.',
-                'kode_aoi_id' => 1,
-                'kode_risk_id' => 1,
+                'kode_aoi_id' => $aoiIds[0] ?? null,
+                'kode_risk_id' => $riskIds[0] ?? null,
                 'nomor_iss' => 'ISS.003/PO PCN/SPI.01.04/01/02/2024',
                 'tahun' => 2024,
                 'permasalahan' => 'Sistem pelaporan kepatuhan tidak terintegrasi.',
@@ -126,11 +131,15 @@ class PelaporanTemuanSeeder extends Seeder
                 'dampak_potensi' => 'Potensi sanksi regulator dan kerugian reputasi.',
                 'signifikan' => 'Tinggi',
                 'status_approval' => 'approved',
-                'approved_by' => 1,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
-        ]);
+        ];
+        foreach ($insertData as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+        }
+        DB::table('pelaporan_temuan')->insert($insertData);
     }
 } 

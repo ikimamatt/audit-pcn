@@ -251,17 +251,17 @@
                                         <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                         
                                         @if($canApproveLvl1)
-                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve (Ketua Tim)">
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve (Ketua Tim)">
                                                 <i class="mdi mdi-check"></i>
                                             </button>
                                         @elseif($canApproveLvl2)
-                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Final (Koordinator)">
+                                            <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve Final (Koordinator)">
                                                 <i class="mdi mdi-check-all"></i>
                                             </button>
                                         @endif
 
                                         @if($canReject)
-                                            <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject">
+                                            <button type="button" class="btn-act btn-act-reject" onclick="rejectData('{{ $item->id }}')" title="Reject">
                                                 <i class="mdi mdi-close"></i>
                                             </button>
                                         @endif

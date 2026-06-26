@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_user', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->string('nama');
             $table->string('username');
             $table->string('nip');
             $table->string('password');
-            $table->unsignedBigInteger('master_auditee_id');
+            $table->uuid('master_auditee_id');
 
             $table->foreign('master_auditee_id')->references('id')->on('master_auditee')->onDelete('restrict');
         });

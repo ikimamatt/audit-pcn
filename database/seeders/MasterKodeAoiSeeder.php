@@ -9,7 +9,7 @@ class MasterKodeAoiSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('master_kode_aoi')->insert([
+        $data = [
             [
                 'indikator_pengawasan' => 'KEPATUHAN',
                 'kode_area_of_improvement' => '01.01',
@@ -100,6 +100,12 @@ class MasterKodeAoiSeeder extends Seeder
                 'kode_area_of_improvement' => '07.06',
                 'deskripsi_area_of_improvement' => 'Temuan berulang terkait Kasus yang Merugikan Perusahaan atau Negara',
             ],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+            $row['created_at'] = now();
+            $row['updated_at'] = now();
+        }
+        DB::table('master_kode_aoi')->insert($data);
     }
 } 

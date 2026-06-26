@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // 1. Create master_region table
         Schema::create('master_region', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('api_id')->nullable();
             $table->string('kd_region_sap', 30)->nullable();
             $table->string('kd_region', 10)->unique();
@@ -33,7 +33,7 @@ return new class extends Migration
 
         // 2. Create master_area table
         Schema::create('master_area', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('api_id')->nullable();
             $table->string('kd_region', 10);
             $table->string('kd_area', 10)->unique();
@@ -63,7 +63,7 @@ return new class extends Migration
             if (Schema::hasColumn('perencanaan_audit', 'unit_id')) {
                 $table->dropColumn('unit_id');
             }
-            $table->unsignedBigInteger('area_id')->nullable()->after('jenis_audit_id');
+            $table->uuid('area_id')->nullable()->after('jenis_audit_id');
             $table->foreign('area_id')
                   ->references('id')->on('master_area')
                   ->onDelete('set null');
@@ -79,7 +79,7 @@ return new class extends Migration
             $table->dropColumn('area_id');
             
             if (!Schema::hasColumn('perencanaan_audit', 'unit_id')) {
-                $table->unsignedBigInteger('unit_id')->nullable()->after('jenis_audit_id');
+                $table->uuid('unit_id')->nullable()->after('jenis_audit_id');
             }
         });
 

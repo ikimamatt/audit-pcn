@@ -11,6 +11,8 @@ class EntryMeetingSeeder extends Seeder
 {
     public function run(): void
     {
+        $userId = DB::table('master_user')->value('id');
+
         // Ambil semua PKA yang sudah ada (sesuai dengan PkaAllSeeder)
         $programKerjaAudit = ProgramKerjaAudit::with(['perencanaanAudit', 'milestones' => function($query) {
             $query->where('nama_milestone', 'Entry Meeting');
@@ -55,7 +57,7 @@ class EntryMeetingSeeder extends Seeder
                     'file_absensi' => 'entry_meeting/absensi_' . ($index + 1) . '.pdf',
                     'status_approval' => $randomStatus,
                     'rejection_reason' => $rejectionReason,
-                    'approved_by' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? 1 : null,
+                    'approved_by' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? $userId : null,
                     'approved_at' => ($randomStatus === 'approved' || $randomStatus === 'rejected') ? now() : null,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -67,6 +69,7 @@ class EntryMeetingSeeder extends Seeder
 
         // Insert all entry meeting data
         if (!empty($entryMeetingData)) {
+            foreach ($entryMeetingData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('entry_meeting')->insert($entryMeetingData);
             $this->command->info('Entry Meeting seeder berhasil dijalankan dengan ' . count($entryMeetingData) . ' data dan status approval yang bervariasi.');
         } else {

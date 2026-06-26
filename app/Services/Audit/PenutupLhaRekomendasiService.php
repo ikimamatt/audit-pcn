@@ -99,7 +99,7 @@ class PenutupLhaRekomendasiService
      * @param int|null $ap2Id
      * @return string
      */
-    private function formatPicRekomendasi(?int $bcId, ?int $ap1Id, ?int $ap2Id): string
+    private function formatPicRekomendasi(?string $bcId, ?string $ap1Id, ?string $ap2Id): string
     {
         $picBusinessContact = MasterUser::with('auditee')->find($bcId);
         $picApproval1 = MasterUser::with('auditee')->find($ap1Id);

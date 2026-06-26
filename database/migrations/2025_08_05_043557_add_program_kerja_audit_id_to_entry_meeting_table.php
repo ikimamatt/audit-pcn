@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('entry_meeting', function (Blueprint $table) {
-            $table->unsignedBigInteger('program_kerja_audit_id')->nullable()->after('auditee_id');
+            $table->uuid('program_kerja_audit_id')->nullable()->after('auditee_id');
             $table->date('actual_meeting_date')->nullable()->after('tanggal');
             $table->foreign('program_kerja_audit_id')->references('id')->on('program_kerja_audit')->onDelete('restrict');
         });

@@ -19,19 +19,26 @@ class PelaporanApiController extends BaseApiController
         protected NomorGeneratorService $nomorService
     ) {}
 
+    /**
+     * Daftar Pelaporan Hasil Audit (server-side paginated via Stored Procedure).
+     * Query params: page, limit, search (nomor_lha_lhk / nomor_surat_tugas), status, jenis (LHA/LHK)
+     */
     public function index(Request $request): JsonResponse
     {
-        $data = PelaporanHasilAudit::with([
-            'perencanaanAudit.auditee',
-            'perencanaanAudit.area',
-            'temuan',
-            'jenisAudit',
-        ])->get();
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        return $this->success($data);
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
+        $jenis  = $request->input('jenis')  ?: null;
+
+        [$total, $rows] = $this->callSP('sp_get_pelaporan', [
+            $perPage, $offset, $search, $status, $jenis,
+        ]);
+
+        return $this->successPaginated($rows, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = PelaporanHasilAudit::with([
             'perencanaanAudit.auditee',
@@ -63,7 +70,7 @@ class PelaporanApiController extends BaseApiController
         }
     }
 
-    public function update(UpdatePelaporanHasilAuditRequest $request, int $id): JsonResponse
+    public function update(UpdatePelaporanHasilAuditRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -82,7 +89,7 @@ class PelaporanApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -101,7 +108,7 @@ class PelaporanApiController extends BaseApiController
         }
     }
 
-    public function approval(Request $request, int $id): JsonResponse
+    public function approval(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -128,7 +135,7 @@ class PelaporanApiController extends BaseApiController
     /**
      * Daftar temuan untuk pelaporan tertentu.
      */
-    public function getTemuan(int $id): JsonResponse
+    public function getTemuan(string $id): JsonResponse
     {
         $temuan = PelaporanTemuan::with(['kodeAoi', 'kodeRisk'])
             ->where('pelaporan_hasil_audit_id', $id)
@@ -140,7 +147,7 @@ class PelaporanApiController extends BaseApiController
     /**
      * Detail temuan.
      */
-    public function getTemuanById(int $id): JsonResponse
+    public function getTemuanById(string $id): JsonResponse
     {
         $item = PelaporanTemuan::with(['kodeAoi', 'kodeRisk', 'pelaporanHasilAudit.perencanaanAudit'])->find($id);
         if (! $item) {
@@ -152,7 +159,7 @@ class PelaporanApiController extends BaseApiController
     /**
      * Update temuan.
      */
-    public function updateTemuan(UpdatePelaporanTemuanRequest $request, int $id): JsonResponse
+    public function updateTemuan(UpdatePelaporanTemuanRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -190,13 +197,13 @@ class PelaporanApiController extends BaseApiController
 
         $request->validate([
             'jenis_lha_lhk' => 'required|string',
-            'jenis_audit_id' => 'required|integer|exists:master_jenis_audit,id',
+            'jenis_audit_id' => 'required|string|exists:master_jenis_audit,id',
             'kode_spi' => 'required|string',
         ]);
 
         $result = $this->nomorService->generateNomorLhaLhk(
             $request->input('jenis_lha_lhk'),
-            (int) $request->input('jenis_audit_id'),
+            $request->input('jenis_audit_id'),
             $request->input('kode_spi')
         );
 
@@ -213,14 +220,14 @@ class PelaporanApiController extends BaseApiController
         }
 
         $request->validate([
-            'kode_aoi_id'  => 'required|integer|exists:master_kode_aoi,id',
-            'kode_risk_id' => 'required|integer|exists:master_kode_risk,id',
+            'kode_aoi_id'  => 'required|string|exists:master_kode_aoi,id',
+            'kode_risk_id' => 'required|string|exists:master_kode_risk,id',
             'kode_spi'     => 'nullable|string',
         ]);
 
         $result = $this->nomorService->generateNomorIss(
-            (int) $request->input('kode_aoi_id'),
-            (int) $request->input('kode_risk_id'),
+            $request->input('kode_aoi_id'),
+            $request->input('kode_risk_id'),
             $request->input('kode_spi', 'SPI.01.02')
         );
 

@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_sub_bidang', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->string('nama');
-            $table->unsignedBigInteger('master_bidang_id');
+            $table->uuid('master_bidang_id');
             $table->timestamps();
 
             $table->foreign('master_bidang_id')

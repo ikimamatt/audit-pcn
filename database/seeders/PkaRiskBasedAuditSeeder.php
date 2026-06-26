@@ -58,6 +58,8 @@ class PkaRiskBasedAuditSeeder extends Seeder
 
         // Insert all risk data
         if (!empty($riskData)) {
+            foreach ($riskData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($riskData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('pka_risk_based_audit')->insert($riskData);
             $this->command->info('PKA Risk-Based Audit seeder berhasil dijalankan.');
         }

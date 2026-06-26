@@ -70,7 +70,7 @@ class NomorGeneratorService
      * @param string $kodeSpi
      * @return array
      */
-    public function generateNomorLhaLhk(string $jenisLhaLhk, int $jenisAuditId, string $kodeSpi): array
+    public function generateNomorLhaLhk(string $jenisLhaLhk, string $jenisAuditId, string $kodeSpi): array
     {
         return DB::transaction(function () use ($jenisLhaLhk, $jenisAuditId, $kodeSpi) {
             $jenisAudit = MasterJenisAudit::findOrFail($jenisAuditId);
@@ -101,7 +101,7 @@ class NomorGeneratorService
      * @param string $kodeSpi
      * @return array
      */
-    public function generateNomorIss(int $kodeAoiId, int $kodeRiskId, string $kodeSpi = 'SPI.01.02'): array
+    public function generateNomorIss(string $kodeAoiId, string $kodeRiskId, string $kodeSpi = 'SPI.01.02'): array
     {
         return DB::transaction(function () use ($kodeAoiId, $kodeRiskId, $kodeSpi) {
             $kodeAoi = MasterKodeAoi::findOrFail($kodeAoiId);

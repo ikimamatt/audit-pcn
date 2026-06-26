@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\PkaRisiko;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class TodBpmRisiko extends Model
 {
+    use HasUuids;
     protected $table    = 'tod_bpm_risiko';
     protected $guarded  = [];
 

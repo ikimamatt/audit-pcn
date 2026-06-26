@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pelaporan_isi_lha', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('pelaporan_hasil_audit_id')->constrained('pelaporan_hasil_audit')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('pelaporan_hasil_audit_id')->constrained('pelaporan_hasil_audit')->onDelete('cascade');
             $table->string('nomor_iss');
             $table->text('permasalahan');
             $table->text('penyebab');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('dampak_potensi')->nullable();
             $table->enum('signifikansi', ['Tinggi', 'Medium', 'Rendah'])->default('Medium');
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->foreignId('approved_by')->nullable()->constrained('master_user')->nullOnDelete();
+            $table->foreignUuid('approved_by')->nullable()->constrained('master_user')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
         });

@@ -158,7 +158,7 @@ class PerencanaanAuditService
     {
         $auditorData = [];
         foreach ($auditorIds as $auditorId) {
-            if (!empty($auditorId) && is_numeric($auditorId)) {
+            if (!empty($auditorId)) {
                 $auditor = MasterUser::find($auditorId);
                 if ($auditor) {
                     $auditorData[] = $auditor->nama . ' - NIP: ' . $auditor->nip;

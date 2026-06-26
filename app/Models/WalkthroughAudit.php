@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class WalkthroughAudit extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
 
     protected $table = 'walkthrough_audit';

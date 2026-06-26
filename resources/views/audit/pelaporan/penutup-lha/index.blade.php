@@ -888,17 +888,17 @@
                                                 <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                 
                                                 @if($canApproveLvl1)
-                                                    <button type="button" class="btn-act btn-act-approve" title="Approve" onclick="approveData({{ $item->id }})">
+                                                    <button type="button" class="btn-act btn-act-approve" title="Approve" onclick="approveData('{{ $item->id }}')">
                                                         <i class="mdi mdi-check"></i>
                                                     </button>
                                                 @elseif($canApproveLvl2)
-                                                    <button type="button" class="btn-act btn-act-approve" title="Approve Final" onclick="approveData({{ $item->id }})">
+                                                    <button type="button" class="btn-act btn-act-approve" title="Approve Final" onclick="approveData('{{ $item->id }}')">
                                                         <i class="mdi mdi-check-all"></i>
                                                     </button>
                                                 @endif
 
                                                 @if($canReject)
-                                                    <button type="button" class="btn-act btn-act-reject" title="Reject" onclick="rejectData({{ $item->id }})">
+                                                    <button type="button" class="btn-act btn-act-reject" title="Reject" onclick="rejectData('{{ $item->id }}')">
                                                         <i class="mdi mdi-close"></i>
                                                     </button>
                                                 @endif
@@ -909,7 +909,7 @@
                                         <button type="button" 
                                                 class="btn-act btn-act-delete" 
                                                 title="Hapus"
-                                                onclick="deleteData({{ $item->id }})">
+                                                onclick="deleteData('{{ $item->id }}')">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
                                         @endcanModifyData

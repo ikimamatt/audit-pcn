@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\PenutupLhaRekomendasi;
+use App\Models\Audit\PerencanaanAudit;
 use App\Http\Requests\Audit\TindakLanjut\UpdatePemantauanRekomendasiRequest;
 use App\Services\Audit\MonitoringService;
 use Illuminate\Http\JsonResponse;
@@ -37,19 +38,45 @@ class TindakLanjutApiController extends BaseApiController
             return $this->error('Parameter nomor_surat_tugas diperlukan.', 422);
         }
 
-        $result = $this->monitoringService->getPemantauanData(
-            $request->get('nomor_surat_tugas'),
-            null, // userAreaId
-            $request->input('bulan')
-        );
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+        $search = $request->input('search') ?: null;
+        $nomorSt = $request->input('nomor_surat_tugas');
 
-        return $this->success($result);
+        [$total, $rows] = $this->callSP('sp_get_pemantauan', [
+            $perPage,
+            $offset,
+            $search,
+            $nomorSt,
+        ]);
+
+        $rekomendasis = PenutupLhaRekomendasi::hydrate($rows);
+        $rekomendasis->load([
+            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
+            'tindakLanjut',
+            'picUsers'
+        ]);
+
+        $perencanaanAudit = PerencanaanAudit::where('nomor_surat_tugas', $nomorSt)->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'data' => $rekomendasis,
+                'perencanaanAudit' => $perencanaanAudit,
+            ],
+            'meta' => [
+                'total'     => $total,
+                'page'      => $page,
+                'per_page'  => $perPage,
+                'last_page' => $total > 0 ? (int) ceil($total / $perPage) : 1,
+            ]
+        ]);
     }
 
     /**
      * Detail tindak lanjut rekomendasi.
      */
-    public function tindakLanjutDetail(int $id): JsonResponse
+    public function tindakLanjutDetail(string $id): JsonResponse
     {
         $rekomendasi = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
@@ -71,7 +98,7 @@ class TindakLanjutApiController extends BaseApiController
     /**
      * Update status rekomendasi (approve/reject).
      */
-    public function updateStatus(Request $request, int $id): JsonResponse
+    public function updateStatus(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -104,7 +131,7 @@ class TindakLanjutApiController extends BaseApiController
     /**
      * Edit rekomendasi pemantauan.
      */
-    public function editPemantauan(UpdatePemantauanRekomendasiRequest $request, int $id): JsonResponse
+    public function editPemantauan(UpdatePemantauanRekomendasiRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -125,13 +152,17 @@ class TindakLanjutApiController extends BaseApiController
      */
     public function monitoringIndex(Request $request): JsonResponse
     {
-        $data = PenutupLhaRekomendasi::with([
-            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
-        ])
-        ->whereIn('status_tindak_lanjut', ['open', 'on_progress'])
-        ->get();
+        $selectedYear = $request->input('year', \Carbon\Carbon::now()->year);
+        
+        $userAreaId = null;
+        $localUser = $this->localUser($request);
+        if ($localUser && $this->localRole($request) === 'AUDITEE') {
+            $userAreaId = $localUser->master_area_id;
+        }
 
-        return $this->success($data);
+        $result = $this->monitoringService->getMonitoringData((int) $selectedYear, $userAreaId);
+
+        return $this->success($result);
     }
 
     /**
@@ -149,36 +180,46 @@ class TindakLanjutApiController extends BaseApiController
         return $this->success($data);
     }
 
-    /**
-     * Persetujuan — daftar item menunggu approval.
-     */
-    public function persetujuanIndex(): JsonResponse
+    public function persetujuanIndex(Request $request): JsonResponse
     {
-        $pendingItems = collect();
-
-        // Collect pending items from various models
-        $models = [
-            'walkthrough'  => \App\Models\WalkthroughAudit::class,
-            'entry_meeting'=> \App\Models\EntryMeeting::class,
-            'tod_bpm'      => \App\Models\TodBpmAudit::class,
-            'toe'          => \App\Models\ToeAudit::class,
-        ];
-
-        foreach ($models as $type => $modelClass) {
-            if (class_exists($modelClass)) {
-                $items = $modelClass::where('status_approval', 'pending')->get();
-                foreach ($items as $item) {
-                    $pendingItems->push([
-                        'type'       => $type,
-                        'id'         => $item->id,
-                        'created_at' => $item->created_at,
-                        'data'       => $item,
-                    ]);
-                }
-            }
+        $localUser = $this->localUser($request);
+        if (!$localUser) {
+            return $this->success([]);
         }
 
-        return $this->success($pendingItems->sortByDesc('created_at')->values());
+        $userId = $localUser->id;
+        $isSuperAdmin = $this->localRole($request) === 'SUPERADMIN';
+
+        $service = app(\App\Services\Audit\PersetujuanService::class);
+        $allPendingItems = $service->getPendingItems($userId, $isSuperAdmin);
+
+        // Search filter at collection level
+        $search = $request->input('search');
+        if ($search) {
+            $q = strtolower($search);
+            $allPendingItems = $allPendingItems->filter(function($item) use ($q) {
+                return str_contains(strtolower($item['nomor_surat_tugas'] ?? ''), $q)
+                    || str_contains(strtolower($item['auditee_name'] ?? ''), $q)
+                    || str_contains(strtolower($item['document_name'] ?? ''), $q)
+                    || str_contains(strtolower($item['title'] ?? ''), $q);
+            });
+        }
+
+        $total = $allPendingItems->count();
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+
+        $paginatedItems = $allPendingItems->slice($offset, $perPage)->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginatedItems,
+            'meta' => [
+                'total'     => $total,
+                'page'      => $page,
+                'per_page'  => $perPage,
+                'last_page' => $total > 0 ? (int) ceil($total / $perPage) : 1,
+            ]
+        ]);
     }
 
     /**
@@ -192,32 +233,46 @@ class TindakLanjutApiController extends BaseApiController
 
         $request->validate([
             'type'   => 'required|string',
-            'id'     => 'required|integer',
+            'id'     => 'required|string',
             'action' => 'required|in:approve,reject',
+            'rejection_reason' => 'required_if:action,reject|nullable|string|min:10',
         ]);
 
-        $modelMap = [
-            'walkthrough'   => \App\Models\WalkthroughAudit::class,
+        $modelType = $request->input('type');
+        $id = $request->input('id');
+        $action = $request->input('action');
+        $reason = $request->input('rejection_reason');
+
+        $modelClass = match($modelType) {
+            'pka' => \App\Models\Models\Audit\ProgramKerjaAudit::class,
             'entry_meeting' => \App\Models\EntryMeeting::class,
-            'tod_bpm'       => \App\Models\TodBpmAudit::class,
-            'toe'           => \App\Models\ToeAudit::class,
-        ];
+            'walkthrough' => \App\Models\WalkthroughAudit::class,
+            'tod_bpm' => \App\Models\TodBpmAudit::class,
+            'toe' => \App\Models\ToeAudit::class,
+            'exit_meeting' => \App\Models\RealisasiAudit::class,
+            'pelaporan_hasil_audit' => \App\Models\Models\Audit\PelaporanHasilAudit::class,
+            'penutup_lha_rekomendasi' => \App\Models\PenutupLhaRekomendasi::class,
+            default => null
+        };
 
-        $modelClass = $modelMap[$request->type] ?? null;
         if (! $modelClass) {
-            return $this->error('Tipe item tidak valid.', 422);
+            return $this->error('Tipe dokumen tidak valid.', 422);
         }
 
-        $item = $modelClass::find($request->id);
+        $item = $modelClass::find($id);
         if (! $item) {
-            return $this->error('Item tidak ditemukan.', 404);
+            return $this->error('Dokumen tidak ditemukan.', 404);
         }
 
-        $result = \App\Helpers\ApprovalHelper::processApproval(
-            $item,
-            $request->action,
-            $request->input('rejection_reason')
-        );
+        if ($modelType === 'pelaporan_hasil_audit') {
+            $pelaporanService = app(\App\Services\Audit\PelaporanHasilAuditService::class);
+            $result = $pelaporanService->approve($item, $action, $reason);
+        } elseif ($modelType === 'exit_meeting') {
+            $exitMeetingService = app(\App\Services\Audit\ExitMeetingService::class);
+            $result = $exitMeetingService->approve($item, $action, $reason);
+        } else {
+            $result = \App\Helpers\ApprovalHelper::processApproval($item, $action, $reason);
+        }
 
         return $result['success']
             ? $this->success($item->fresh(), $result['message'])

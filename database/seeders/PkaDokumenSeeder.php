@@ -10,6 +10,8 @@ class PkaDokumenSeeder extends Seeder
 {
     public function run(): void
     {
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
         // Ambil semua ID dari program kerja audit yang sudah ada
         $programKerjaAuditList = ProgramKerjaAudit::all();
         
@@ -27,14 +29,14 @@ class PkaDokumenSeeder extends Seeder
                     'nama_dokumen' => 'Program Kerja Audit ' . ($index + 1),
                     'file_path' => 'dokumen/pka_' . ($index + 1) . '.pdf',
                     'status_approval' => 'approved',
-                    'approved_by' => 1,
+                    'approved_by' => $userIds[0] ?? null,
                     'approved_at' => now(),
                 ],
                 [
                     'nama_dokumen' => 'Surat Tugas Audit ' . ($index + 1),
                     'file_path' => 'dokumen/surat_tugas_' . ($index + 1) . '.pdf',
                     'status_approval' => 'approved',
-                    'approved_by' => 1,
+                    'approved_by' => $userIds[0] ?? null,
                     'approved_at' => now(),
                 ],
                 [
@@ -62,6 +64,8 @@ class PkaDokumenSeeder extends Seeder
 
         // Insert all dokumen data
         if (!empty($dokumenData)) {
+            foreach ($dokumenData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($dokumenData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('pka_dokumen')->insert($dokumenData);
             $this->command->info('PKA Dokumen seeder berhasil dijalankan.');
         }

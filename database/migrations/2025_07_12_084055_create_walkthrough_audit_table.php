@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('walkthrough_audit', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('perencanaan_audit_id');
+            $table->uuid('id')->primary();
+            $table->uuid('perencanaan_audit_id');
             $table->date('tanggal_walkthrough');
             $table->string('auditee_nama');
             $table->text('hasil_walkthrough');
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 

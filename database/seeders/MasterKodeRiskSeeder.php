@@ -9,7 +9,7 @@ class MasterKodeRiskSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('master_kode_risk')->insert([
+        $data = [
             // STRATEGIS
             ['kelompok_risiko' => 'STRATEGIS', 'kode_risiko' => 'S.1.1', 'kelompok_risiko_detail' => 'Regulasi Pemerintah', 'deskripsi_risiko' => 'Risiko Tarif Listrik'],
             ['kelompok_risiko' => 'STRATEGIS', 'kode_risiko' => 'S.1.2', 'kelompok_risiko_detail' => 'Regulasi Pemerintah', 'deskripsi_risiko' => 'Risiko Subsidi Listrik'],
@@ -96,6 +96,12 @@ class MasterKodeRiskSeeder extends Seeder
             ['kelompok_risiko' => 'KEPATUHAN', 'kode_risiko' => 'K.2.2', 'kelompok_risiko_detail' => 'Etika & Kecurangan (Fraud)', 'deskripsi_risiko' => 'Risiko Kecurangan / Korupsi'],
             ['kelompok_risiko' => 'KEPATUHAN', 'kode_risiko' => 'K.3.1', 'kelompok_risiko_detail' => 'Lingkungan', 'deskripsi_risiko' => 'Risiko Dampak Lingkungan'],
             ['kelompok_risiko' => 'KEPATUHAN', 'kode_risiko' => 'K.3.2', 'kelompok_risiko_detail' => 'Lingkungan', 'deskripsi_risiko' => 'Risiko Sosial / Politik / Budaya'],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+            $row['created_at'] = now();
+            $row['updated_at'] = now();
+        }
+        DB::table('master_kode_risk')->insert($data);
     }
 } 

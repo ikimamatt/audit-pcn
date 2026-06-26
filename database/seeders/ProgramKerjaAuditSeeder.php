@@ -91,6 +91,8 @@ class ProgramKerjaAuditSeeder extends Seeder
 
     public function run(): void
     {
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
         $perencanaanAuditList = PerencanaanAudit::all();
 
         if ($perencanaanAuditList->isEmpty()) {
@@ -102,7 +104,9 @@ class ProgramKerjaAuditSeeder extends Seeder
 
         foreach ($perencanaanAuditList as $index => $perencanaanAudit) {
             // ── 1. Insert PKA ──────────────────────────────────────────────
-            $pkaId = DB::table('program_kerja_audit')->insertGetId([
+            $pkaId = (string) \Illuminate\Support\Str::uuid();
+            DB::table('program_kerja_audit')->insert([
+                'id' => $pkaId,
                 'perencanaan_audit_id' => $perencanaanAudit->id,
                 'tanggal_pka'          => '2024-07-01',
                 'no_pka'               => 'PKA-00' . ($index + 1) . '/2024',
@@ -121,7 +125,9 @@ class ProgramKerjaAuditSeeder extends Seeder
 
             // ── 2. Insert Hierarki Proses Bisnis → Risiko → Kontrol ───────
             foreach ($this->hierarkiTemplate as $pbUrutan => $pbData) {
-                $pbId = DB::table('pka_proses_bisnis')->insertGetId([
+                $pbId = (string) \Illuminate\Support\Str::uuid();
+                DB::table('pka_proses_bisnis')->insert([
+                    'id' => $pbId,
                     'program_kerja_audit_id' => $pkaId,
                     'nama_proses_bisnis'     => $pbData['nama_proses_bisnis'],
                     'urutan'                 => $pbUrutan + 1,
@@ -130,7 +136,9 @@ class ProgramKerjaAuditSeeder extends Seeder
                 ]);
 
                 foreach ($pbData['risiko'] as $risikoUrutan => $risikoData) {
-                    $risikoId = DB::table('pka_risiko')->insertGetId([
+                    $risikoId = (string) \Illuminate\Support\Str::uuid();
+                    DB::table('pka_risiko')->insert([
+                        'id' => $risikoId,
                         'pka_proses_bisnis_id' => $pbId,
                         'deskripsi_risiko'     => $risikoData['deskripsi_risiko'],
                         'level_risiko'         => $risikoData['level_risiko'] ?? null,
@@ -143,6 +151,8 @@ class ProgramKerjaAuditSeeder extends Seeder
 
                     foreach ($risikoData['kontrol'] as $kontrolUrutan => $deskripsiKontrol) {
                         DB::table('pka_kontrol')->insert([
+                            'id' => (string) \Illuminate\Support\Str::uuid(),
+                            'id' => (string) \Illuminate\Support\Str::uuid(),
                             'pka_risiko_id'     => $risikoId,
                             'deskripsi_kontrol' => $deskripsiKontrol,
                             'urutan'            => $kontrolUrutan + 1,
@@ -155,9 +165,9 @@ class ProgramKerjaAuditSeeder extends Seeder
 
             // ── 3. Dokumen PKA ─────────────────────────────────────────────
             $dokumens = [
-                ['nama_dokumen' => 'Program Kerja Audit ' . ($index + 1),     'file_path' => 'dokumen/pka_' . ($index + 1) . '.pdf',          'status_approval' => 'approved', 'approved_by' => 1, 'approved_at' => now()],
+                ['nama_dokumen' => 'Program Kerja Audit ' . ($index + 1),     'file_path' => 'dokumen/pka_' . ($index + 1) . '.pdf',          'status_approval' => 'approved', 'approved_by' => $userIds[0] ?? null, 'approved_at' => now()],
                 ['nama_dokumen' => 'Lampiran Dokumen ' . ($index + 1),        'file_path' => 'dokumen/lampiran_' . ($index + 1) . '.pdf',     'status_approval' => 'pending',  'approved_by' => null, 'approved_at' => null],
-                ['nama_dokumen' => 'Surat Tugas Audit ' . ($index + 1),       'file_path' => 'dokumen/surat_tugas_' . ($index + 1) . '.pdf',  'status_approval' => 'approved', 'approved_by' => 1, 'approved_at' => now()],
+                ['nama_dokumen' => 'Surat Tugas Audit ' . ($index + 1),       'file_path' => 'dokumen/surat_tugas_' . ($index + 1) . '.pdf',  'status_approval' => 'approved', 'approved_by' => $userIds[0] ?? null, 'approved_at' => now()],
             ];
 
             foreach ($dokumens as $dok) {
@@ -170,6 +180,8 @@ class ProgramKerjaAuditSeeder extends Seeder
         }
 
         if (!empty($dokumenData)) {
+            foreach ($dokumenData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($dokumenData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('pka_dokumen')->insert($dokumenData);
         }
 

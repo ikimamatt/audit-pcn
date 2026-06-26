@@ -16,13 +16,32 @@ class PkptApiController extends BaseApiController
         protected PerencanaanAuditService $perencanaanService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $data = JadwalPkptAudit::with('auditee')->get();
-        return $this->success($data);
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+
+        $query = JadwalPkptAudit::with('auditee');
+
+        if ($request->filled('search')) {
+            $search = '%' . $request->input('search') . '%';
+            $query->where(function($q) use ($search) {
+                $q->where('jenis_audit', 'like', $search)
+                  ->orWhereHas('auditee', function($q2) use ($search) {
+                      $q2->where('nama_bidang', 'like', $search);
+                  });
+            });
+        }
+
+        $total = $query->count();
+        $data = $query->orderBy('tanggal_mulai', 'desc')
+            ->limit($perPage)
+            ->offset($offset)
+            ->get();
+
+        return $this->successPaginated($data, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = JadwalPkptAudit::with('auditee')->find($id);
         if (! $item) {
@@ -45,7 +64,7 @@ class PkptApiController extends BaseApiController
         }
     }
 
-    public function update(UpdateJadwalPkptRequest $request, int $id): JsonResponse
+    public function update(UpdateJadwalPkptRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -64,7 +83,7 @@ class PkptApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();

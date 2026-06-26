@@ -18,22 +18,28 @@ class TodBpmApiController extends BaseApiController
         protected TodBpmService $todBpmService
     ) {}
 
+    /**
+     * Daftar TOD BPM (server-side paginated via Stored Procedure).
+     * Query params: page, limit, search (nomor_surat_tugas), status
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol']);
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        if ($request->filled('bulan')) {
-            $query->whereHas('perencanaanAudit', function ($q) use ($request) {
-                $bulan = \Carbon\Carbon::parse($request->bulan);
-                $q->whereYear('tanggal_audit_mulai', $bulan->year)
-                  ->whereMonth('tanggal_audit_mulai', $bulan->month);
-            });
-        }
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
 
-        return $this->success($query->get());
+        [$total, $rows] = $this->callSP('sp_get_tod_bpm', [
+            $perPage, $offset, $search, $status,
+        ]);
+
+        $items = TodBpmAudit::hydrate($rows);
+        $items->load(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol']);
+
+        return $this->successPaginated($items, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = TodBpmAudit::with(['perencanaanAudit.auditee', 'evaluasi', 'pkaRisiko', 'pkaKontrol'])->find($id);
         if (! $item) {
@@ -61,7 +67,7 @@ class TodBpmApiController extends BaseApiController
         }
     }
 
-    public function update(UpdateTodBpmRequest $request, int $id): JsonResponse
+    public function update(UpdateTodBpmRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -85,7 +91,7 @@ class TodBpmApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -104,7 +110,7 @@ class TodBpmApiController extends BaseApiController
         }
     }
 
-    public function approval(Request $request, int $id): JsonResponse
+    public function approval(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -130,7 +136,7 @@ class TodBpmApiController extends BaseApiController
 
     // ── Evaluasi ─────────────────────────────────────────────────
 
-    public function evaluasiIndex(int $bpmId): JsonResponse
+    public function evaluasiIndex(string $bpmId): JsonResponse
     {
         $evaluasi = TodBpmEvaluasi::where('tod_bpm_audit_id', $bpmId)->get();
         return $this->success($evaluasi);
@@ -146,7 +152,7 @@ class TodBpmApiController extends BaseApiController
         return $this->success($item, 'Evaluasi TOD BPM berhasil disimpan.', 201);
     }
 
-    public function evaluasiUpdate(UpdateTodBpmEvaluasiRequest $request, int $id): JsonResponse
+    public function evaluasiUpdate(UpdateTodBpmEvaluasiRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -161,7 +167,7 @@ class TodBpmApiController extends BaseApiController
         return $this->success($item->fresh(), 'Evaluasi TOD BPM berhasil diupdate.');
     }
 
-    public function evaluasiDestroy(Request $request, int $id): JsonResponse
+    public function evaluasiDestroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();

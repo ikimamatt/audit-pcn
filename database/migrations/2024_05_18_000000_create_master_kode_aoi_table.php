@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_kode_aoi', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->string('indikator_pengawasan');
             $table->string('kode_area_of_improvement');
             $table->text('deskripsi_area_of_improvement');

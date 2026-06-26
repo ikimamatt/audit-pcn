@@ -15,25 +15,31 @@ class ExitMeetingApiController extends BaseApiController
         protected ExitMeetingService $exitMeetingService
     ) {}
 
+    /**
+     * Daftar Exit Meeting (server-side paginated via Stored Procedure).
+     * Query params: page, limit, search (nomor_surat_tugas), status
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = RealisasiAudit::with([
-            'perencanaanAudit.auditee',
-            'perencanaanAudit.programKerjaAudit.milestones',
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
+
+        [$total, $rows] = $this->callSP('sp_get_exit_meeting', [
+            $perPage, $offset, $search, $status,
         ]);
 
-        if ($request->filled('bulan')) {
-            $query->whereHas('perencanaanAudit', function ($q) use ($request) {
-                $bulan = \Carbon\Carbon::parse($request->bulan);
-                $q->whereYear('tanggal_audit_mulai', $bulan->year)
-                  ->whereMonth('tanggal_audit_mulai', $bulan->month);
-            });
-        }
+        $items = RealisasiAudit::hydrate($rows);
+        $items->load([
+            'perencanaanAudit.auditee',
+            'perencanaanAudit.programKerjaAudit.milestones'
+        ]);
 
-        return $this->success($query->orderByDesc('id')->get());
+        return $this->successPaginated($items, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = RealisasiAudit::with([
             'perencanaanAudit.auditee',
@@ -68,7 +74,7 @@ class ExitMeetingApiController extends BaseApiController
         }
     }
 
-    public function update(UpdateExitMeetingRequest $request, int $id): JsonResponse
+    public function update(UpdateExitMeetingRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -95,7 +101,7 @@ class ExitMeetingApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -114,7 +120,7 @@ class ExitMeetingApiController extends BaseApiController
         }
     }
 
-    public function approval(Request $request, int $id): JsonResponse
+    public function approval(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();

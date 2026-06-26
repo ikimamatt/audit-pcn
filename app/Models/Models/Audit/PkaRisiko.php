@@ -5,8 +5,10 @@ namespace App\Models\Models\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class PkaRisiko extends Model
 {
+    use HasUuids;
     use HasFactory;
 
     protected $table = 'pka_risiko';

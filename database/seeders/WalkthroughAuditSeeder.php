@@ -96,6 +96,8 @@ class WalkthroughAuditSeeder extends Seeder
 
         // Insert all walkthrough data
         if (!empty($walkthroughData)) {
+            foreach ($walkthroughData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($walkthroughData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('walkthrough_audit')->insert($walkthroughData);
             $this->command->info('Walkthrough Audit seeder berhasil dijalankan dengan ' . count($walkthroughData) . ' data.');
         }

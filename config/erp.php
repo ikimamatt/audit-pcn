@@ -42,4 +42,12 @@ return [
     |
     */
     'timeout' => (int) env('ERP_API_SERVICE_TIMEOUT', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gateway Security Configurations
+    |--------------------------------------------------------------------------
+    */
+    'gateway_internal_key' => env('INTERNAL_SERVICE_KEY', ''),
+    'gateway_jwt_secret'   => env('JWT_SECRET', ''),
 ];

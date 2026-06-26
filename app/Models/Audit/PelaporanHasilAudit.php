@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class PelaporanHasilAudit extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
 
     protected $table = 'pelaporan_hasil_audit';

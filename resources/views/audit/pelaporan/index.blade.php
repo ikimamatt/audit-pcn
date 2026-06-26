@@ -693,7 +693,7 @@
                                     </td>
                                     <td class="text-center">
                                         @if($item->temuan && $item->temuan->count() > 0)
-                                            <span class="iss-count-badge" onclick="showIssModal({{ $item->id }}, '{{ $item->nomor_lha_lhk }}')" title="Klik untuk lihat detail ISS">
+                                            <span class="iss-count-badge" onclick="showIssModal('{{ $item->id }}', '{{ $item->nomor_lha_lhk }}')" title="Klik untuk lihat detail ISS">
                                                 {{ $item->temuan->count() }}
                                             </span>
                                         @else
@@ -750,17 +750,17 @@
                                                     <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                     
                                                     @if($canApproveLvl1)
-                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve">
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve">
                                                             <i class="mdi mdi-check"></i>
                                                         </button>
                                                     @elseif($canApproveLvl2)
-                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData({{ $item->id }})" title="Approve Final">
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve Final">
                                                             <i class="mdi mdi-check-all"></i>
                                                         </button>
                                                     @endif
                                 
                                                     @if($canReject)
-                                                        <button type="button" class="btn-act btn-act-reject" onclick="rejectData({{ $item->id }})" title="Reject">
+                                                        <button type="button" class="btn-act btn-act-reject" onclick="rejectData('{{ $item->id }}')" title="Reject">
                                                             <i class="mdi mdi-close"></i>
                                                         </button>
                                                     @endif
@@ -771,7 +771,7 @@
                                             <button type="button" 
                                                     class="btn-act btn-act-delete" 
                                                     title="Hapus"
-                                                    onclick="deleteData({{ $item->id }})">
+                                                    onclick="deleteData('{{ $item->id }}')">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>
                                             @endcanModifyData
@@ -1113,7 +1113,7 @@ function showIssModal(id, nomorLhaLhk) {
                         
                         ${canModifyData ? `
                         <div class="text-end mt-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editIss(${temuan.id})">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editIss('${temuan.id}')">
                                 <i class="mdi mdi-pencil me-1"></i>Edit ISS
                             </button>
                         </div>

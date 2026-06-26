@@ -33,9 +33,9 @@ class MasterUserSeeder extends Seeder
         $firstAreaId       = $areaMap->first(); // fallback area default
 
         if ($superadminAksesId && $spiDivisiId) {
-            DB::table('master_user')->updateOrInsert(
-                ['username' => 'superadmin'],
-                [
+            if (!DB::table('master_user')->where('username', 'superadmin')->exists()) {
+                DB::table('master_user')->insert([
+                    'id'                   => (string) \Illuminate\Support\Str::uuid(),
                     'nama'                 => 'System Administrator',
                     'username'             => 'superadmin',
                     'nip'                  => 'SUPERADMIN001',
@@ -48,8 +48,8 @@ class MasterUserSeeder extends Seeder
                     'master_akses_user_id' => $superadminAksesId,
                     'created_at'           => now(),
                     'updated_at'           => now(),
-                ]
-            );
+                ]);
+            }
             echo "✅ Superadmin user created (hidden from master user view)" . PHP_EOL;
         }
 
@@ -353,6 +353,7 @@ class MasterUserSeeder extends Seeder
             }
 
             DB::table('master_user')->insert([
+                'id'                   => (string) \Illuminate\Support\Str::uuid(),
                 'nama'                 => $user['nama'],
                 'username'             => $user['username'],
                 'nip'                  => $user['nip'],

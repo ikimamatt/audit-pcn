@@ -230,7 +230,7 @@ class ProgramKerjaAuditService
      * @param int $perencanaanId
      * @return array
      */
-    public function getHierarkiFlat(int $perencanaanId): array
+    public function getHierarkiFlat(string $perencanaanId): array
     {
         $pka = ProgramKerjaAudit::where('perencanaan_audit_id', $perencanaanId)
             ->with(['prosesBisnis.risikoList.kontrolList'])
@@ -284,7 +284,7 @@ class ProgramKerjaAuditService
      * @param array $prosesBisnisList
      * @return void
      */
-    private function storeHierarki(int $pkaId, array $prosesBisnisList): void
+    private function storeHierarki(string $pkaId, array $prosesBisnisList): void
     {
         foreach ($prosesBisnisList as $pbUrutan => $pbData) {
             $namaPb = trim($pbData['nama'] ?? '');

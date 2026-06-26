@@ -315,8 +315,8 @@
                         </td>
                         <td>
                             @if($item->hasil_walkthrough)
-                                <div class="mb-1" style="font-size:0.8rem; color:#4b5563; max-width:250px; line-height:1.4;">
-                                    <span title="{{ $item->hasil_walkthrough }}">{{ Str::limit($item->hasil_walkthrough, 45) }}</span>
+                                <div class="mb-1" style="font-size:0.8rem; color:#4b5563; max-width:320px; line-height:1.4; word-break:break-word;">
+                                    {{ $item->hasil_walkthrough }}
                                 </div>
                             @endif
                             @if($item->file_bpm)

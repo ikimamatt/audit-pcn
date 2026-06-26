@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('monitoring_tindak_lanjut', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('objek_pemeriksaan');
             $table->integer('aoi_count')->default(0);
             $table->integer('rekomendasi_count')->default(0);

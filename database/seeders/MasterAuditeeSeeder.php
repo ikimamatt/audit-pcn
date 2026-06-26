@@ -9,11 +9,8 @@ class MasterAuditeeSeeder extends Seeder
 {
     public function run(): void
     {
-        // Hapus data dan reset auto-increment tanpa melanggar foreign key constraint
         DB::table('master_auditee')->delete();
-        DB::statement('ALTER TABLE master_auditee AUTO_INCREMENT = 1');
-        // Data bidang sesuai dengan master_bidang
-        DB::table('master_auditee')->insert([
+        $data = [
             ['kd_bidang' => '01', 'nama_bidang' => 'PEMBANGKITAN',                     'is_available_for_up' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['kd_bidang' => '02', 'nama_bidang' => 'DISTRIBUSI',                       'is_available_for_up' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['kd_bidang' => '03', 'nama_bidang' => 'PELAYANAN PELANGGAN',              'is_available_for_up' => 1, 'created_at' => now(), 'updated_at' => now()],
@@ -26,6 +23,10 @@ class MasterAuditeeSeeder extends Seeder
             ['kd_bidang' => '10', 'nama_bidang' => 'SPI',                              'is_available_for_up' => 0, 'created_at' => now(), 'updated_at' => now()],
             ['kd_bidang' => '11', 'nama_bidang' => 'BEYOND KWH',                       'is_available_for_up' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['kd_bidang' => '12', 'nama_bidang' => 'OPERASI',                          'is_available_for_up' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+        }
+        DB::table('master_auditee')->insert($data);
     }
 }

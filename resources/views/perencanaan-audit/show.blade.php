@@ -739,7 +739,7 @@
                                         @endif
                                         
                                         @if($canRejectDok)
-                                            <button type="button" class="btn btn-sm btn-danger ms-1" style="border-radius:8px;font-size:.78rem;" onclick="rejectDokumen({{ $item->id }}, {{ $dok->id }})">
+                                            <button type="button" class="btn btn-sm btn-danger ms-1" style="border-radius:8px;font-size:.78rem;" onclick="rejectDokumen('{{ $item->id }}', '{{ $dok->id }}')">
                                                 <i class="mdi mdi-close me-1"></i>Reject
                                             </button>
                                         @endif

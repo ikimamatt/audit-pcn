@@ -346,7 +346,7 @@
                                         @csrf @method('DELETE')
                                         <button type="button"
                                                 class="btn-act btn-act-delete"
-                                                onclick="deleteData({{ $item->id }})"
+                                                onclick="deleteData('{{ $item->id }}')"
                                                 title="Hapus Bidang">
                                             <i class="mdi mdi-delete"></i>
                                         </button>

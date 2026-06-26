@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\PkaRisiko;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class ToeRisiko extends Model
 {
+    use HasUuids;
     protected $table   = 'toe_risiko';
     protected $guarded = [];
 

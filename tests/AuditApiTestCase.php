@@ -51,6 +51,28 @@ abstract class AuditApiTestCase extends TestCase
         $payloadBase64 = base64_encode($payloadJson);
         $signature = hash_hmac('sha256', $payloadBase64, $sharedSecret);
 
+        // Gateway Validation Mocking
+        $jwtSecret = 'testing_jwt_secret_key_123';
+        config(['erp.gateway_jwt_secret' => $jwtSecret]);
+
+        $header = json_encode(['alg' => 'HS256', 'typ' => 'JWT']);
+        $payload = json_encode([
+            'user_id' => 123,
+            'nip' => $nip,
+            'name' => 'ERP Test User',
+            'email' => $email,
+            'roles' => [$role],
+            'permissions' => $permissions,
+            'exp' => time() + 3600,
+        ]);
+
+        $headerBase64 = rtrim(strtr(base64_encode($header), '+/', '-_'), '=');
+        $payloadBase64Url = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+        $headerAndPayload = $headerBase64 . '.' . $payloadBase64Url;
+        $sig = hash_hmac('sha256', $headerAndPayload, $jwtSecret, true);
+        $sigBase64 = rtrim(strtr(base64_encode($sig), '+/', '-_'), '=');
+        $jwtToken = $headerAndPayload . '.' . $sigBase64;
+
         // Also mock authentication inside Laravel guard if checking local session/web auth
         $localUser = MasterUser::where('nip', $nip)->first();
         if ($localUser) {
@@ -62,6 +84,8 @@ abstract class AuditApiTestCase extends TestCase
             'X-ERP-Signature' => $signature,
             'X-ERP-Domain' => $allowedDomain,
             'Accept' => 'application/json',
+            'X-Gateway-Service' => 'erp-api-gateway',
+            'Authorization' => 'Bearer ' . $jwtToken,
         ];
     }
 

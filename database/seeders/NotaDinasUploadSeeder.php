@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Support\Facades\DB;
+
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\NotaDinasUpload;
@@ -14,6 +16,8 @@ class NotaDinasUploadSeeder extends Seeder
      */
     public function run(): void
     {
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
         $sampleData = [
             [
                 'nomor_nota_dinas' => 'ND-001/AUDIT/2024',
@@ -22,8 +26,8 @@ class NotaDinasUploadSeeder extends Seeder
                 'file_path' => 'uploads/nota-dinas/nd-001-audit-2024.pdf',
                 'keterangan' => 'Nota dinas untuk audit keuangan tahun 2024',
                 'status' => 'approved',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subDays(5),
                 'approval_notes' => 'Dokumen lengkap dan sesuai prosedur',
                 'created_at' => Carbon::now()->subDays(10),
@@ -36,7 +40,7 @@ class NotaDinasUploadSeeder extends Seeder
                 'file_path' => 'uploads/nota-dinas/nd-002-audit-2024.pdf',
                 'keterangan' => 'Nota dinas untuk audit operasional',
                 'status' => 'pending',
-                'uploaded_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
                 'created_at' => Carbon::now()->subDays(3),
                 'updated_at' => Carbon::now()->subDays(3),
             ],
@@ -47,8 +51,8 @@ class NotaDinasUploadSeeder extends Seeder
                 'file_path' => 'uploads/nota-dinas/nd-003-audit-2024.pdf',
                 'keterangan' => 'Nota dinas untuk audit compliance',
                 'status' => 'approved',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subDays(1),
                 'approval_notes' => 'Dokumen sudah sesuai standar audit',
                 'created_at' => Carbon::now()->subDays(7),
@@ -61,7 +65,7 @@ class NotaDinasUploadSeeder extends Seeder
                 'file_path' => 'uploads/nota-dinas/nd-004-audit-2024.pdf',
                 'keterangan' => 'Nota dinas untuk audit IT',
                 'status' => 'pending',
-                'uploaded_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
                 'created_at' => Carbon::now()->subDays(1),
                 'updated_at' => Carbon::now()->subDays(1),
             ],
@@ -72,8 +76,8 @@ class NotaDinasUploadSeeder extends Seeder
                 'file_path' => 'uploads/nota-dinas/nd-005-audit-2024.pdf',
                 'keterangan' => 'Nota dinas untuk audit risiko',
                 'status' => 'rejected',
-                'uploaded_by' => 1,
-                'approved_by' => 1,
+                'uploaded_by' => $userIds[0] ?? null,
+                'approved_by' => $userIds[0] ?? null,
                 'approved_at' => Carbon::now()->subHours(6),
                 'approval_notes' => 'Dokumen perlu perbaikan format dan konten',
                 'created_at' => Carbon::now()->subDays(2),

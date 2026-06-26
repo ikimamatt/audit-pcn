@@ -21,15 +21,136 @@ class PenutupLhaApiController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
-        $data = PenutupLhaRekomendasi::with([
-            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
-            'tindakLanjut',
-        ])->get();
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        return $this->success($data);
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
+        $nomorSt = $request->input('nomor_surat_tugas') ?: null;
+
+        if ($nomorSt) {
+            [$total, $rows] = $this->callSP('sp_get_pemantauan', [
+                $perPage,
+                $offset,
+                $search,
+                $nomorSt,
+            ]);
+
+            $rekomendasis = PenutupLhaRekomendasi::hydrate($rows);
+            $rekomendasis->load([
+                'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
+                'tindakLanjut',
+                'picUsers'
+            ]);
+
+            return $this->successPaginated($rekomendasis, $total, $page, $perPage);
+        }
+
+        [$total, $rows] = $this->callSP('sp_get_penutup_lha', [
+            $perPage,
+            $offset,
+            $search,
+            $status,
+        ]);
+
+        return $this->successPaginated($rows, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+
+    public function selectNomorSuratTugas(Request $request): JsonResponse
+    {
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+
+        $localUser = $this->localUser($request);
+        $userAreaId = null;
+        if ($localUser && $this->localRole($request) === 'AUDITEE') {
+            $userAreaId = $localUser->master_area_id;
+        }
+
+        $query = \Illuminate\Support\Facades\DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', function ($join) {
+                $join->on('pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+                     ->where('pt.status_approval', '=', 'approved');
+            })
+            ->select(
+                'pa.id as perencanaan_audit_id',
+                'pa.nomor_surat_tugas',
+                'pa.jenis_audit',
+                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT pt.id) as count_temuan'),
+                \Illuminate\Support\Facades\DB::raw('GROUP_CONCAT(DISTINCT pha.nomor_lha_lhk SEPARATOR ", ") as nomor_lha_lhk')
+            )
+            ->groupBy('pa.id', 'pa.nomor_surat_tugas', 'pa.jenis_audit');
+
+        if ($userAreaId !== null) {
+            $query->where('pa.area_id', $userAreaId);
+        }
+
+        if ($request->filled('jenis_audit')) {
+            $query->where('pa.jenis_audit', $request->jenis_audit);
+        }
+
+        if ($request->filled('search')) {
+            $search = \App\Helpers\QueryHelper::escapeLike($request->search);
+            $query->where(function($q) use ($search) {
+                $q->where('pa.nomor_surat_tugas', 'like', '%' . $search . '%')
+                  ->orWhere('pha.nomor_lha_lhk', 'like', '%' . $search . '%');
+            });
+        }
+
+        $totalQuery = clone $query;
+        $total = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$totalQuery->toSql()}) as sub"))
+            ->mergeBindings($totalQuery)
+            ->count();
+
+        $nomorSuratTugasList = $query->orderBy('pa.nomor_surat_tugas')
+            ->limit($perPage)
+            ->offset($offset)
+            ->get()
+            ->map(function($row) {
+                return [
+                    'nomor_surat_tugas'    => $row->nomor_surat_tugas,
+                    'perencanaan_audit_id' => $row->perencanaan_audit_id,
+                    'jenis_audit'          => $row->jenis_audit,
+                    'nomor_lha_lhk'        => $row->nomor_lha_lhk ?? '',
+                    'count_temuan'         => (int) $row->count_temuan,
+                ];
+            })
+            ->values();
+
+        // Get audit types
+        $jenisAuditQuery = \Illuminate\Support\Facades\DB::table('perencanaan_audit as pa')
+            ->join('pelaporan_hasil_audit as pha', 'pa.id', '=', 'pha.perencanaan_audit_id')
+            ->join('pelaporan_temuan as pt', function ($join) {
+                $join->on('pha.id', '=', 'pt.pelaporan_hasil_audit_id')
+                     ->where('pt.status_approval', '=', 'approved');
+            });
+
+        if ($userAreaId !== null) {
+            $jenisAuditQuery->where('pa.area_id', $userAreaId);
+        }
+
+        $jenisAuditList = $jenisAuditQuery
+            ->distinct()
+            ->orderBy('pa.jenis_audit')
+            ->pluck('pa.jenis_audit')
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nomorSuratTugasList' => $nomorSuratTugasList,
+                'jenisAuditList'      => $jenisAuditList,
+            ],
+            'meta' => [
+                'total'     => $total,
+                'page'      => $page,
+                'per_page'  => $perPage,
+                'last_page' => $total > 0 ? (int) ceil($total / $perPage) : 1,
+            ]
+        ]);
+    }
+
+    public function show(string $id): JsonResponse
     {
         $item = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
@@ -58,7 +179,7 @@ class PenutupLhaApiController extends BaseApiController
         }
     }
 
-    public function update(UpdatePenutupLhaRekomendasiRequest $request, int $id): JsonResponse
+    public function update(UpdatePenutupLhaRekomendasiRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -77,7 +198,7 @@ class PenutupLhaApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -96,7 +217,7 @@ class PenutupLhaApiController extends BaseApiController
         }
     }
 
-    public function approval(Request $request, int $id): JsonResponse
+    public function approval(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -121,8 +242,7 @@ class PenutupLhaApiController extends BaseApiController
     }
 
     // ── Tindak Lanjut ────────────────────────────────────────────
-
-    public function tindakLanjutIndex(int $rekomendasiId): JsonResponse
+    public function tindakLanjutIndex(string $rekomendasiId): JsonResponse
     {
         $rekomendasi = PenutupLhaRekomendasi::with(['tindakLanjut'])->find($rekomendasiId);
         if (! $rekomendasi) {
@@ -135,7 +255,7 @@ class PenutupLhaApiController extends BaseApiController
         ]);
     }
 
-    public function tindakLanjutStore(StoreTindakLanjutRequest $request, int $rekomendasiId): JsonResponse
+    public function tindakLanjutStore(StoreTindakLanjutRequest $request, string $rekomendasiId): JsonResponse
     {
         $rekomendasi = PenutupLhaRekomendasi::find($rekomendasiId);
         if (! $rekomendasi) {
@@ -153,5 +273,43 @@ class PenutupLhaApiController extends BaseApiController
         } catch (\Exception $e) {
             return $this->error('Gagal menyimpan data: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Get active reminders for the logged in user.
+     */
+    public function myReminders(Request $request): JsonResponse
+    {
+        $localUser = $this->localUser($request);
+        if (!$localUser) {
+            return $this->success([]);
+        }
+        $userId = $localUser->id;
+
+        $reminders = PenutupLhaRekomendasi::whereIn('status_tindak_lanjut', ['open', 'on_progress'])
+            ->whereHas('picUsers', function ($q) use ($userId) {
+                $q->where('master_user_id', $userId)
+                  ->where('pic_type', 'business_contact');
+            })
+            ->whereIn('status_approval', ['approved', 'rejected', 'rejected_level1'])
+            ->with(['temuan.pelaporanHasilAudit.perencanaanAudit'])
+            ->get()
+            ->map(function ($item) {
+                $pa = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
+                $pha = $item->temuan->pelaporanHasilAudit ?? null;
+                $pt = $item->temuan ?? null;
+
+                return [
+                    'id' => $item->id,
+                    'rekomendasi' => $item->rekomendasi,
+                    'target_waktu' => $item->target_waktu,
+                    'nomor_surat_tugas' => $pa ? $pa->nomor_surat_tugas : '-',
+                    'nomor_lha_lhk' => $pha ? $pha->nomor_lha_lhk : '-',
+                    'nomor_iss' => $pt ? $pt->nomor_iss : '-',
+                    'link' => "/audit/pemantauan/{$item->id}/tindak-lanjut",
+                ];
+            });
+
+        return $this->success($reminders);
     }
 }

@@ -10,6 +10,8 @@ class JadwalPkptAuditSeeder extends Seeder
 {
     public function run(): void
     {
+        $userId = DB::table('master_user')->value('id');
+
         // Ambil ID dari auditee yang sudah ada
         $auditee = MasterAuditee::first();
         
@@ -18,7 +20,7 @@ class JadwalPkptAuditSeeder extends Seeder
             return;
         }
 
-        DB::table('jadwal_pkpt_audits')->insert([
+        $data = [
             [
                 'auditee_id' => $auditee->id,
                 'jenis_audit' => 'PKPT Tahunan',
@@ -38,11 +40,15 @@ class JadwalPkptAuditSeeder extends Seeder
                 'tanggal_mulai' => '2024-08-01',
                 'tanggal_selesai' => '2024-08-05',
                 'status_approval' => 'approved',
-                'approved_by' => 1,
+                'approved_by' => $userId,
                 'approved_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+        }
+        DB::table('jadwal_pkpt_audits')->insert($data);
     }
 } 

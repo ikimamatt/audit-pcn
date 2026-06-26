@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pka_risiko', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('pka_proses_bisnis_id');
+            $table->uuid('id')->primary();
+            $table->uuid('pka_proses_bisnis_id');
             $table->text('deskripsi_risiko');
             $table->string('level_risiko')->nullable();
             $table->text('penyebab_risiko')->nullable();

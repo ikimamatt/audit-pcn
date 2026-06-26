@@ -10,15 +10,12 @@ class TodBpmEvaluasiSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ambil ID dari tod_bpm_audit yang sudah ada
         $todBpmAudits = TodBpmAudit::take(2)->get();
-        
         if ($todBpmAudits->count() < 2) {
             $this->command->warn('Tidak cukup data tod_bpm_audit. Skipping TodBpmEvaluasiSeeder.');
             return;
         }
-
-        DB::table('tod_bpm_evaluasi')->insert([
+        $data = [
             [
                 'tod_bpm_audit_id' => $todBpmAudits[0]->id,
                 'hasil_evaluasi' => 'Cukup',
@@ -31,6 +28,10 @@ class TodBpmEvaluasiSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+        }
+        DB::table('tod_bpm_evaluasi')->insert($data);
     }
-} 
+}

@@ -202,7 +202,7 @@
                                             <button type="button" 
                                                     class="btn btn-outline-danger btn-sm btn-custom" 
                                                     title="Hapus"
-                                                    onclick="deleteData({{ $item->id }})">
+                                                    onclick="deleteData('{{ $item->id }}')">
                                                 <i class="mdi mdi-delete me-1"></i>Hapus
                                             </button>
                                         </div>

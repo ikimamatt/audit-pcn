@@ -17,7 +17,7 @@ class MonitoringService
     /**
      * Get planning list filtered by search and role access.
      */
-    public function getSelectNomorSuratTugasList(?int $userAreaId, ?string $search, ?string $jenisAudit): array
+    public function getSelectNomorSuratTugasList(?string $userAreaId, ?string $search, ?string $jenisAudit): array
     {
         // Single JOIN query replaces get() + map() with N+1 count sub-query
         $query = DB::table('perencanaan_audit as pa')
@@ -84,7 +84,7 @@ class MonitoringService
     /**
      * Get pemantauan data.
      */
-    public function getPemantauanData(?string $nomorSuratTugas, ?int $userAreaId, ?string $bulan): array
+    public function getPemantauanData(?string $nomorSuratTugas, ?string $userAreaId, ?string $bulan): array
     {
         $query = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
@@ -194,7 +194,7 @@ class MonitoringService
      * Get aggregated monitoring data.
      * Fixes N+1 issue by using memory-level collections.
      */
-    public function getMonitoringData(int $selectedYear, ?int $userAreaId): array
+    public function getMonitoringData(int $selectedYear, ?string $userAreaId): array
     {
         $currentMonth = Carbon::create($selectedYear, Carbon::now()->month, 1);
         $currentMonthName = Carbon::now()->format('M');
@@ -435,7 +435,7 @@ class MonitoringService
      * Get progress dashboard data.
      * Fixes N+1 issue by using grouping and raw aggregations.
      */
-    public function getProgressData(int $selectedYear, string $selectedStatus, ?int $selectedAuditee, ?int $userAreaId): array
+    public function getProgressData(int $selectedYear, string $selectedStatus, ?string $selectedAuditee, ?string $userAreaId): array
     {
         // 1. Base Query for Recommendation Data table
         $query = PenutupLhaRekomendasi::with([

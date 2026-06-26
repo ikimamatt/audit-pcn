@@ -24,7 +24,7 @@ class PersetujuanService
      * @param bool $isSuperAdmin
      * @return Collection
      */
-    public function getPendingItems(int $userId, bool $isSuperAdmin): Collection
+    public function getPendingItems(string $userId, bool $isSuperAdmin): Collection
     {
         // 1. Fetch PKAs
         $pkas = ProgramKerjaAudit::with(['perencanaanAudit.auditee', 'perencanaanAudit.ketuaTim', 'perencanaanAudit.koordinator'])
@@ -115,8 +115,8 @@ class PersetujuanService
                 
                 $approvalLevel = $status === 'pending' ? 'Level 1 (Business Reviewer 1)' : 'Level 2 (Business Reviewer 2)';
             } else {
-                $isKetua = (int)($perencanaan->ketua_tim_id ?? 0) === $userId;
-                $isKoordinator = (int)($perencanaan->koordinator_id ?? 0) === $userId;
+                $isKetua = ($perencanaan->ketua_tim_id ?? null) === $userId;
+                $isKoordinator = ($perencanaan->koordinator_id ?? null) === $userId;
 
                 if ($status === 'pending') {
                     $canApprove = ($isKetua || $isSuperAdmin);

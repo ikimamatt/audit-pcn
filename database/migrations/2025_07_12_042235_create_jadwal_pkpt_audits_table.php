@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jadwal_pkpt_audits', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('auditee_id');
+            $table->uuid('id')->primary();
+            $table->uuid('auditee_id');
             $table->string('jenis_audit');
             $table->integer('jumlah_auditor');
             $table->date('tanggal_mulai');
             $table->date('tanggal_selesai');
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 

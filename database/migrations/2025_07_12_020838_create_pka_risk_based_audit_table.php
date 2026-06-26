@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pka_risk_based_audit', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('program_kerja_audit_id');
+            $table->uuid('id')->primary();
+            $table->uuid('program_kerja_audit_id');
             $table->text('deskripsi_resiko');
             $table->text('penyebab_resiko');
             $table->text('dampak_resiko');

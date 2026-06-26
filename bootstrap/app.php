@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'                => \App\Http\Middleware\CheckRole::class,
             'can-modify'          => \App\Http\Middleware\CheckCanModify::class,
             'erp.header.validate' => \App\Http\Middleware\ValidationERPToken::class,
+            'gateway.validate'    => \App\Http\Middleware\GatewayValidation::class,
         ]);
         
         // Apply middleware to web routes

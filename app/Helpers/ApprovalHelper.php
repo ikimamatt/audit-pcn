@@ -81,7 +81,7 @@ class ApprovalHelper
      * Cek apakah user saat ini bisa approve Level 1 (Ketua Tim atau PIC approval_1_spi)
      * SUPER ADMIN selalu bisa.
      */
-    public static function canApproveLevel1($item, ?int $userId = null): bool
+    public static function canApproveLevel1($item, ?string $userId = null): bool
     {
         if (!Auth::check()) return false;
 
@@ -104,14 +104,14 @@ class ApprovalHelper
         $perencanaan = self::getPerencanaanAudit($item);
         if (!$perencanaan) return false;
 
-        return (int) $perencanaan->ketua_tim_id === $userId && $validStatusLvl1;
+        return $perencanaan->ketua_tim_id === $userId && $validStatusLvl1;
     }
 
     /**
      * Cek apakah user saat ini bisa approve Level 2 (Koordinator atau PIC approval_2_spi)
      * SUPER ADMIN selalu bisa.
      */
-    public static function canApproveLevel2($item, ?int $userId = null): bool
+    public static function canApproveLevel2($item, ?string $userId = null): bool
     {
         if (!Auth::check()) return false;
 
@@ -134,13 +134,13 @@ class ApprovalHelper
         $perencanaan = self::getPerencanaanAudit($item);
         if (!$perencanaan) return false;
 
-        return (int) $perencanaan->koordinator_id === $userId && $validStatusLvl2;
+        return $perencanaan->koordinator_id === $userId && $validStatusLvl2;
     }
 
     /**
      * Cek apakah user saat ini bisa reject (di level manapun yang relevan)
      */
-    public static function canReject($item, ?int $userId = null): bool
+    public static function canReject($item, ?string $userId = null): bool
     {
         if (!Auth::check()) return false;
 
@@ -175,8 +175,8 @@ class ApprovalHelper
         $perencanaan = self::getPerencanaanAudit($item);
         if (!$perencanaan) return false;
 
-        $isKetua      = (int) $perencanaan->ketua_tim_id === $userId;
-        $isKoordinator = (int) $perencanaan->koordinator_id === $userId;
+        $isKetua      = $perencanaan->ketua_tim_id === $userId;
+        $isKoordinator = $perencanaan->koordinator_id === $userId;
 
         // Ketua bisa reject dari pending
         if ($isKetua && $validKetuaReject) return true;
@@ -227,8 +227,8 @@ class ApprovalHelper
                 ->where('pic_type', 'approval_2_spi')
                 ->exists();
         } else {
-            $ketuaId      = $perencanaan ? (int) $perencanaan->ketua_tim_id : null;
-            $koordinatorId = $perencanaan ? (int) $perencanaan->koordinator_id : null;
+            $ketuaId      = $perencanaan ? $perencanaan->ketua_tim_id : null;
+            $koordinatorId = $perencanaan ? $perencanaan->koordinator_id : null;
 
             $isKetua      = $ketuaId && $ketuaId === $userId;
             $isKoordinator = $koordinatorId && $koordinatorId === $userId;

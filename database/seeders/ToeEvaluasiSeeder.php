@@ -14,7 +14,7 @@ class ToeEvaluasiSeeder extends Seeder
             $this->command->warn('Tidak cukup data toe_audit. Skipping ToeEvaluasiSeeder.');
             return;
         }
-        DB::table('toe_evaluasi')->insert([
+        $data = [
             [
                 'toe_audit_id' => $toeAudits[0]->id,
                 'hasil_evaluasi' => 'Efektif',
@@ -27,6 +27,10 @@ class ToeEvaluasiSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ];
+        foreach ($data as &$row) {
+            $row['id'] = (string) \Illuminate\Support\Str::uuid();
+        }
+        DB::table('toe_evaluasi')->insert($data);
     }
-} 
+}

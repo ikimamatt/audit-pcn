@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_dinas_uploads', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('pelaporan_hasil_audit_id');
+            $table->uuid('id')->primary();
+            $table->uuid('pelaporan_hasil_audit_id');
             $table->string('file_nota_dinas');
             $table->enum('tujuan_nota_dinas', ['dirut', 'dekom', 'auditee']);
             $table->timestamps();

@@ -13,10 +13,14 @@ return new class extends Migration
     public function up(): void
     {
         // Tambahkan akses "Auditee" ke tabel master_akses_user
-        DB::table('master_akses_user')->updateOrInsert(
-            ['nama_akses' => 'Auditee'],
-            ['nama_akses' => 'Auditee']
-        );
+        if (!DB::table('master_akses_user')->where('nama_akses', 'Auditee')->exists()) {
+            DB::table('master_akses_user')->insert([
+                'id'         => (string) \Illuminate\Support\Str::uuid(),
+                'nama_akses' => 'Auditee',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     /**

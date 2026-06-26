@@ -18,7 +18,7 @@ class PkaDocumentService
      * @return string
      * @throws \Exception
      */
-    public function generate(int $id): string
+    public function generate(string $id): string
     {
         $item = ProgramKerjaAudit::with([
             'perencanaanAudit.auditee',

@@ -9,13 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('entry_meeting', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->date('tanggal');
-            $table->unsignedBigInteger('auditee_id');
+            $table->uuid('auditee_id');
             $table->string('file_undangan');
             $table->string('file_absensi');
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 

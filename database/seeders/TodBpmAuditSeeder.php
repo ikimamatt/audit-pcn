@@ -9,6 +9,10 @@ class TodBpmAuditSeeder extends Seeder
 {
     public function run(): void
     {
+        $userId = DB::table('master_user')->value('id');
+
+        $userId = DB::table('master_user')->value('id');
+
         $pkaList = \App\Models\Models\Audit\ProgramKerjaAudit::with([
             'perencanaanAudit',
             'prosesBisnis.risikoList.kontrolList',
@@ -64,16 +68,18 @@ class TodBpmAuditSeeder extends Seeder
                 $rejectionReason = $alasan[array_rand($alasan)];
             }
 
-            $todId = DB::table('tod_bpm_audit')->insertGetId([
+            $todId = (string) \Illuminate\Support\Str::uuid();
+            DB::table('tod_bpm_audit')->insert([
+                'id'                   => $todId,
                 'perencanaan_audit_id' => $pka->perencanaan_audit_id,
                 'judul_bpm'            => 'Business Process Mapping - ' . ($pka->perencanaanAudit->jenis_audit ?? 'Audit'),
                 'nama_bpo'             => 'BPO - ' . ($pka->perencanaanAudit->auditee->direktorat ?? 'Direktorat'),
                 'file_bpm'             => $fileBpm,
-                'resiko'               => null, // tidak digunakan, digantikan pivot
-                'kontrol'              => null, // tidak digunakan, digantikan pivot
+                'resiko'               => null,
+                'kontrol'              => null,
                 'status_approval'      => $randomStatus,
                 'rejection_reason'     => $rejectionReason,
-                'approved_by'          => in_array($randomStatus, ['approved', 'rejected']) ? 1 : null,
+                'approved_by'          => in_array($randomStatus, ['approved', 'rejected']) ? $userId : null,
                 'approved_at'          => in_array($randomStatus, ['approved', 'rejected']) ? now() : null,
                 'created_at'           => now(),
                 'updated_at'           => now(),
@@ -110,12 +116,18 @@ class TodBpmAuditSeeder extends Seeder
 
         // Batch insert pivot dan evaluasi
         if (!empty($todPivotRisiko)) {
+            foreach ($todPivotRisiko as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($todPivotRisiko as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('tod_bpm_risiko')->insert($todPivotRisiko);
         }
         if (!empty($todPivotKontrol)) {
+            foreach ($todPivotKontrol as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($todPivotKontrol as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('tod_bpm_kontrol')->insert($todPivotKontrol);
         }
         if (!empty($evaluasiData)) {
+            foreach ($evaluasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($evaluasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('tod_bpm_evaluasi')->insert($evaluasiData);
         }
 

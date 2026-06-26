@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class MasterUser extends Authenticatable
 {
+    use HasUuids;
     use HasFactory;
     protected $table = 'master_user';
     protected $guarded = [];

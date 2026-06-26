@@ -89,5 +89,10 @@ class DatabaseSeeder extends Seeder
 
         // ── Dashboard Analytical Dummy Data ───────────────────────
         $this->call(DashboardDummySeeder::class);
+
+        // ── Warm-up dashboard cache (agar dashboard tidak lambat saat pertama kali dibuka) ──
+        $this->command->info('🔄 Warming up dashboard cache...');
+        \Artisan::call('dashboard:refresh-cache');
+        $this->command->info('✅ Dashboard cache ready!');
     }
 }

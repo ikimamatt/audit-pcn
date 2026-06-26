@@ -12,12 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('master_user', function (Blueprint $table) {
-            // Tambahkan kolom dengan nilai default
-            $table->unsignedBigInteger('master_akses_user_id')->default(2)->after('master_auditee_id');
+            // Tambahkan kolom master_akses_user_id sebagai nullable UUID
+            $table->uuid('master_akses_user_id')->nullable()->after('master_auditee_id');
         });
-
-        // Set nilai default untuk data yang sudah ada
-        \DB::table('master_user')->update(['master_akses_user_id' => 2]);
 
         // Tambahkan foreign key constraint
         Schema::table('master_user', function (Blueprint $table) {

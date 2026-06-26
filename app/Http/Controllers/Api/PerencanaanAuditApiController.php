@@ -22,19 +22,64 @@ class PerencanaanAuditApiController extends BaseApiController
     ) {}
 
     /**
-     * Daftar semua perencanaan audit.
+     * Daftar perencanaan audit (server-side paginated via Stored Procedure).
+     *
+     * Query params:
+     *   - page     : halaman aktif (default 1)
+     *   - limit    : jumlah item per halaman (default 15, max 100)
+     *   - search   : filter nomor_surat_tugas (LIKE)
+     *   - jenis_id : filter jenis_audit_id (exact match)
      */
     public function index(Request $request): JsonResponse
     {
-        $data = PerencanaanAudit::with(['auditee', 'jenisAudit', 'area', 'koordinator', 'ketuaTim'])->get();
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        return $this->success($data);
+        $search   = $request->input('search')   ?: null;
+        $jenisId  = $request->input('jenis_id') ?: null;
+
+        [$total, $rows] = $this->callSP('sp_get_perencanaan_audit', [
+            $perPage,
+            $offset,
+            $search,
+            $jenisId,
+        ]);
+
+        // Map flat SP result ke struktur nested yang konsisten dengan response lama
+        $data = array_map(function (array $row) {
+            return [
+                'id'                  => $row['id'],
+                'nomor_surat_tugas'   => $row['nomor_surat_tugas'],
+                'tanggal_surat_tugas' => $row['tanggal_surat_tugas'],
+                'jenis_audit'         => $row['jenis_audit'],
+                'jenis_audit_id'      => $row['jenis_audit_id'],
+                'koordinator_id'      => $row['koordinator_id'],
+                'ketua_tim_id'        => $row['ketua_tim_id'],
+                'auditor'             => json_decode($row['auditor'] ?? '[]', true),
+                'auditee_id'          => $row['auditee_id'],
+                'ruang_lingkup'       => json_decode($row['ruang_lingkup'] ?? '[]', true),
+                'tanggal_audit_mulai' => $row['tanggal_audit_mulai'],
+                'tanggal_audit_sampai'=> $row['tanggal_audit_sampai'],
+                'periode_audit'       => $row['periode_audit'],
+                'area_id'             => $row['area_id'],
+                'created_at'          => $row['created_at'],
+                'auditee' => [
+                    'nama_bidang' => $row['auditee_nama_bidang'],
+                ],
+                'jenis_audit_obj' => [
+                    'nama_jenis_audit' => $row['jenis_audit_nama'],
+                ],
+                'koordinator' => $row['koordinator_nama'] ? ['nama' => $row['koordinator_nama']] : null,
+                'ketua_tim'   => $row['ketua_tim_nama']   ? ['nama' => $row['ketua_tim_nama']]   : null,
+            ];
+        }, $rows);
+
+        return $this->successPaginated($data, $total, $page, $perPage);
     }
 
     /**
      * Detail perencanaan audit.
      */
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = PerencanaanAudit::with(['auditee', 'jenisAudit', 'area', 'koordinator', 'ketuaTim'])->find($id);
 
@@ -81,7 +126,7 @@ class PerencanaanAuditApiController extends BaseApiController
     /**
      * Update perencanaan audit.
      */
-    public function update(UpdatePerencanaanRequest $request, int $id): JsonResponse
+    public function update(UpdatePerencanaanRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -103,7 +148,7 @@ class PerencanaanAuditApiController extends BaseApiController
     /**
      * Hapus perencanaan audit.
      */
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();

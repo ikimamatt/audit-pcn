@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Models\Audit\ProgramKerjaAudit;
 use App\Traits\FilterableByAuditee;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class EntryMeeting extends Model
 {
+    use HasUuids;
     use HasFactory, FilterableByAuditee;
     protected $table = 'entry_meeting';
     protected $guarded = [];

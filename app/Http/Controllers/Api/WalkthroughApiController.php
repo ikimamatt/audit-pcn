@@ -15,22 +15,25 @@ class WalkthroughApiController extends BaseApiController
         protected WalkthroughService $walkthroughService
     ) {}
 
+    /**
+     * Daftar Walkthrough Audit (server-side paginated via Stored Procedure).
+     * Query params: page, limit, search (nomor_surat_tugas), status
+     */
     public function index(Request $request): JsonResponse
     {
-        $query = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit.perencanaanAudit']);
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
 
-        if ($request->filled('bulan')) {
-            $query->whereHas('perencanaanAudit', function ($q) use ($request) {
-                $bulan = \Carbon\Carbon::parse($request->bulan);
-                $q->whereYear('tanggal_audit_mulai', $bulan->year)
-                  ->whereMonth('tanggal_audit_mulai', $bulan->month);
-            });
-        }
+        $search = $request->input('search') ?: null;
+        $status = $request->input('status') ?: null;
 
-        return $this->success($query->get());
+        [$total, $rows] = $this->callSP('sp_get_walkthrough', [
+            $perPage, $offset, $search, $status,
+        ]);
+
+        return $this->successPaginated($rows, $total, $page, $perPage);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         $item = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit'])->find($id);
         if (! $item) {
@@ -58,7 +61,7 @@ class WalkthroughApiController extends BaseApiController
         }
     }
 
-    public function update(UpdateWalkthroughRequest $request, int $id): JsonResponse
+    public function update(UpdateWalkthroughRequest $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -82,7 +85,7 @@ class WalkthroughApiController extends BaseApiController
         }
     }
 
-    public function destroy(Request $request, int $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();
@@ -101,7 +104,7 @@ class WalkthroughApiController extends BaseApiController
         }
     }
 
-    public function approval(Request $request, int $id): JsonResponse
+    public function approval(Request $request, string $id): JsonResponse
     {
         if (! $this->canModify($request)) {
             return $this->denyModify();

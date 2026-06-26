@@ -24,7 +24,7 @@ return new class extends Migration
         });
 
         Schema::table('master_user', function (Blueprint $table) {
-            $table->unsignedBigInteger('master_area_id')->nullable(false)->change();
+            $table->uuid('master_area_id')->nullable(false)->change();
             $table->foreign('master_area_id')
                   ->references('id')->on('master_area')
                   ->onDelete('restrict');
@@ -40,7 +40,7 @@ return new class extends Migration
         });
 
         Schema::table('master_user', function (Blueprint $table) {
-            $table->unsignedBigInteger('master_area_id')->nullable()->change();
+            $table->uuid('master_area_id')->nullable()->change();
             $table->foreign('master_area_id')
                   ->references('id')->on('master_area')
                   ->onDelete('set null');

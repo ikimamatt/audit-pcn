@@ -9,15 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('perencanaan_audit', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->date('tanggal_surat_tugas');
             $table->string('nomor_surat_tugas');
             $table->string('jenis_audit');
-            $table->unsignedBigInteger('koordinator_id')->nullable();
-            $table->unsignedBigInteger('ketua_tim_id')->nullable();
-            $table->unsignedBigInteger('unit_id')->nullable();
+            $table->uuid('koordinator_id')->nullable();
+            $table->uuid('ketua_tim_id')->nullable();
+            $table->uuid('unit_id')->nullable();
             $table->json('auditor');
-            $table->unsignedBigInteger('auditee_id');
+            $table->uuid('auditee_id');
             $table->json('ruang_lingkup');
             $table->date('tanggal_audit_mulai');
             $table->date('tanggal_audit_sampai');

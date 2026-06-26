@@ -52,7 +52,7 @@ class PersetujuanController extends Controller
 
         $request->validate([
             'model_type' => 'required|string',
-            'id' => 'required|integer',
+            'id' => 'required|string',
             'action' => 'required|in:approve,reject',
             'rejection_reason' => 'required_if:action,reject|nullable|string|min:10',
         ], [

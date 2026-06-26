@@ -9,6 +9,10 @@ class ToeAuditSeeder extends Seeder
 {
     public function run(): void
     {
+        $userId = DB::table('master_user')->value('id');
+
+        $userId = DB::table('master_user')->value('id');
+
         // Ambil TOD yang sudah approved (TOE bergantung pada TOD)
         $todList = DB::table('tod_bpm_audit')
             ->where('status_approval', 'approved')
@@ -61,16 +65,17 @@ class ToeAuditSeeder extends Seeder
             }
 
             // Insert TOE (tanpa pengendalian_eksisting — digantikan pivot kontrol)
-            $toeId = DB::table('toe_audit')->insertGetId([
+            $toeId = (string) \Illuminate\Support\Str::uuid();
+            DB::table('toe_audit')->insert([
+                'id'                      => $toeId,
                 'perencanaan_audit_id'    => $tod->perencanaan_audit_id,
                 'judul_bpm'               => $tod->judul_bpm,
                 'pemilihan_sampel_audit'  => 'Sampel audit dipilih berdasarkan risiko tinggi dan materialitas transaksi.',
-                'resiko'                  => null, // digantikan pivot
-                'kontrol'                 => null, // digantikan pivot
-                // pengendalian_eksisting: NULL — akan dihapus di fase migrasi berikutnya
+                'resiko'                  => null,
+                'kontrol'                 => null,
                 'status_approval'         => $randomStatus,
                 'rejection_reason'        => $rejectionReason,
-                'approved_by'             => in_array($randomStatus, ['approved', 'rejected']) ? 1 : null,
+                'approved_by'             => in_array($randomStatus, ['approved', 'rejected']) ? $userId : null,
                 'approved_at'             => in_array($randomStatus, ['approved', 'rejected']) ? now() : null,
                 'created_at'              => now(),
                 'updated_at'              => now(),
@@ -108,12 +113,18 @@ class ToeAuditSeeder extends Seeder
 
         // Batch insert
         if (!empty($toePivotRisiko)) {
+            foreach ($toePivotRisiko as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($toePivotRisiko as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('toe_risiko')->insert($toePivotRisiko);
         }
         if (!empty($toePivotKontrol)) {
+            foreach ($toePivotKontrol as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($toePivotKontrol as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('toe_kontrol')->insert($toePivotKontrol);
         }
         if (!empty($evaluasiData)) {
+            foreach ($evaluasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($evaluasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('toe_evaluasi')->insert($evaluasiData);
         }
 

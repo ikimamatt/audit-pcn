@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('realisasi_audits', function (Blueprint $table) {
             $table->enum('status_approval', ['pending', 'approved', 'rejected'])->default('pending')->after('status');
-            $table->unsignedBigInteger('approved_by')->nullable()->after('status_approval');
+            $table->uuid('approved_by')->nullable()->after('status_approval');
             $table->timestamp('approved_at')->nullable()->after('approved_by');
             $table->text('rejection_reason')->nullable()->after('approved_at');
             

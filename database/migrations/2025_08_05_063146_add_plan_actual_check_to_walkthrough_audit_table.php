@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('walkthrough_audit', function (Blueprint $table) {
             // Tambah kolom untuk plan check dan actual check
-            $table->unsignedBigInteger('program_kerja_audit_id')->nullable()->after('perencanaan_audit_id');
+            $table->uuid('program_kerja_audit_id')->nullable()->after('perencanaan_audit_id');
             $table->date('planned_walkthrough_date')->nullable()->after('tanggal_walkthrough');
             $table->date('actual_walkthrough_date')->nullable()->after('planned_walkthrough_date');
             

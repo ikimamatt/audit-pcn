@@ -36,10 +36,10 @@ use App\Http\Controllers\Audit\Dashboard\RekapitulasiAktivitasAuditController;
 // ============================================================
 // AUDIT ROUTES
 // ============================================================
-Route::pattern('pkpt', '[0-9]+');
-Route::pattern('pka', '[0-9]+');
-Route::pattern('tod_bpm', '[0-9]+');
-Route::pattern('toe', '[0-9]+');
+Route::pattern('pkpt', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+Route::pattern('pka', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+Route::pattern('tod_bpm', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+Route::pattern('toe', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 
 Route::prefix('audit')->name('audit.')->group(function () {
 
@@ -55,7 +55,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
 
         // Pelaporan Hasil Audit
         Route::get('pelaporan-hasil-audit', [PelaporanHasilAuditController::class, 'index'])->name('pelaporan-hasil-audit.index');
-        Route::get('pelaporan-hasil-audit/{id}', [PelaporanHasilAuditController::class, 'show'])->name('pelaporan-hasil-audit.show')->where('id', '[0-9]+');
+        Route::get('pelaporan-hasil-audit/{id}', [PelaporanHasilAuditController::class, 'show'])->name('pelaporan-hasil-audit.show')->where('id', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
         Route::get('pelaporan-hasil-audit/{id}/temuan', [PelaporanHasilAuditController::class, 'getTemuanData'])->name('pelaporan-hasil-audit.get-temuan');
         Route::get('pelaporan-hasil-audit/temuan/{id}', [PelaporanHasilAuditController::class, 'getTemuanById'])->name('pelaporan-hasil-audit.get-temuan-by-id');
 
@@ -69,7 +69,7 @@ Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('penutup-lha-rekomendasi/select-nomor-surat-tugas', [PenutupLhaRekomendasiController::class, 'selectNomorSuratTugas'])->name('penutup-lha-rekomendasi.select-nomor-surat-tugas');
         Route::get('penutup-lha-rekomendasi/get-iss-data', [PenutupLhaRekomendasiController::class, 'getIssData'])->name('penutup-lha-rekomendasi.get-iss-data');
         Route::get('penutup-lha-rekomendasi', [PenutupLhaRekomendasiController::class, 'index'])->name('penutup-lha-rekomendasi.index');
-        Route::get('penutup-lha-rekomendasi/{penutup_lha_rekomendasi}', [PenutupLhaRekomendasiController::class, 'show'])->name('penutup-lha-rekomendasi.show')->where('penutup_lha_rekomendasi', '[0-9]+');
+        Route::get('penutup-lha-rekomendasi/{penutup_lha_rekomendasi}', [PenutupLhaRekomendasiController::class, 'show'])->name('penutup-lha-rekomendasi.show')->where('penutup_lha_rekomendasi', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
         Route::post('penutup-lha-rekomendasi/{id}/approval', [PenutupLhaRekomendasiController::class, 'approval'])->name('penutup-lha-rekomendasi.approval');
         Route::get('my-reminders', [PenutupLhaRekomendasiController::class, 'myReminders'])->name('my-reminders');
 

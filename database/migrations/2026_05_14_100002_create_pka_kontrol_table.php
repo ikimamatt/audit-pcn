@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pka_kontrol', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('pka_risiko_id');
+            $table->uuid('id')->primary();
+            $table->uuid('pka_risiko_id');
             $table->text('deskripsi_kontrol');
             $table->unsignedInteger('urutan')->default(1);
             $table->timestamps();

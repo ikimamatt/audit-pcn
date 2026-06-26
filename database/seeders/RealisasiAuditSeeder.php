@@ -11,6 +11,10 @@ class RealisasiAuditSeeder extends Seeder
 {
     public function run(): void
     {
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
+        $userIds = DB::table('master_user')->pluck('id')->toArray();
+
         // Get all perencanaan audit IDs
         $perencanaanAuditIds = PerencanaanAudit::pluck('id')->toArray();
         
@@ -45,10 +49,10 @@ class RealisasiAuditSeeder extends Seeder
                     'Dokumentasi exit meeting perlu perbaikan format dan konten.',
                 ];
                 $rejectionReason = $rejectionReasons[array_rand($rejectionReasons)];
-                $approvedBy = 1; // User ID 1
+                $approvedBy = $userIds[0] ?? null; // User ID 1
                 $approvedAt = now()->subDays(rand(1, 5));
             } elseif ($approvalStatus === 'approved') {
-                $approvedBy = 1; // User ID 1
+                $approvedBy = $userIds[0] ?? null; // User ID 1
                 $approvedAt = now()->subDays(rand(1, 10));
             }
             
@@ -66,6 +70,8 @@ class RealisasiAuditSeeder extends Seeder
             ];
         }
 
+        foreach ($realisasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+        foreach ($realisasiData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
         DB::table('realisasi_audits')->insert($realisasiData);
         
         $this->command->info('RealisasiAudit seeder completed successfully!');

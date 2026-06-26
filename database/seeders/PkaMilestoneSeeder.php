@@ -87,6 +87,8 @@ class PkaMilestoneSeeder extends Seeder
 
         // Insert all milestone data
         if (!empty($milestoneData)) {
+            foreach ($milestoneData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
+            foreach ($milestoneData as &$row) { $row['id'] = (string) \Illuminate\Support\Str::uuid(); }
             DB::table('pka_milestone')->insert($milestoneData);
             $this->command->info('PKA Milestone seeder berhasil dijalankan.');
         }

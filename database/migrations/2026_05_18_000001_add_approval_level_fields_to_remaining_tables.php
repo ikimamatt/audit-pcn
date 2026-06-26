@@ -18,15 +18,15 @@ return new class extends Migration
         DB::statement("ALTER TABLE `pka_dokumen` MODIFY COLUMN `status_approval` ENUM('pending', 'approved_level1', 'approved', 'rejected_level1', 'rejected') DEFAULT 'pending'");
 
         Schema::table('pka_dokumen', function (Blueprint $table) {
-            $table->unsignedBigInteger('approved_by_level1')->nullable()->after('approved_at');
+            $table->uuid('approved_by_level1')->nullable()->after('approved_at');
             $table->timestamp('approved_at_level1')->nullable()->after('approved_by_level1');
-            $table->unsignedBigInteger('rejected_by_level1')->nullable()->after('approved_at_level1');
+            $table->uuid('rejected_by_level1')->nullable()->after('approved_at_level1');
             $table->timestamp('rejected_at_level1')->nullable()->after('rejected_by_level1');
             $table->text('rejection_reason_level1')->nullable()->after('rejected_at_level1');
 
-            $table->unsignedBigInteger('approved_by_level2')->nullable()->after('rejection_reason_level1');
+            $table->uuid('approved_by_level2')->nullable()->after('rejection_reason_level1');
             $table->timestamp('approved_at_level2')->nullable()->after('approved_by_level2');
-            $table->unsignedBigInteger('rejected_by_level2')->nullable()->after('approved_at_level2');
+            $table->uuid('rejected_by_level2')->nullable()->after('approved_at_level2');
             $table->timestamp('rejected_at_level2')->nullable()->after('rejected_by_level2');
             $table->text('rejection_reason_level2')->nullable()->after('rejected_at_level2');
 
