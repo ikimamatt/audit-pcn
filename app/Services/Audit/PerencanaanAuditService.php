@@ -150,19 +150,29 @@ class PerencanaanAuditService
 
     /**
      * Format auditor ID array into "Name - NIP" text format.
+     * Optimized: uses a single whereIn query instead of N individual find() calls.
      *
      * @param array $auditorIds
      * @return array
      */
     private function formatAuditors(array $auditorIds): array
     {
+        $ids = array_filter($auditorIds, fn($id) => !empty($id));
+        if (empty($ids)) {
+            return [];
+        }
+
+        // Single query for all auditors — eliminates N+1
+        $auditors = MasterUser::whereIn('id', array_values($ids))
+            ->select('id', 'nama', 'nip')
+            ->get()
+            ->keyBy('id');
+
         $auditorData = [];
-        foreach ($auditorIds as $auditorId) {
-            if (!empty($auditorId)) {
-                $auditor = MasterUser::find($auditorId);
-                if ($auditor) {
-                    $auditorData[] = $auditor->nama . ' - NIP: ' . $auditor->nip;
-                }
+        foreach ($ids as $auditorId) {
+            if (isset($auditors[$auditorId])) {
+                $a = $auditors[$auditorId];
+                $auditorData[] = $a->nama . ' - NIP: ' . $a->nip;
             }
         }
         return $auditorData;

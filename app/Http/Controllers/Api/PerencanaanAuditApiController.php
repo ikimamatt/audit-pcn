@@ -92,16 +92,29 @@ class PerencanaanAuditApiController extends BaseApiController
 
     /**
      * Data referensi untuk form create/edit.
+     * OPTIMIZED: Master reference data is cached for 5 minutes (rarely changes).
      */
     public function formData(): JsonResponse
     {
-        $auditees    = MasterAuditee::all();
-        $jenisAudits = MasterJenisAudit::all();
-        $areas       = MasterArea::with('region')->orderBy('kd_area')->get();
-        $auditors    = MasterUser::with('akses')
-            ->whereDoesntHave('akses', fn($q) => $q->where('nama_akses', 'AUDITEE'))
-            ->orderBy('nama')
-            ->get();
+        $auditees = cache()->remember('form_data_auditees', 300, function () {
+            return MasterAuditee::select('id', 'nama_bidang')->orderBy('nama_bidang')->get();
+        });
+
+        $jenisAudits = cache()->remember('form_data_jenis_audits', 300, function () {
+            return MasterJenisAudit::select('id', 'nama_jenis_audit')->get();
+        });
+
+        $areas = cache()->remember('form_data_areas', 300, function () {
+            return MasterArea::with('region')->orderBy('kd_area')->get();
+        });
+
+        $auditors = cache()->remember('form_data_auditors', 300, function () {
+            return MasterUser::with('akses')
+                ->whereDoesntHave('akses', fn($q) => $q->where('nama_akses', 'AUDITEE'))
+                ->select('id', 'nama', 'nip', 'master_akses_user_id')
+                ->orderBy('nama')
+                ->get();
+        });
 
         return $this->success(compact('auditees', 'jenisAudits', 'areas', 'auditors'));
     }

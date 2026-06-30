@@ -51,38 +51,48 @@ class DashboardCacheService
 
     /**
      * Dashboard Analitik — KPI cards, charts, heatmap.
+     *
+     * OPTIMIZED: Replaces PHP-intermediate planIds (pluck all UUIDs into memory
+     * then pass back as whereIn) with direct JOIN subqueries. This avoids sending
+     * thousands of UUIDs over the wire and lets MySQL use indexes properly.
      */
     public function buildAnalitikData(): array
     {
         // KPI: Total Direncanakan
         $totalDirencanakan = DB::table('perencanaan_audit')->count();
-        $planIds = DB::table('perencanaan_audit')->pluck('id')->toArray();
 
-        // KPI: Total Terealisasi (Entry Meeting path + Fallback)
-        $emPlanIds = DB::table('entry_meeting')
-            ->join('program_kerja_audit as pka', 'entry_meeting.program_kerja_audit_id', '=', 'pka.id')
-            ->whereIn('pka.perencanaan_audit_id', $planIds)
-            ->distinct()
-            ->pluck('pka.perencanaan_audit_id');
-        $totalFromEM = $emPlanIds->count();
-        $totalFromFallback = DB::table('realisasi_audits')
-            ->whereIn('perencanaan_audit_id', $planIds)
-            ->whereNotIn('perencanaan_audit_id', $emPlanIds)
+        // KPI: Total Terealisasi — single query via subquery JOIN (no PHP planIds list)
+        $totalFromEM = DB::table('entry_meeting as em')
+            ->join('program_kerja_audit as pka', 'em.program_kerja_audit_id', '=', 'pka.id')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))->from('perencanaan_audit')->whereColumn('perencanaan_audit.id', 'pka.perencanaan_audit_id');
+            })
+            ->distinct('pka.perencanaan_audit_id')
+            ->count('pka.perencanaan_audit_id');
+
+        $totalFromFallback = DB::table('realisasi_audits as ra')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('entry_meeting as em')
+                  ->join('program_kerja_audit as pka', 'em.program_kerja_audit_id', '=', 'pka.id')
+                  ->whereColumn('pka.perencanaan_audit_id', 'ra.perencanaan_audit_id');
+            })
             ->distinct('perencanaan_audit_id')
             ->count('perencanaan_audit_id');
+
         $totalTerealisasi = $totalFromEM + $totalFromFallback;
 
-        // KPI: Total Temuan
+        // KPI: Total Temuan — direct JOIN, no whereIn
         $totalTemuan = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->count('pt.id');
 
-        // KPI: Rekomendasi status
+        // KPI: Rekomendasi status — direct JOIN chain
         $rekomendasiStatus = DB::table('penutup_lha_rekomendasi as plr')
             ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->select('plr.status_tindak_lanjut', DB::raw('count(*) as total'))
             ->groupBy('plr.status_tindak_lanjut')
             ->pluck('total', 'status_tindak_lanjut')
@@ -96,7 +106,7 @@ class DashboardCacheService
         $trenRaw = DB::table('penutup_lha_rekomendasi as plr')
             ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->where('plr.status_tindak_lanjut', 'closed')
             ->whereNotNull('plr.real_waktu')
             ->select(DB::raw('MONTH(plr.real_waktu) as bulan'), DB::raw('COUNT(*) as total'))
@@ -109,11 +119,11 @@ class DashboardCacheService
             $trenSelesai[] = $trenRaw[$i] ?? 0;
         }
 
-        // Aging — classify in SQL using CASE WHEN
+        // Aging — classify in SQL using CASE WHEN, direct JOIN chain
         $agingRaw = DB::table('penutup_lha_rekomendasi as plr')
             ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->where(function ($q) {
                 $q->whereIn('plr.status_tindak_lanjut', ['open', 'on_progress'])
                   ->orWhereNull('plr.status_tindak_lanjut');
@@ -138,15 +148,15 @@ class DashboardCacheService
             $agingData[] = $agingRaw[$cat] ?? 0;
         }
 
-        // Status Realisasi
-        $statusCounts = DB::table('realisasi_audits')
-            ->whereIn('perencanaan_audit_id', $planIds)
-            ->select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
+        // Status Realisasi — direct JOIN
+        $statusCounts = DB::table('realisasi_audits as ra')
+            ->join('perencanaan_audit as pa', 'ra.perencanaan_audit_id', '=', 'pa.id')
+            ->select('ra.status', DB::raw('count(*) as count'))
+            ->groupBy('ra.status')
             ->pluck('count', 'status')
             ->toArray();
 
-        // Temuan vs TL (Stacked Bar) — top 8
+        // Temuan vs TL (Stacked Bar) — top 8, direct JOIN
         $temuanTl = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
@@ -158,7 +168,6 @@ class DashboardCacheService
                 DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "on_progress" THEN 1 ELSE 0 END) as progress_count'),
                 DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "open" OR plr.status_tindak_lanjut IS NULL THEN 1 ELSE 0 END) as open_count')
             )
-            ->whereIn('pa.id', $planIds)
             ->whereNotNull('ma.nama_bidang')
             ->groupBy('ma.id', 'ma.nama_bidang')
             ->orderByDesc('open_count')
@@ -176,13 +185,12 @@ class DashboardCacheService
             $stackedOpen[] = (int) $t->open_count;
         }
 
-        // Temuan per Divisi — top 8
+        // Temuan per Divisi — top 8, direct JOIN
         $divisiTemuan = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
             ->select('ma.nama_bidang as divisi', DB::raw('count(pt.id) as total'))
-            ->whereIn('pa.id', $planIds)
             ->whereNotNull('ma.nama_bidang')
             ->groupBy('ma.nama_bidang')
             ->orderByDesc('total')
@@ -196,12 +204,12 @@ class DashboardCacheService
             $divisiData[] = (int) $d->total;
         }
 
-        // Top Risiko — top 8
+        // Top Risiko — top 8, direct JOIN
         $topRisks = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_kode_risk as mkr', 'pt.kode_risk_id', '=', 'mkr.id')
             ->select('mkr.kode_risiko', 'mkr.deskripsi_risiko', 'mkr.kelompok_risiko', DB::raw('count(pt.id) as total'))
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
             ->groupBy('mkr.id', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', 'mkr.kelompok_risiko')
             ->orderByDesc('total')
             ->limit(8)
@@ -216,14 +224,13 @@ class DashboardCacheService
             $riskData[] = (int) $r->total;
         }
 
-        // Heatmap — pivot in SQL
+        // Heatmap — pivot in SQL, direct JOIN
         $heatmapQuery = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
             ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
             ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
             ->join('master_kode_risk as mkr', 'pt.kode_risk_id', '=', 'mkr.id')
             ->select('ma.nama_bidang as divisi', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', DB::raw('count(pt.id) as total'))
-            ->whereIn('pa.id', $planIds)
             ->whereNotNull('ma.nama_bidang')
             ->groupBy('ma.nama_bidang', 'mkr.kode_risiko', 'mkr.deskripsi_risiko')
             ->get();
@@ -267,6 +274,10 @@ class DashboardCacheService
 
     /**
      * Dashboard Rencana PKPT — PKA summary with milestones.
+     *
+     * OPTIMIZED: Replaces 4 correlated subqueries per row (for jumlah_risiko,
+     * jumlah_milestone, first/last milestone dates) with pre-aggregated LEFT JOINs.
+     * For N PKA rows: was 4N+1 queries, now is 1 query.
      */
     public function buildRencanaPkptData(): array
     {
@@ -275,6 +286,25 @@ class DashboardCacheService
             ->leftJoin('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
             ->leftJoin('master_jenis_audit as mja', 'pa.jenis_audit_id', '=', 'mja.id')
             ->leftJoin('entry_meeting as em', 'em.program_kerja_audit_id', '=', 'pka.id')
+            // Pre-aggregate milestone stats — replaces 4 correlated subqueries per row
+            ->leftJoin(
+                DB::raw('(SELECT program_kerja_audit_id,
+                    COUNT(*) as jumlah_milestone,
+                    MIN(tanggal_mulai) as first_milestone_start,
+                    MAX(tanggal_selesai) as last_milestone_end,
+                    MAX(CASE WHEN nama_milestone = \'Entry Meeting\' THEN tanggal_mulai END) as entry_milestone_start,
+                    MAX(CASE WHEN nama_milestone = \'Exit Meeting\' THEN tanggal_selesai END) as exit_milestone_end
+                FROM pka_milestone GROUP BY program_kerja_audit_id) as ms_agg'),
+                'ms_agg.program_kerja_audit_id', '=', 'pka.id'
+            )
+            // Pre-aggregate risiko count via proses_bisnis join
+            ->leftJoin(
+                DB::raw('(SELECT ppb.program_kerja_audit_id, COUNT(pr.id) as jumlah_risiko
+                FROM pka_proses_bisnis ppb
+                LEFT JOIN pka_risiko pr ON pr.pka_proses_bisnis_id = ppb.id
+                GROUP BY ppb.program_kerja_audit_id) as risiko_agg'),
+                'risiko_agg.program_kerja_audit_id', '=', 'pka.id'
+            )
             ->select(
                 'pka.id',
                 'pka.no_pka',
@@ -284,12 +314,12 @@ class DashboardCacheService
                 'ma.nama_bidang',
                 DB::raw('COALESCE(mja.nama_jenis_audit, pa.jenis_audit, "Audit Operasional") as jenis_audit'),
                 'em.actual_meeting_date',
-                DB::raw('(SELECT COUNT(*) FROM pka_risiko WHERE pka_risiko.pka_proses_bisnis_id IN (SELECT id FROM pka_proses_bisnis WHERE program_kerja_audit_id = pka.id)) as jumlah_risiko'),
-                DB::raw('(SELECT COUNT(*) FROM pka_milestone WHERE pka_milestone.program_kerja_audit_id = pka.id) as jumlah_milestone'),
-                DB::raw('(SELECT MIN(tanggal_mulai) FROM pka_milestone WHERE program_kerja_audit_id = pka.id) as first_milestone_start'),
-                DB::raw('(SELECT MAX(tanggal_selesai) FROM pka_milestone WHERE program_kerja_audit_id = pka.id) as last_milestone_end'),
-                DB::raw("(SELECT tanggal_mulai FROM pka_milestone WHERE program_kerja_audit_id = pka.id AND nama_milestone = 'Entry Meeting' LIMIT 1) as entry_milestone_start"),
-                DB::raw("(SELECT tanggal_selesai FROM pka_milestone WHERE program_kerja_audit_id = pka.id AND nama_milestone = 'Exit Meeting' LIMIT 1) as exit_milestone_end")
+                DB::raw('COALESCE(risiko_agg.jumlah_risiko, 0) as jumlah_risiko'),
+                DB::raw('COALESCE(ms_agg.jumlah_milestone, 0) as jumlah_milestone'),
+                DB::raw('ms_agg.first_milestone_start'),
+                DB::raw('ms_agg.last_milestone_end'),
+                DB::raw('ms_agg.entry_milestone_start'),
+                DB::raw('ms_agg.exit_milestone_end')
             )
             ->get()
             ->map(function ($row) {
@@ -495,16 +525,27 @@ class DashboardCacheService
                 return ['name' => $item->nama_bidang ?? 'Unknown', 'total' => $item->total];
             });
 
-        // Total Summary
+        // Total Summary — single UNION ALL query replaces 8 individual count() calls
+        $totalSummaryRaw = DB::select("
+            SELECT 'pka' as tipe, COUNT(*) as total FROM program_kerja_audit
+            UNION ALL SELECT 'perencanaan', COUNT(*) FROM perencanaan_audit
+            UNION ALL SELECT 'entry_meeting', COUNT(*) FROM entry_meeting
+            UNION ALL SELECT 'walkthrough', COUNT(*) FROM walkthrough_audit
+            UNION ALL SELECT 'tod', COUNT(*) FROM tod_bpm_audit
+            UNION ALL SELECT 'toe', COUNT(*) FROM toe_audit
+            UNION ALL SELECT 'exit', COUNT(*) FROM exit_meeting_uploads
+            UNION ALL SELECT 'pelaporan', COUNT(*) FROM pelaporan_hasil_audit
+        ");
+        $summaryMap = collect($totalSummaryRaw)->pluck('total', 'tipe')->toArray();
         $totalSummary = [
-            'total_pka'           => DB::table('program_kerja_audit')->count(),
-            'total_perencanaan'   => DB::table('perencanaan_audit')->count(),
-            'total_entry_meeting' => DB::table('entry_meeting')->count(),
-            'total_walkthrough'   => DB::table('walkthrough_audit')->count(),
-            'total_tod'           => DB::table('tod_bpm_audit')->count(),
-            'total_toe'           => DB::table('toe_audit')->count(),
-            'total_exit'          => DB::table('exit_meeting_uploads')->count(),
-            'total_pelaporan'     => DB::table('pelaporan_hasil_audit')->count(),
+            'total_pka'           => (int) ($summaryMap['pka'] ?? 0),
+            'total_perencanaan'   => (int) ($summaryMap['perencanaan'] ?? 0),
+            'total_entry_meeting' => (int) ($summaryMap['entry_meeting'] ?? 0),
+            'total_walkthrough'   => (int) ($summaryMap['walkthrough'] ?? 0),
+            'total_tod'           => (int) ($summaryMap['tod'] ?? 0),
+            'total_toe'           => (int) ($summaryMap['toe'] ?? 0),
+            'total_exit'          => (int) ($summaryMap['exit'] ?? 0),
+            'total_pelaporan'     => (int) ($summaryMap['pelaporan'] ?? 0),
         ];
 
         return compact(

@@ -59,6 +59,11 @@ class PenutupLhaRekomendasi extends Model
         return $this->hasMany(\App\Models\PenutupLhaTindakLanjut::class, 'penutup_lha_rekomendasi_id');
     }
 
+    public function latestTindakLanjut()
+    {
+        return $this->hasOne(\App\Models\PenutupLhaTindakLanjut::class, 'penutup_lha_rekomendasi_id')->latestOfMany();
+    }
+
     public function approvedBy()
     {
         return $this->belongsTo(\App\Models\MasterData\MasterUser::class, 'approved_by');

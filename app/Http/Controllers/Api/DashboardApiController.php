@@ -58,43 +58,55 @@ class DashboardApiController extends BaseApiController
             }
         }
 
-        // Compute with filters
-        $queryPlan = DB::table('perencanaan_audit');
-        if ($startDate) $queryPlan->whereDate('tanggal_audit_mulai', '>=', $startDate);
-        if ($endDate)   $queryPlan->whereDate('tanggal_audit_sampai', '<=', $endDate);
-        if ($divisiId)  $queryPlan->where('auditee_id', $divisiId);
-        if ($areaId)    $queryPlan->where('area_id', $areaId);
+        // Build a reusable filter closure for perencanaan_audit — used as EXISTS subquery
+        // to avoid PHP-intermediate planIds (no UUID list sent back to MySQL)
+        $filterPA = function ($q) use ($startDate, $endDate, $divisiId, $areaId) {
+            $q->select(DB::raw(1))->from('perencanaan_audit as pa_f')
+              ->whereColumn('pa_f.id', 'pa.id');
+            if ($startDate) $q->whereDate('pa_f.tanggal_audit_mulai', '>=', $startDate);
+            if ($endDate)   $q->whereDate('pa_f.tanggal_audit_sampai', '<=', $endDate);
+            if ($divisiId)  $q->where('pa_f.auditee_id', $divisiId);
+            if ($areaId)    $q->where('pa_f.area_id', $areaId);
+        };
 
-        $totalDirencanakan = $queryPlan->count();
-        $planIds = $queryPlan->pluck('id')->toArray();
-        if (empty($planIds)) $planIds = [0];
+        // When no filters match any PA, add shortcut sentinel
+        $totalDirencanakan = DB::table('perencanaan_audit as pa')->whereExists($filterPA)->count();
 
-        // Terealisasi
-        $emPlanIds = DB::table('entry_meeting')
-            ->join('program_kerja_audit as pka', 'entry_meeting.program_kerja_audit_id', '=', 'pka.id')
-            ->whereIn('pka.perencanaan_audit_id', $planIds)
-            ->distinct()
-            ->pluck('pka.perencanaan_audit_id');
+        // Terealisasi — subquery path, no PHP planIds
+        $totalFromEM = DB::table('entry_meeting as em')
+            ->join('program_kerja_audit as pka', 'em.program_kerja_audit_id', '=', 'pka.id')
+            ->join('perencanaan_audit as pa', 'pka.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
+            ->distinct('pka.perencanaan_audit_id')
+            ->count('pka.perencanaan_audit_id');
 
-        $totalFromEM = $emPlanIds->count();
-        $totalFromFallback = DB::table('realisasi_audits')
-            ->whereIn('perencanaan_audit_id', $planIds)
-            ->when($emPlanIds->isNotEmpty(), fn($q) => $q->whereNotIn('perencanaan_audit_id', $emPlanIds))
-            ->distinct('perencanaan_audit_id')
-            ->count('perencanaan_audit_id');
+        $totalFromFallback = DB::table('realisasi_audits as ra')
+            ->join('perencanaan_audit as pa', 'ra.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('entry_meeting as em')
+                  ->join('program_kerja_audit as pka', 'em.program_kerja_audit_id', '=', 'pka.id')
+                  ->whereColumn('pka.perencanaan_audit_id', 'ra.perencanaan_audit_id');
+            })
+            ->distinct('ra.perencanaan_audit_id')
+            ->count('ra.perencanaan_audit_id');
+
         $totalTerealisasi = $totalFromEM + $totalFromFallback;
 
-        // Total Temuan
+        // Total Temuan — direct JOIN + EXISTS filter
         $totalTemuan = DB::table('pelaporan_temuan as pt')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
             ->count('pt.id');
 
-        // Rekomendasi
+        // Rekomendasi — direct JOIN chain + EXISTS filter
         $rekomendasiStatus = DB::table('penutup_lha_rekomendasi as plr')
             ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
             ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
-            ->whereIn('pha.perencanaan_audit_id', $planIds)
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
             ->select('plr.status_tindak_lanjut', DB::raw('count(*) as total'))
             ->groupBy('plr.status_tindak_lanjut')
             ->pluck('total', 'status_tindak_lanjut')
@@ -106,13 +118,175 @@ class DashboardApiController extends BaseApiController
         $totalTl               = array_sum($rekomendasiStatus);
         $percentClosed         = $totalTl > 0 ? round(($rekomendasiClosed / $totalTl) * 100, 1) : 0;
 
-        // Status Realisasi
-        $statusCounts = DB::table('realisasi_audits')
-            ->whereIn('perencanaan_audit_id', $planIds)
-            ->select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
+        // Status Realisasi — JOIN + EXISTS filter
+        $statusCounts = DB::table('realisasi_audits as ra')
+            ->join('perencanaan_audit as pa', 'ra.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
+            ->select('ra.status', DB::raw('count(*) as count'))
+            ->groupBy('ra.status')
             ->pluck('count', 'status')
             ->toArray();
+
+        // Tren Penyelesaian — JOIN + EXISTS filter
+        $trenRaw = DB::table('penutup_lha_rekomendasi as plr')
+            ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
+            ->where('plr.status_tindak_lanjut', 'closed')
+            ->whereNotNull('plr.real_waktu')
+            ->select(DB::raw('MONTH(plr.real_waktu) as bulan'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('MONTH(plr.real_waktu)'))
+            ->pluck('total', 'bulan')
+            ->toArray();
+
+        $trenSelesai = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $trenSelesai[] = $trenRaw[$i] ?? 0;
+        }
+
+        // Aging — JOIN + EXISTS filter
+        $agingRaw = DB::table('penutup_lha_rekomendasi as plr')
+            ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->whereExists($filterPA)
+            ->where(function ($q) {
+                $q->whereIn('plr.status_tindak_lanjut', ['open', 'on_progress'])
+                  ->orWhereNull('plr.status_tindak_lanjut');
+            })
+            ->whereNotNull('plr.target_waktu')
+            ->select(DB::raw("
+                CASE
+                    WHEN plr.target_waktu >= NOW() THEN 'Sesuai Target'
+                    WHEN DATEDIFF(NOW(), plr.target_waktu) <= 30 THEN '< 30 Hari'
+                    WHEN DATEDIFF(NOW(), plr.target_waktu) <= 60 THEN '31-60 Hari'
+                    WHEN DATEDIFF(NOW(), plr.target_waktu) <= 90 THEN '61-90 Hari'
+                    ELSE '> 90 Hari'
+                END as bucket
+            "), DB::raw('COUNT(*) as total'))
+            ->groupBy('bucket')
+            ->pluck('total', 'bucket')
+            ->toArray();
+
+        $agingCategories = ['Sesuai Target', '< 30 Hari', '31-60 Hari', '61-90 Hari', '> 90 Hari'];
+        $agingData = [];
+        foreach ($agingCategories as $cat) {
+            $agingData[] = $agingRaw[$cat] ?? 0;
+        }
+
+        // Stacked Bar (Temuan vs TL) — JOIN + EXISTS filter
+        $temuanTl = DB::table('pelaporan_temuan as pt')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
+            ->leftJoin('penutup_lha_rekomendasi as plr', 'pt.id', '=', 'plr.pelaporan_isi_lha_id')
+            ->whereExists($filterPA)
+            ->select(
+                'ma.nama_bidang as auditee',
+                DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "closed" THEN 1 ELSE 0 END) as closed_count'),
+                DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "on_progress" THEN 1 ELSE 0 END) as progress_count'),
+                DB::raw('SUM(CASE WHEN plr.status_tindak_lanjut = "open" OR plr.status_tindak_lanjut IS NULL THEN 1 ELSE 0 END) as open_count')
+            )
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.id', 'ma.nama_bidang')
+            ->orderByDesc('open_count')
+            ->limit(8)
+            ->get();
+
+        $stackedCategories = [];
+        $stackedClosed = [];
+        $stackedProgress = [];
+        $stackedOpen = [];
+        foreach ($temuanTl as $t) {
+            $stackedCategories[] = mb_strlen($t->auditee) > 15 ? mb_substr($t->auditee, 0, 15) . '...' : $t->auditee;
+            $stackedClosed[] = (int) $t->closed_count;
+            $stackedProgress[] = (int) $t->progress_count;
+            $stackedOpen[] = (int) $t->open_count;
+        }
+
+        // Temuan per Divisi — JOIN + EXISTS filter
+        $divisiTemuan = DB::table('pelaporan_temuan as pt')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
+            ->whereExists($filterPA)
+            ->select('ma.nama_bidang as divisi', DB::raw('count(pt.id) as total'))
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.nama_bidang')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get();
+
+        $divisiCategories = [];
+        $divisiData = [];
+        foreach ($divisiTemuan as $d) {
+            $divisiCategories[] = mb_strlen($d->divisi) > 15 ? mb_substr($d->divisi, 0, 15) . '...' : $d->divisi;
+            $divisiData[] = (int) $d->total;
+        }
+
+        // Top Risiko — JOIN + EXISTS filter
+        $topRisks = DB::table('pelaporan_temuan as pt')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->join('master_kode_risk as mkr', 'pt.kode_risk_id', '=', 'mkr.id')
+            ->whereExists($filterPA)
+            ->select('mkr.kode_risiko', 'mkr.deskripsi_risiko', 'mkr.kelompok_risiko', DB::raw('count(pt.id) as total'))
+            ->groupBy('mkr.id', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', 'mkr.kelompok_risiko')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get();
+
+        $riskCategories = [];
+        $riskDescriptions = [];
+        $riskData = [];
+        foreach ($topRisks as $r) {
+            $riskCategories[] = $r->kode_risiko;
+            $riskDescriptions[] = $r->deskripsi_risiko;
+            $riskData[] = (int) $r->total;
+        }
+
+        // Heatmap — JOIN + EXISTS filter
+        $heatmapQuery = DB::table('pelaporan_temuan as pt')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->join('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
+            ->join('master_kode_risk as mkr', 'pt.kode_risk_id', '=', 'mkr.id')
+            ->whereExists($filterPA)
+            ->select('ma.nama_bidang as divisi', 'mkr.kode_risiko', 'mkr.deskripsi_risiko', DB::raw('count(pt.id) as total'))
+            ->whereNotNull('ma.nama_bidang')
+            ->groupBy('ma.nama_bidang', 'mkr.kode_risiko', 'mkr.deskripsi_risiko')
+            ->get();
+
+        $heatmapLookup = [];
+        foreach ($heatmapQuery as $hq) {
+            $heatmapLookup[$hq->divisi . '|' . $hq->kode_risiko] = [
+                'total' => (int) $hq->total,
+                'desc'  => $hq->deskripsi_risiko,
+            ];
+        }
+
+        $heatmapDivisis = [];
+        foreach ($divisiTemuan as $d) {
+            $heatmapDivisis[] = $d->divisi;
+        }
+        $heatmapRisks = [];
+        foreach ($topRisks as $r) {
+            $heatmapRisks[] = $r->kode_risiko;
+        }
+
+        $heatmapData = [];
+        foreach ($heatmapDivisis as $yIndex => $divisi) {
+            foreach ($heatmapRisks as $xIndex => $riskKode) {
+                $key = $divisi . '|' . $riskKode;
+                $entry = $heatmapLookup[$key] ?? ['total' => 0, 'desc' => ''];
+                $heatmapData[] = [$xIndex, $yIndex, $entry['total'], $entry['desc']];
+            }
+        }
+
+        $heatmapDivisiLabels = array_map(function ($d) {
+            return mb_strlen($d) > 15 ? mb_substr($d, 0, 15) . '...' : $d;
+        }, $heatmapDivisis);
 
         return $this->success([
             'filters' => compact('masterDivisi', 'masterArea'),
@@ -125,7 +299,13 @@ class DashboardApiController extends BaseApiController
                 'rekomendasi_on_progress' => $rekomendasiOnProgress,
                 'percent_closed'          => $percentClosed,
             ],
-            'status' => $statusCounts,
+            'tren'    => ['bulan' => ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'], 'selesai' => $trenSelesai],
+            'aging'   => ['categories' => $agingCategories, 'data' => $agingData],
+            'status'  => $statusCounts,
+            'stacked' => ['categories' => $stackedCategories, 'closed' => $stackedClosed, 'progress' => $stackedProgress, 'open' => $stackedOpen],
+            'divisi'  => ['categories' => $divisiCategories, 'data' => $divisiData],
+            'risk'    => ['categories' => $riskCategories, 'descriptions' => $riskDescriptions, 'data' => $riskData],
+            'heatmap' => ['divisi_labels' => $heatmapDivisiLabels, 'risks' => $heatmapRisks, 'data' => $heatmapData],
         ]);
     }
 
@@ -195,18 +375,28 @@ class DashboardApiController extends BaseApiController
 
     /**
      * Dashboard Rekapitulasi Aktivitas Audit.
+     * OPTIMIZED: Results are cached for 60 seconds. Explicit column select
+     * avoids transferring all pa.* columns (including JSON blobs) for every row.
      */
     public function rekapitulasi(Request $request): JsonResponse
     {
-        $tahun = $request->input('tahun', date('Y'));
+        $tahun = (int) $request->input('tahun', date('Y'));
+        $cacheKey = "dashboard_rekapitulasi_{$tahun}";
 
-        $data = DB::table('perencanaan_audit as pa')
-            ->leftJoin('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
-            ->leftJoin('master_area as area', 'pa.area_id', '=', 'area.id')
-            ->whereYear('pa.tanggal_audit_mulai', $tahun)
-            ->select('pa.*', 'ma.nama_bidang', 'area.nama_area')
-            ->orderBy('pa.tanggal_audit_mulai')
-            ->get();
+        $data = cache()->remember($cacheKey, 60, function () use ($tahun) {
+            return DB::table('perencanaan_audit as pa')
+                ->leftJoin('master_auditee as ma', 'pa.auditee_id', '=', 'ma.id')
+                ->leftJoin('master_area as area', 'pa.area_id', '=', 'area.id')
+                ->whereYear('pa.tanggal_audit_mulai', $tahun)
+                ->select(
+                    'pa.id', 'pa.nomor_surat_tugas', 'pa.tanggal_surat_tugas',
+                    'pa.jenis_audit', 'pa.tanggal_audit_mulai', 'pa.tanggal_audit_sampai',
+                    'pa.periode_audit', 'pa.area_id', 'pa.auditee_id',
+                    'ma.nama_bidang', 'area.nama_area'
+                )
+                ->orderBy('pa.tanggal_audit_mulai')
+                ->get();
+        });
 
         return $this->success($data);
     }

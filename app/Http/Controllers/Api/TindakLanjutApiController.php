@@ -168,16 +168,43 @@ class TindakLanjutApiController extends BaseApiController
     /**
      * Progress tindak lanjut — overview.
      */
+    /**
+     * Progress tindak lanjut — overview.
+     * OPTIMIZED: If called without a specific status, it returns a fast count summary
+     * grouped by status. If a status is requested, it returns a paginated list of recommendations.
+     */
     public function progressIndex(Request $request): JsonResponse
     {
-        $data = PenutupLhaRekomendasi::with([
-            'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
-            'tindakLanjut',
-        ])
-        ->get()
-        ->groupBy('status_tindak_lanjut');
+        $status = $request->input('status');
 
-        return $this->success($data);
+        if (!$status) {
+            // Return aggregate summary (extremely fast)
+            $summary = \Illuminate\Support\Facades\DB::table('penutup_lha_rekomendasi')
+                ->select('status_tindak_lanjut', \Illuminate\Support\Facades\DB::raw('COUNT(*) as total'))
+                ->groupBy('status_tindak_lanjut')
+                ->pluck('total', 'status_tindak_lanjut')
+                ->toArray();
+
+            return $this->success([
+                'open'        => (int) ($summary['open'] ?? 0),
+                'on_progress' => (int) ($summary['on_progress'] ?? 0),
+                'closed'      => (int) ($summary['closed'] ?? 0),
+            ]);
+        }
+
+        // Return paginated recommendations for the specific status
+        [$perPage, $page, $offset] = $this->resolvePagination($request);
+
+        $query = PenutupLhaRekomendasi::where('status_tindak_lanjut', $status)
+            ->with([
+                'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
+                'latestTindakLanjut'
+            ]);
+
+        $total = $query->count();
+        $items = $query->limit($perPage)->offset($offset)->get();
+
+        return $this->successPaginated($items, $total, $page, $perPage);
     }
 
     public function persetujuanIndex(Request $request): JsonResponse

@@ -438,9 +438,11 @@ class MonitoringService
     public function getProgressData(int $selectedYear, string $selectedStatus, ?string $selectedAuditee, ?string $userAreaId): array
     {
         // 1. Base Query for Recommendation Data table
+        // OPTIMIZED: Use 'latestTindakLanjut' (latestOfMany relation) instead of loading
+        // all child tindakLanjut rows to avoid massive memory consumption.
         $query = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
-            'tindakLanjut'
+            'latestTindakLanjut'
         ]);
         
         if ($selectedAuditee) {
@@ -604,7 +606,7 @@ class MonitoringService
                 }
             }
             
-            $latestTindakLanjut = $item->tindakLanjut->sortByDesc('created_at')->first();
+            $latestTindakLanjut = $item->latestTindakLanjut;
             $progressPercentage = 0;
             
             if ($item->status_tindak_lanjut == 'closed') {

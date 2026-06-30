@@ -174,6 +174,9 @@ class AuthHelper
             $user->load('akses');
         }
 
-        return $user->akses?->nama_akses === $role;
+        $userRole = strtoupper(trim($user->akses?->nama_akses ?? ''));
+        $targetRole = strtoupper(trim($role));
+
+        return $userRole === $targetRole;
     }
 }

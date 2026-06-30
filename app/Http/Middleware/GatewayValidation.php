@@ -14,6 +14,11 @@ class GatewayValidation
     {
         $request->headers->set('Accept', 'application/json');
 
+        // Bypass for direct ERP requests using ERP Token
+        if ($request->hasHeader('X-ERP-Payload')) {
+            return (new \App\Http\Middleware\ValidationERPToken())->handle($request, $next);
+        }
+
         // Step 1: Check bypass using X-Internal-Key (for direct service-to-service calls)
         $internalKey = $request->header('X-Internal-Key');
         $expectedKey = config('erp.gateway_internal_key');

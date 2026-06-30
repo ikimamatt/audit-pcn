@@ -26,9 +26,10 @@ class CheckRole
             $user->load('akses');
         }
 
-        $userRole = $user->akses?->nama_akses ?? null;
+        $userRole = strtoupper(trim($user->akses?->nama_akses ?? ''));
+        $rolesUpper = array_map(fn($r) => strtoupper(trim($r)), $roles);
 
-        if (!$userRole || !in_array($userRole, $roles)) {
+        if (!$userRole || !in_array($userRole, $rolesUpper)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 

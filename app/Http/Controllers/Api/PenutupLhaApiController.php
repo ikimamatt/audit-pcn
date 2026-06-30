@@ -277,6 +277,9 @@ class PenutupLhaApiController extends BaseApiController
 
     /**
      * Get active reminders for the logged in user.
+     *
+     * OPTIMIZED: Replaces 3-level eager loading chain (temuan → pelaporanHasilAudit →
+     * perencanaanAudit) with a single flat JOIN query fetching only the 5 columns needed.
      */
     public function myReminders(Request $request): JsonResponse
     {
@@ -286,29 +289,35 @@ class PenutupLhaApiController extends BaseApiController
         }
         $userId = $localUser->id;
 
-        $reminders = PenutupLhaRekomendasi::whereIn('status_tindak_lanjut', ['open', 'on_progress'])
-            ->whereHas('picUsers', function ($q) use ($userId) {
-                $q->where('master_user_id', $userId)
-                  ->where('pic_type', 'business_contact');
+        $reminders = \Illuminate\Support\Facades\DB::table('penutup_lha_rekomendasi as plr')
+            ->join('penutup_lha_rekomendasi_pic as pic', function ($join) use ($userId) {
+                $join->on('pic.penutup_lha_rekomendasi_id', '=', 'plr.id')
+                     ->where('pic.master_user_id', '=', $userId)
+                     ->where('pic.pic_type', '=', 'business_contact');
             })
-            ->whereIn('status_approval', ['approved', 'rejected', 'rejected_level1'])
-            ->with(['temuan.pelaporanHasilAudit.perencanaanAudit'])
+            ->join('pelaporan_temuan as pt', 'plr.pelaporan_isi_lha_id', '=', 'pt.id')
+            ->join('pelaporan_hasil_audit as pha', 'pt.pelaporan_hasil_audit_id', '=', 'pha.id')
+            ->join('perencanaan_audit as pa', 'pha.perencanaan_audit_id', '=', 'pa.id')
+            ->whereIn('plr.status_tindak_lanjut', ['open', 'on_progress'])
+            ->whereIn('plr.status_approval', ['approved', 'rejected', 'rejected_level1'])
+            ->select(
+                'plr.id',
+                'plr.rekomendasi',
+                'plr.target_waktu',
+                'pa.nomor_surat_tugas',
+                'pha.nomor_lha_lhk',
+                'pt.nomor_iss'
+            )
             ->get()
-            ->map(function ($item) {
-                $pa = $item->temuan->pelaporanHasilAudit->perencanaanAudit ?? null;
-                $pha = $item->temuan->pelaporanHasilAudit ?? null;
-                $pt = $item->temuan ?? null;
-
-                return [
-                    'id' => $item->id,
-                    'rekomendasi' => $item->rekomendasi,
-                    'target_waktu' => $item->target_waktu,
-                    'nomor_surat_tugas' => $pa ? $pa->nomor_surat_tugas : '-',
-                    'nomor_lha_lhk' => $pha ? $pha->nomor_lha_lhk : '-',
-                    'nomor_iss' => $pt ? $pt->nomor_iss : '-',
-                    'link' => "/audit/pemantauan/{$item->id}/tindak-lanjut",
-                ];
-            });
+            ->map(fn($row) => [
+                'id'                => $row->id,
+                'rekomendasi'       => $row->rekomendasi,
+                'target_waktu'      => $row->target_waktu,
+                'nomor_surat_tugas' => $row->nomor_surat_tugas ?? '-',
+                'nomor_lha_lhk'     => $row->nomor_lha_lhk ?? '-',
+                'nomor_iss'         => $row->nomor_iss ?? '-',
+                'link'              => "/audit/pemantauan/{$row->id}/tindak-lanjut",
+            ]);
 
         return $this->success($reminders);
     }

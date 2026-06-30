@@ -54,5 +54,28 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('canModifyData', function () {
             return \App\Helpers\AuthHelper::canModifyData();
         });
+
+        // Auto-invalidate and refresh dashboard cache on mutations of core transactional models
+        $refreshCache = function () {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('dashboard:refresh-cache');
+            } catch (\Throwable $e) {
+                // Prevent app from failing if cache refresh fails
+                report($e);
+            }
+        };
+
+        $models = [
+            \App\Models\Audit\PerencanaanAudit::class,
+            \App\Models\EntryMeeting::class,
+            \App\Models\RealisasiAudit::class,
+            \App\Models\Models\Audit\PelaporanHasilAudit::class,
+            \App\Models\PenutupLhaRekomendasi::class,
+        ];
+
+        foreach ($models as $model) {
+            $model::saved($refreshCache);
+            $model::deleted($refreshCache);
+        }
     }
 }
