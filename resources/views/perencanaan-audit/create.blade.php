@@ -10,6 +10,9 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('audit.pka.store') }}" enctype="multipart/form-data" id="pkaForm">
                     @csrf
+                    @if(!empty($returnUrl))
+                        <input type="hidden" name="return_url" value="{{ $returnUrl }}">
+                    @endif
                     <div class="mb-3">
                         <label class="form-label">Surat Tugas</label>
                         <select name="perencanaan_audit_id" class="form-select select2-search" required>
@@ -143,9 +146,9 @@
                         @else
                             <button type="submit" class="btn btn-primary" disabled>Simpan</button>
                         @endif
-                        <a href="{{ route('audit.pka.index') }}" class="btn btn-secondary">Batal</a>
+                        <a href="{{ $returnUrl ?? route('audit.pka.index') }}" class="btn btn-secondary">Batal</a>
                         @if($suratTugas->isEmpty())
-                            <a href="{{ route('audit.perencanaan.create') }}" class="btn btn-info">
+                            <a href="{{ $returnUrl ?? route('audit.perencanaan.create') }}" class="btn btn-info">
                                 <i class="mdi mdi-plus-circle me-1"></i>
                                 Buat Surat Tugas Baru
                             </a>

@@ -21,6 +21,12 @@ class WalkthroughApiController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
+        if ($request->filled('id')) {
+            $item = WalkthroughAudit::with(['perencanaanAudit.auditee', 'programKerjaAudit'])->find($request->id);
+            $items = $item ? [$item] : [];
+            return $this->successPaginated($items, count($items), 1, 15);
+        }
+
         [$perPage, $page, $offset] = $this->resolvePagination($request);
 
         $search = $request->input('search') ?: null;

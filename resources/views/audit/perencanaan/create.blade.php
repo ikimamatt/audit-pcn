@@ -30,7 +30,7 @@
                 @endif
                 <div class="row mb-2">
                     <div class="col-sm-5">
-                        <a href="{{ route('audit.perencanaan.index') }}" class="btn btn-secondary mb-2">
+                        <a href="{{ $returnUrl ?? route('audit.perencanaan.index') }}" class="btn btn-secondary mb-2">
                             <i class="mdi mdi-arrow-left me-2"></i> Kembali
                         </a>
                     </div>
@@ -39,6 +39,9 @@
                 @include('components.alert')
                 <form id="form-perencanaan-audit" method="POST" action="{{ route('audit.perencanaan.store') }}">
                     @csrf
+                    @if(!empty($returnUrl))
+                        <input type="hidden" name="return_url" value="{{ $returnUrl }}">
+                    @endif
                     <div class="mb-3">
                         <label class="form-label">Tanggal Surat Tugas</label>
                         <input type="date" name="tanggal_surat_tugas" class="form-control" value="{{ old('tanggal_surat_tugas') }}" required>
@@ -164,7 +167,7 @@
                     </div>
                     <div class="mb-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Save</button>
-                        <a href="{{ route('audit.perencanaan.index') }}" class="btn btn-secondary">Batal</a>
+                        <a href="{{ $returnUrl ?? route('audit.perencanaan.index') }}" class="btn btn-secondary">Batal</a>
                     </div>
                 </form>
             </div>

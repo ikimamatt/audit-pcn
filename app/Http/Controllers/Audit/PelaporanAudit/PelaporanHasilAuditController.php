@@ -66,13 +66,14 @@ class PelaporanHasilAuditController extends Controller
         return view('audit.pelaporan.index', compact('data', 'suratTugas', 'kodeAoi', 'kodeRisk', 'selectedAudit', 'temuanList'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         if (!\App\Helpers\AuthHelper::canModifyData()) {
             abort(403, 'Anda tidak memiliki akses untuk membuat pelaporan hasil audit.');
         }
 
         // Ambil data perencanaan audit (surat tugas)
+        $returnUrl  = $request->query('return_url');
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
@@ -80,7 +81,7 @@ class PelaporanHasilAuditController extends Controller
         
         $nomorLhaLhk = '';
         
-        return view('audit.pelaporan.create', compact('suratTugas', 'kodeAoi', 'kodeRisk', 'nomorLhaLhk', 'jenisAudit'));
+        return view('audit.pelaporan.create', compact('suratTugas', 'kodeAoi', 'kodeRisk', 'nomorLhaLhk', 'jenisAudit', 'returnUrl'));
     }
 
     public function store(StorePelaporanHasilAuditRequest $request)
@@ -109,18 +110,19 @@ class PelaporanHasilAuditController extends Controller
         return view('audit.pelaporan.show', compact('item'));
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         if (!\App\Helpers\AuthHelper::canModifyData()) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit pelaporan hasil audit.');
         }
 
+        $returnUrl  = $request->query('return_url');
         $item = PelaporanHasilAudit::with(['temuan.kodeAoi', 'temuan.kodeRisk'])->findOrFail($id);
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $kodeAoi = \App\Models\MasterData\MasterKodeAoi::all();
         $kodeRisk = \App\Models\MasterData\MasterKodeRisk::all();
         $jenisAudit = \App\Models\MasterData\MasterJenisAudit::all();
-        return view('audit.pelaporan.edit', compact('item', 'suratTugas', 'kodeAoi', 'kodeRisk', 'jenisAudit'));
+        return view('audit.pelaporan.edit', compact('item', 'suratTugas', 'kodeAoi', 'kodeRisk', 'jenisAudit', 'returnUrl'));
     }
 
     public function editTemuan($id)

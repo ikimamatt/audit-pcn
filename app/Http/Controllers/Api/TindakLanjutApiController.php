@@ -215,7 +215,7 @@ class TindakLanjutApiController extends BaseApiController
         }
 
         $userId = $localUser->id;
-        $isSuperAdmin = $this->localRole($request) === 'SUPERADMIN';
+        $isSuperAdmin = in_array(strtoupper(str_replace(' ', '', $this->localRole($request))), ['SUPERADMIN', 'SUPER_ADMIN']);
 
         $service = app(\App\Services\Audit\PersetujuanService::class);
         $allPendingItems = $service->getPendingItems($userId, $isSuperAdmin);
@@ -254,9 +254,12 @@ class TindakLanjutApiController extends BaseApiController
      */
     public function persetujuanProses(Request $request): JsonResponse
     {
-        if (! $this->canModify($request)) {
-            return $this->denyModify();
+        $localUser = $this->localUser($request);
+        if (!$localUser) {
+            return $this->error('User lokal tidak ditemukan.', 404);
         }
+
+        \Illuminate\Support\Facades\Auth::login($localUser);
 
         $request->validate([
             'type'   => 'required|string',
@@ -269,6 +272,18 @@ class TindakLanjutApiController extends BaseApiController
         $id = $request->input('id');
         $action = $request->input('action');
         $reason = $request->input('rejection_reason');
+
+        // Menyesuaikan dengan logika PersetujuanController web asli:
+        // Auditee tidak boleh melakukan approval kecuali untuk tipe penutup_lha_rekomendasi
+        $isAuditee = strtoupper(trim($this->localRole($request))) === 'AUDITEE';
+        if ($isAuditee && $modelType !== 'penutup_lha_rekomendasi') {
+            return $this->denyModify();
+        }
+
+        // Untuk non-auditee, tetap ikuti aturan general modify
+        if (! $isAuditee && ! $this->canModify($request)) {
+            return $this->denyModify();
+        }
 
         $modelClass = match($modelType) {
             'pka' => \App\Models\Models\Audit\ProgramKerjaAudit::class,

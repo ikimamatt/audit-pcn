@@ -68,7 +68,7 @@ class PemantauanAuditController extends Controller
         return view('audit.pemantauan.index', compact('data', 'nomorSuratTugas', 'perencanaanAudit', 'canSendReminder'));
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $item = PenutupLhaRekomendasi::with([
             'temuan.pelaporanHasilAudit.perencanaanAudit.auditee',
@@ -79,7 +79,9 @@ class PemantauanAuditController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi ini.');
         }
         
-        return view('audit.pemantauan.edit', compact('item'));
+        $returnUrl = $request->query('return_url');
+        
+        return view('audit.pemantauan.edit', compact('item', 'returnUrl'));
     }
 
     public function update(UpdatePemantauanRekomendasiRequest $request, $id)

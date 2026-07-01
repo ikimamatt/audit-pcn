@@ -21,6 +21,15 @@ class ExitMeetingApiController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
+        if ($request->filled('id')) {
+            $item = RealisasiAudit::with([
+                'perencanaanAudit.auditee',
+                'perencanaanAudit.programKerjaAudit.milestones'
+            ])->find($request->id);
+            $items = $item ? collect([$item]) : collect([]);
+            return $this->successPaginated($items, $items->count(), 1, 15);
+        }
+
         [$perPage, $page, $offset] = $this->resolvePagination($request);
 
         $search = $request->input('search') ?: null;

@@ -96,7 +96,7 @@
                             <i class="mdi mdi-plus-circle me-2"></i>
                             Tambah Rekomendasi Penutup LHA/LHK
                         </h4>
-                        <a href="{{ route('audit.penutup-lha-rekomendasi.index') }}" class="btn btn-secondary">
+                        <a href="{{ $returnUrl ?? route('audit.penutup-lha-rekomendasi.index') }}" class="btn btn-secondary">
                             <i class="mdi mdi-arrow-left me-2"></i>Kembali
                         </a>
                     </div>
@@ -113,6 +113,7 @@
                     @endif
                     <form action="{{ route('audit.penutup-lha-rekomendasi.store') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                         <div class="mb-3">
                             <label for="pelaporan_isi_lha_id" class="form-label">Nomor ISS (LHA/LHK) <span class="text-danger">*</span></label>
                             <select name="pelaporan_isi_lha_id" id="pelaporan_isi_lha_id" class="form-select" required>

@@ -47,9 +47,10 @@ class EntryMeetingController extends Controller
         return view('audit.entry-meeting.index', compact('data'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $auditees = MasterAuditee::all();
+        $returnUrl = $request->query('return_url');
         
         try {
             // Ambil PKA yang memiliki milestone Entry Meeting dan belum memiliki Entry Meeting
@@ -74,7 +75,7 @@ class EntryMeetingController extends Controller
             }])->get();
         }
         
-        return view('audit.entry-meeting.create', compact('auditees', 'programKerjaAudit'));
+        return view('audit.entry-meeting.create', compact('auditees', 'programKerjaAudit', 'returnUrl'));
     }
 
     public function store(StoreEntryMeetingRequest $request)
@@ -88,12 +89,13 @@ class EntryMeetingController extends Controller
         return redirect()->route('audit.entry-meeting.index')->with('success', 'Entry Meeting berhasil disimpan!');
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $item = EntryMeeting::with(['programKerjaAudit.perencanaanAudit'])->findOrFail($id);
         $auditees = MasterAuditee::all();
+        $returnUrl = $request->query('return_url');
         
-        return view('audit.entry-meeting.edit', compact('item', 'auditees'));
+        return view('audit.entry-meeting.edit', compact('item', 'auditees', 'returnUrl'));
     }
 
     public function update(UpdateEntryMeetingRequest $request, $id)

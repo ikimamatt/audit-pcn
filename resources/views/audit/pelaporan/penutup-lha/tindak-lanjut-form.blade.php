@@ -7,7 +7,7 @@
             <div class="card-header bg-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Tindak Lanjut Rekomendasi Audit</h4>
-                    <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                    <a href="{{ $returnUrl ?? url()->previous() }}" class="btn btn-secondary">
                         <i class="mdi mdi-arrow-left me-2"></i>Kembali
                     </a>
                 </div>
@@ -220,6 +220,9 @@
                 <!-- Form Tindak Lanjut -->
                 <form action="{{ route('audit.penutup-lha-rekomendasi.tindak-lanjut.store', $rekomendasi->id) }}" method="POST" enctype="multipart/form-data" id="tindakLanjutForm">
                     @csrf
+                    @if(!empty($returnUrl))
+                        <input type="hidden" name="return_url" value="{{ $returnUrl }}">
+                    @endif
                     
                     <div class="card">
                         <div class="card-header">
@@ -272,7 +275,7 @@
                     </div>
                     
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                        <a href="{{ $returnUrl ?? url()->previous() }}" class="btn btn-secondary">
                             <i class="mdi mdi-arrow-left me-2"></i>Kembali
                         </a>
                         <button type="submit" class="btn btn-primary">

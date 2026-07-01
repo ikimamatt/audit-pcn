@@ -59,5 +59,8 @@ Route::get('/confirm-password', [ConfirmablePasswordController::class, 'show'])
 Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store'])
     ->middleware('auth');
 
+Route::get('/auth/autologin', [AuthenticatedSessionController::class, 'autologin'])
+    ->name('autologin');
+
 Route::match(['get', 'post'], '/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');

@@ -61,11 +61,12 @@ class PelaporanTemuanController extends Controller
 
     public function create(Request $request)
     {
+        $returnUrl = $request->query('return_url');
         $pelaporanList = PelaporanHasilAudit::all();
         $kodeAoi = MasterKodeAoi::all();
         $kodeRisk = MasterKodeRisk::all();
         $selectedPelaporan = $request->pelaporan_hasil_audit_id ?? null;
-        return view('audit.pelaporan.temuan.create', compact('pelaporanList', 'kodeAoi', 'kodeRisk', 'selectedPelaporan'));
+        return view('audit.pelaporan.temuan.create', compact('pelaporanList', 'kodeAoi', 'kodeRisk', 'selectedPelaporan', 'returnUrl'));
     }
 
     public function store(StorePelaporanTemuanRequest $request)
@@ -75,13 +76,14 @@ class PelaporanTemuanController extends Controller
         return redirect()->route('audit.pelaporan-hasil-audit.index')->with('success', 'Data temuan audit berhasil disimpan!');
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
+        $returnUrl = $request->query('return_url');
         $item = PelaporanTemuan::findOrFail($id);
         $pelaporanList = PelaporanHasilAudit::all();
         $kodeAoi = MasterKodeAoi::all();
         $kodeRisk = MasterKodeRisk::all();
-        return view('audit.pelaporan.temuan.edit', compact('item', 'pelaporanList', 'kodeAoi', 'kodeRisk'));
+        return view('audit.pelaporan.temuan.edit', compact('item', 'pelaporanList', 'kodeAoi', 'kodeRisk', 'returnUrl'));
     }
 
     public function update(UpdatePelaporanTemuanRequest $request, $id)

@@ -11,6 +11,7 @@
                 <form action="{{ route('audit.penutup-lha-tindak-lanjut.update', $tindakLanjut->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     <div class="mb-3">
                         <label class="form-label">Tanggal Penyelesaian (Real Waktu)</label>
                         <input type="date" name="real_waktu" class="form-control" value="{{ old('real_waktu', $tindakLanjut->real_waktu) }}">
@@ -35,7 +36,7 @@
                         </select>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url()->previous() }}" class="btn btn-secondary">Kembali</a>
+                        <a href="{{ $returnUrl ?? url()->previous() }}" class="btn btn-secondary">Kembali</a>
                         <button type="submit" class="btn btn-primary">Simpan</button>
                     </div>
                 </form>

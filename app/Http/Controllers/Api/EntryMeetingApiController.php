@@ -21,6 +21,12 @@ class EntryMeetingApiController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
+        if ($request->filled('id')) {
+            $item = EntryMeeting::with(['auditee', 'programKerjaAudit.perencanaanAudit'])->find($request->id);
+            $items = $item ? [$item] : [];
+            return $this->successPaginated($items, count($items), 1, 15);
+        }
+
         [$perPage, $page, $offset] = $this->resolvePagination($request);
 
         $search = $request->input('search') ?: null;

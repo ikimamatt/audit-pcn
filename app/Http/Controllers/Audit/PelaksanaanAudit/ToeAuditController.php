@@ -46,11 +46,12 @@ class ToeAuditController extends Controller
         return view('audit.toe.index', compact('data'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $returnUrl  = $request->query('return_url');
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $bpmList    = TodBpmAudit::all();
-        return view('audit.toe.create', compact('suratTugas', 'bpmList'));
+        return view('audit.toe.create', compact('suratTugas', 'bpmList', 'returnUrl'));
     }
 
     public function store(StoreToeRequest $request)
@@ -88,7 +89,7 @@ class ToeAuditController extends Controller
         return view('audit.toe.show', compact('item', 'risikoData'));
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $item = ToeAudit::with([
             'perencanaanAudit',
@@ -97,6 +98,7 @@ class ToeAuditController extends Controller
             'evaluasi',
         ])->findOrFail($id);
 
+        $returnUrl  = $request->query('return_url');
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $bpmList    = TodBpmAudit::all();
 
@@ -105,7 +107,7 @@ class ToeAuditController extends Controller
 
         return view('audit.toe.edit', compact(
             'item', 'suratTugas', 'bpmList',
-            'selectedRisikoIds', 'selectedKontrolIds'
+            'selectedRisikoIds', 'selectedKontrolIds', 'returnUrl'
         ));
     }
 

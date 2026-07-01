@@ -173,4 +173,17 @@ Route::middleware(['gateway.validate'])->prefix('v1/audit')->name('api.audit.')-
         Route::get('/region', [MasterDataApiController::class, 'region'])->name('region');
         Route::get('/sub-bidang', [MasterDataApiController::class, 'subBidang'])->name('sub-bidang');
     });
+
+    // ── User Profile ─────────────────────────────────────────────
+    Route::get('/user-profile', function (Illuminate\Http\Request $request) {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nip' => $request->attributes->get('erp_nip'),
+                'name' => $request->attributes->get('erp_name'),
+                'role' => $request->attributes->get('erp_local_role'),
+                'can_modify' => (bool) $request->attributes->get('erp_can_modify'),
+            ]
+        ]);
+    })->name('user-profile');
 });

@@ -5,7 +5,7 @@
     <div class="col-12">
         <div class="page-title-box">
             <div class="page-title-right">
-                <a href="{{ route('audit.exit-meeting.index') }}" class="btn btn-secondary">
+                <a href="{{ $returnUrl ?? route('audit.exit-meeting.index') }}" class="btn btn-secondary">
                     <i class="mdi mdi-arrow-left"></i> Kembali
                 </a>
             </div>
@@ -20,6 +20,7 @@
             <div class="card-body">
                 <form action="{{ route('audit.exit-meeting.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -152,7 +153,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="mdi mdi-content-save"></i> Simpan
                         </button>
-                        <a href="{{ route('audit.exit-meeting.index') }}" class="btn btn-secondary">
+                        <a href="{{ $returnUrl ?? route('audit.exit-meeting.index') }}" class="btn btn-secondary">
                             <i class="mdi mdi-close"></i> Batal
                         </a>
                     </div>

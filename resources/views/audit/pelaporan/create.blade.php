@@ -19,6 +19,7 @@
                 @endif
                 <form method="POST" action="{{ route('audit.pelaporan-hasil-audit.store') }}">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     
                     <!-- Row 1: Surat Tugas dan Jenis -->
                     <div class="row g-3 mb-3">
@@ -97,7 +98,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="mdi mdi-content-save"></i> Simpan
                             </button>
-                            <a href="{{ route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-secondary">
+                            <a href="{{ $returnUrl ?? route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-secondary">
                                 <i class="mdi mdi-close"></i> Batal
                             </a>
                         </div>

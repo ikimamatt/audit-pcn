@@ -107,6 +107,7 @@
                     <form action="{{ route('audit.penutup-lha-rekomendasi.update', $item->id) }}" method="POST">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                         <input type="hidden" name="pelaporan_isi_lha_id" value="{{ $item->pelaporan_isi_lha_id }}">
                         <div class="mb-3">
                             <label class="form-label">Nomor ISS (LHA/LHK)</label>
@@ -207,7 +208,7 @@
                             @error('target_waktu')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url()->previous() }}" class="btn btn-secondary">Batal</a>
+                            <a href="{{ $returnUrl ?? url()->previous() }}" class="btn btn-secondary">Batal</a>
                             <button type="submit" class="btn btn-primary">Update</button>
                         </div>
                     </form>

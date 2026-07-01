@@ -14,6 +14,7 @@
             <div class="card-body">
                 <form action="{{ route('audit.entry-meeting.update', $item->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf @method('PUT')
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     <div class="mb-3">
                         <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
                         <input type="text" class="form-control" value="{{ $item->programKerjaAudit ? $item->programKerjaAudit->no_pka . ' - ' . ($item->programKerjaAudit->perencanaanAudit ? $item->programKerjaAudit->perencanaanAudit->nomor_surat_tugas : 'N/A') : 'N/A' }}" readonly>
@@ -54,7 +55,7 @@
                         @endif
                     </div>
                     <button type="submit" class="btn btn-primary">Update</button>
-                    <a href="{{ route('audit.entry-meeting.index') }}" class="btn btn-secondary">Batal</a>
+                    <a href="{{ $returnUrl ?? route('audit.entry-meeting.index') }}" class="btn btn-secondary">Batal</a>
                 </form>
             </div>
         </div>

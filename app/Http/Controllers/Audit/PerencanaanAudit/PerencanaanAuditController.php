@@ -33,7 +33,7 @@ class PerencanaanAuditController extends Controller
         return view('audit.perencanaan.index', compact('data'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $auditees   = MasterAuditee::all();
         $jenisAudits = MasterJenisAudit::all();
@@ -45,13 +45,27 @@ class PerencanaanAuditController extends Controller
             ->orderBy('nama')
             ->get();
         
-        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'areas'));
+        $returnUrl = $request->query('return_url');
+        
+        return view('audit.perencanaan.create', compact('auditees', 'auditors', 'jenisAudits', 'areas', 'returnUrl'));
     }
 
     public function store(StorePerencanaanRequest $request)
     {
         $perencanaan = $this->perencanaanService->create($request->validated());
         
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with([
+                    'success' => 'Data perencanaan audit berhasil disimpan!',
+                    'nomor' => $perencanaan->nomor_surat_tugas
+                ]);
+            }
+        }
+
         // Redirect ke index dengan session data untuk modal
         return redirect()->route('audit.perencanaan.index')->with([
             'success' => 'Data perencanaan audit berhasil disimpan!',
@@ -59,7 +73,7 @@ class PerencanaanAuditController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $item = PerencanaanAudit::findOrFail($id);
         
@@ -95,8 +109,9 @@ class PerencanaanAuditController extends Controller
             }
         }
         $item->matched_auditor_ids = $matchedAuditorIds;
+        $returnUrl = $request->query('return_url');
         
-        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits', 'areas'));
+        return view('audit.perencanaan.edit', compact('item', 'auditees', 'auditors', 'jenisAudits', 'areas', 'returnUrl'));
     }
 
     public function update(UpdatePerencanaanRequest $request, $id)
@@ -105,6 +120,18 @@ class PerencanaanAuditController extends Controller
         
         $this->perencanaanService->update($item, $request->validated());
         
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with([
+                    'success' => 'Data perencanaan audit berhasil diupdate!',
+                    'nomor' => $item->nomor_surat_tugas
+                ]);
+            }
+        }
+
         // Redirect ke index dengan session data untuk modal
         return redirect()->route('audit.perencanaan.index')->with([
             'success' => 'Data perencanaan audit berhasil diupdate!',

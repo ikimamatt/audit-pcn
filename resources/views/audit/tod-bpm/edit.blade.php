@@ -15,6 +15,7 @@
             <div class="card-body">
                 <form action="{{ route('audit.tod-bpm.update', $item->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf @method('PUT')
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
 
                     {{-- Surat Tugas --}}
                     <div class="mb-3">
@@ -100,7 +101,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">Update</button>
-                    <a href="{{ route('audit.tod-bpm.index') }}" class="btn btn-secondary">Batal</a>
+                    <a href="{{ $returnUrl ?? route('audit.tod-bpm.index') }}" class="btn btn-secondary">Batal</a>
                 </form>
             </div>
         </div>

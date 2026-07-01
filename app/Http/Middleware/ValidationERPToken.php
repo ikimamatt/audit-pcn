@@ -116,7 +116,7 @@ class ValidationERPToken
             // Tentukan apakah user bisa melakukan modifikasi data
             // AUDITEE dan VIEW BOD tidak bisa modify, sesuai logic AuthHelper::canModifyData()
             $nonModifyRoles = ['AUDITEE', 'VIEW BOD', 'VIEW_ONLY'];
-            $canModify = !in_array($localRole, $nonModifyRoles);
+            $canModify = !in_array(strtoupper(trim($localRole)), $nonModifyRoles);
         }
 
         // ── STEP 8: Inject Data ERP ke Request ───────────────────────────────

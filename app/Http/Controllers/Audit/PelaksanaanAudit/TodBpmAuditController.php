@@ -52,8 +52,9 @@ class TodBpmAuditController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
+        $returnUrl   = $request->query('return_url');
         $suratTugas  = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')
@@ -61,7 +62,7 @@ class TodBpmAuditController extends Controller
             ->get()
             ->groupBy('perencanaan_audit_id');
 
-        return view('audit.tod-bpm.create', compact('suratTugas', 'walkthroughs'));
+        return view('audit.tod-bpm.create', compact('suratTugas', 'walkthroughs', 'returnUrl'));
     }
 
     /**
@@ -119,7 +120,7 @@ class TodBpmAuditController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $item = TodBpmAudit::with([
             'perencanaanAudit',
@@ -128,6 +129,7 @@ class TodBpmAuditController extends Controller
             'evaluasi',
         ])->findOrFail($id);
 
+        $returnUrl   = $request->query('return_url');
         $suratTugas  = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
         $walkthroughs = WalkthroughAudit::whereNotNull('file_bpm')
             ->where('status_approval', 'approved')
@@ -141,7 +143,7 @@ class TodBpmAuditController extends Controller
 
         return view('audit.tod-bpm.edit', compact(
             'item', 'suratTugas', 'walkthroughs',
-            'selectedRisikoIds', 'selectedKontrolIds'
+            'selectedRisikoIds', 'selectedKontrolIds', 'returnUrl'
         ));
     }
 

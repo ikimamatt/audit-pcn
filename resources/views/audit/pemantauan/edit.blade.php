@@ -14,7 +14,7 @@
                                 $nomorSuratTugas = $item->temuan->pelaporanHasilAudit->perencanaanAudit->nomor_surat_tugas;
                             }
                         @endphp
-                        <a href="{{ route('audit.pemantauan.index', $nomorSuratTugas ? ['nomor_surat_tugas' => $nomorSuratTugas] : []) }}" class="btn btn-secondary">
+                        <a href="{{ $returnUrl ?? route('audit.pemantauan.index', $nomorSuratTugas ? ['nomor_surat_tugas' => $nomorSuratTugas] : []) }}" class="btn btn-secondary">
                             <i class="mdi mdi-arrow-left me-2"></i>Kembali
                         </a>
                     </div>
@@ -86,6 +86,7 @@
                     <form action="{{ route('audit.pemantauan.update', $item->id) }}" method="POST">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                         
                         <div class="row">
                             <div class="col-md-6">
@@ -123,7 +124,7 @@
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{{ route('audit.pemantauan.index') }}" class="btn btn-secondary">
+                            <a href="{{ $returnUrl ?? route('audit.pemantauan.index') }}" class="btn btn-secondary">
                                 <i class="mdi mdi-arrow-left me-2"></i>Batal
                             </a>
                             <button type="submit" class="btn btn-primary">

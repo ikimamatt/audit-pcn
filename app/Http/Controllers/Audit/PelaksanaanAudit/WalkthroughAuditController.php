@@ -48,8 +48,9 @@ class WalkthroughAuditController extends Controller
         return view('audit.walkthrough.index', compact('data'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $returnUrl = $request->query('return_url');
         // Ambil Program Kerja Audit yang memiliki milestone 'Walkthrough'
         // Exclude yang sudah approved atau pending, tapi include yang rejected
         try {
@@ -79,7 +80,7 @@ class WalkthroughAuditController extends Controller
         // Ambil data master auditee
         $auditees = MasterAuditee::all();
         
-        return view('audit.walkthrough.create', compact('programKerjaAudit', 'auditees'));
+        return view('audit.walkthrough.create', compact('programKerjaAudit', 'auditees', 'returnUrl'));
     }
 
     public function store(StoreWalkthroughRequest $request)
@@ -94,14 +95,15 @@ class WalkthroughAuditController extends Controller
         return redirect()->route('audit.walkthrough.index')->with('success', 'Hasil walkthrough berhasil ditambahkan!');
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $item = WalkthroughAudit::with(['programKerjaAudit.perencanaanAudit'])->findOrFail($id);
+        $returnUrl = $request->query('return_url');
         
         // Ambil data master auditee
         $auditees = MasterAuditee::all();
         
-        return view('audit.walkthrough.edit', compact('item', 'auditees'));
+        return view('audit.walkthrough.edit', compact('item', 'auditees', 'returnUrl'));
     }
 
     public function update(UpdateWalkthroughRequest $request, $id)

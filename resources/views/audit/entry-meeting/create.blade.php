@@ -14,6 +14,7 @@
             <div class="card-body">
                 <form action="{{ route('audit.entry-meeting.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     <div class="mb-3">
                         <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
                         @if($programKerjaAudit->count() > 0)
@@ -105,7 +106,7 @@
                     </div>
                     
                     <button type="submit" class="btn btn-primary">Simpan</button>
-                    <a href="{{ route('audit.entry-meeting.index') }}" class="btn btn-secondary">Batal</a>
+                    <a href="{{ $returnUrl ?? route('audit.entry-meeting.index') }}" class="btn btn-secondary">Batal</a>
                 </form>
             </div>
         </div>

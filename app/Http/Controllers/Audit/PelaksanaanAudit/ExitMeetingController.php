@@ -85,8 +85,9 @@ class ExitMeetingController extends Controller
         }
         
         $perencanaanAudits = $query->orderBy('nomor_surat_tugas')->get();
+        $returnUrl = $request->query('return_url');
             
-        return view('audit.exit-meeting.create', compact('perencanaanAudits'));
+        return view('audit.exit-meeting.create', compact('perencanaanAudits', 'returnUrl'));
     }
 
     public function store(StoreExitMeetingRequest $request)
@@ -105,11 +106,12 @@ class ExitMeetingController extends Controller
                         ->with('success', 'Data exit meeting berhasil ditambahkan.');
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         $realisasiAudit = RealisasiAudit::findOrFail($id);
         $perencanaanAudits = PerencanaanAudit::with('auditee')->get();
-        return view('audit.exit-meeting.edit', compact('realisasiAudit', 'perencanaanAudits'));
+        $returnUrl = $request->query('return_url');
+        return view('audit.exit-meeting.edit', compact('realisasiAudit', 'perencanaanAudits', 'returnUrl'));
     }
 
     public function update(UpdateExitMeetingRequest $request, $id)

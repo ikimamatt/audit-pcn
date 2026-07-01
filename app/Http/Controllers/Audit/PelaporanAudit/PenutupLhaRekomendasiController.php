@@ -229,8 +229,9 @@ class PenutupLhaRekomendasiController extends Controller
         }
 
         $picUsers = $picUsersQuery->orderBy('nama')->get();
+        $returnUrl = $request->query('return_url');
         
-        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers', 'nomorSuratTugas'));
+        return view('audit.pelaporan.penutup-lha.create', compact('isiLhaId', 'approvedIss', 'picUsers', 'nomorSuratTugas', 'returnUrl'));
     }
 
     public function getIssData(Request $request)
@@ -293,7 +294,7 @@ class PenutupLhaRekomendasiController extends Controller
             ->with('success', 'Rekomendasi penutup LHA/LHK berhasil ditambahkan!');
     }
 
-    public function edit($id)
+    public function edit($id, Request $request)
     {
         if (!\App\Helpers\AuthHelper::canModifyData()) {
             abort(403, 'Anda tidak memiliki akses untuk mengedit rekomendasi.');
@@ -325,8 +326,10 @@ class PenutupLhaRekomendasiController extends Controller
         $item->pic_business_contact_id = $picBusinessContact ? $picBusinessContact->id : null;
         $item->pic_approval_1_spi_id = $picApproval1 ? $picApproval1->id : null;
         $item->pic_approval_2_spi_id = $picApproval2 ? $picApproval2->id : null;
+
+        $returnUrl = $request->query('return_url');
         
-        return view('audit.pelaporan.penutup-lha.edit', compact('item', 'picUsers'));
+        return view('audit.pelaporan.penutup-lha.edit', compact('item', 'picUsers', 'returnUrl'));
     }
 
     public function update(UpdatePenutupLhaRekomendasiRequest $request, $id)
@@ -405,7 +408,7 @@ class PenutupLhaRekomendasiController extends Controller
     }
 
     // TINDAK LANJUT
-    public function tindakLanjutForm($rekomendasiId)
+    public function tindakLanjutForm(Request $request, $rekomendasiId)
     {
         $rekomendasi = PenutupLhaRekomendasi::with(['temuan.pelaporanHasilAudit', 'tindakLanjut'])->findOrFail($rekomendasiId);
         
@@ -419,7 +422,9 @@ class PenutupLhaRekomendasiController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk menginput tindak lanjut. Hanya Business Contact yang berhak.');
         }
 
-        return view('audit.pelaporan.penutup-lha.tindak-lanjut-form', compact('rekomendasi'));
+        $returnUrl = $request->query('return_url');
+
+        return view('audit.pelaporan.penutup-lha.tindak-lanjut-form', compact('rekomendasi', 'returnUrl'));
     }
 
     public function storeTindakLanjut(StoreTindakLanjutRequest $request, $rekomendasiId)
@@ -443,7 +448,7 @@ class PenutupLhaRekomendasiController extends Controller
 
         $this->tindakLanjutService->storeTindakLanjut($rekomendasiId, $data);
         
-        // Ambil nomor surat tugas untuk redirect
+        // Ambil nomor surat tugas untuk redirect fallback
         $rekomendasi->load(['temuan.pelaporanHasilAudit.perencanaanAudit']);
         $nomorSuratTugas = null;
         if ($rekomendasi->temuan && $rekomendasi->temuan->pelaporanHasilAudit && $rekomendasi->temuan->pelaporanHasilAudit->perencanaanAudit) {
@@ -455,14 +460,26 @@ class PenutupLhaRekomendasiController extends Controller
         });
         $komentarCount = count($validKomentar);
 
+        // Dynamic redirect back handling
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)
+                    ->with('success', "Berhasil menambahkan tindak lanjut dengan {$komentarCount} komentar!");
+            }
+        }
+
         return redirect()->route('audit.pemantauan.index', ['nomor_surat_tugas' => $nomorSuratTugas])
             ->with('success', "Berhasil menambahkan tindak lanjut dengan {$komentarCount} komentar!");
     }
 
-    public function editTindakLanjut($id)
+    public function editTindakLanjut($id, Request $request)
     {
         $tindakLanjut = PenutupLhaTindakLanjut::with(['rekomendasi.temuan.pelaporanHasilAudit'])->findOrFail($id);
-        return view('audit.pelaporan.penutup-lha.tindak-lanjut-edit', compact('tindakLanjut'));
+        $returnUrl = $request->query('return_url');
+        return view('audit.pelaporan.penutup-lha.tindak-lanjut-edit', compact('tindakLanjut', 'returnUrl'));
     }
 
     public function updateTindakLanjut(UpdateTindakLanjutRequest $request, $id)

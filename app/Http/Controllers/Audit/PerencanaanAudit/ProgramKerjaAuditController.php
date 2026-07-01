@@ -38,12 +38,13 @@ class ProgramKerjaAuditController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         // Ambil semua surat tugas yang belum memiliki PKA
         $suratTugas = PerencanaanAudit::whereDoesntHave('programKerjaAudit')->with('auditee')->orderBy('nomor_surat_tugas')->get();
+        $returnUrl = $request->query('return_url');
 
-        return view('perencanaan-audit.create', compact('suratTugas'));
+        return view('perencanaan-audit.create', compact('suratTugas', 'returnUrl'));
     }
 
     /**
@@ -55,6 +56,15 @@ class ProgramKerjaAuditController extends Controller
         $data['dokumen_files'] = $request->file('dokumen') ?? [];
 
         $this->pkaService->create($data);
+
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with('success', 'Program Kerja Audit berhasil disimpan!');
+            }
+        }
 
         return redirect()->route('audit.pka.index')->with('success', 'Program Kerja Audit berhasil disimpan!');
     }
@@ -80,7 +90,7 @@ class ProgramKerjaAuditController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $item = ProgramKerjaAudit::with([
             'perencanaanAudit',
@@ -90,7 +100,9 @@ class ProgramKerjaAuditController extends Controller
         ])->findOrFail($id);
 
         $suratTugas = PerencanaanAudit::with('auditee')->orderBy('nomor_surat_tugas')->get();
-        return view('perencanaan-audit.edit', compact('item', 'suratTugas'));
+        $returnUrl = $request->query('return_url');
+
+        return view('perencanaan-audit.edit', compact('item', 'suratTugas', 'returnUrl'));
     }
 
     /**
@@ -104,6 +116,15 @@ class ProgramKerjaAuditController extends Controller
         $data['dokumen_files'] = $request->file('dokumen') ?? [];
 
         $this->pkaService->update($pka, $data);
+
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with('success', 'Program Kerja Audit berhasil diupdate!');
+            }
+        }
 
         return redirect()->route('audit.pka.index')->with('success', 'Program Kerja Audit berhasil diupdate!');
     }

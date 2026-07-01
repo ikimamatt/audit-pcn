@@ -17,6 +17,7 @@
                 <form action="{{ route('audit.walkthrough.update', $item->id) }}" method="POST" id="walkthroughForm" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     
                     <div class="mb-3">
                         <label for="program_kerja_audit_id" class="form-label">Program Kerja Audit</label>
@@ -70,7 +71,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save me-1"></i> Update
                     </button>
-                    <a href="{{ route('audit.walkthrough.index') }}" class="btn btn-secondary">
+                    <a href="{{ $returnUrl ?? route('audit.walkthrough.index') }}" class="btn btn-secondary">
                         <i class="mdi mdi-arrow-left me-1"></i> Kembali
                     </a>
                 </form>

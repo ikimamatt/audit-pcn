@@ -31,10 +31,11 @@ class JadwalPkptAuditController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         $auditees = MasterAuditee::all();
-        return view('audit.jadwal-pkpt-audit.create', compact('auditees'));
+        $returnUrl = $request->query('return_url');
+        return view('audit.jadwal-pkpt-audit.create', compact('auditees', 'returnUrl'));
     }
 
     /**
@@ -43,6 +44,15 @@ class JadwalPkptAuditController extends Controller
     public function store(StoreJadwalPkptRequest $request)
     {
         $this->perencanaanService->createJadwalPkpt($request->validated());
+
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with('success', 'Jadwal PKPT berhasil disimpan!');
+            }
+        }
 
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil disimpan!');
     }
@@ -58,11 +68,12 @@ class JadwalPkptAuditController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $item = JadwalPkptAudit::findOrFail($id);
         $auditees = MasterAuditee::all();
-        return view('audit.jadwal-pkpt-audit.edit', compact('item', 'auditees'));
+        $returnUrl = $request->query('return_url');
+        return view('audit.jadwal-pkpt-audit.edit', compact('item', 'auditees', 'returnUrl'));
     }
 
     /**
@@ -72,6 +83,15 @@ class JadwalPkptAuditController extends Controller
     {
         $item = JadwalPkptAudit::findOrFail($id);
         $this->perencanaanService->updateJadwalPkpt($item, $request->validated());
+
+        $returnUrl = $request->input('return_url');
+        if ($returnUrl) {
+            $expectedHost = parse_url(config('erp.allowed_domain'), PHP_URL_HOST);
+            $actualHost = parse_url($returnUrl, PHP_URL_HOST);
+            if ($expectedHost === $actualHost) {
+                return redirect()->to($returnUrl)->with('success', 'Jadwal PKPT berhasil diupdate!');
+            }
+        }
 
         return redirect()->route('audit.pkpt.index')->with('success', 'Jadwal PKPT berhasil diupdate!');
     }

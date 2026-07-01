@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Apply middleware to web routes
         $middleware->web([
             \App\Http\Middleware\CheckUserActivity::class,
+            \App\Http\Middleware\RedirectBackToERPMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

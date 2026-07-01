@@ -20,6 +20,7 @@
                 <form method="POST" action="{{ route('audit.pelaporan-hasil-audit.update', $item->id) }}">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return_url" value="{{ $returnUrl ?? '' }}">
                     <div class="mb-3">
                         <label class="form-label">Pelaporan Hasil Audit (Judul LHA/LHK)</label>
                         @php
@@ -62,7 +63,7 @@
                     </div>
                     <div class="mb-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Update</button>
-                        <a href="{{ route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-secondary">Batal</a>
+                        <a href="{{ $returnUrl ?? route('audit.pelaporan-hasil-audit.index') }}" class="btn btn-secondary">Batal</a>
                     </div>
                 </form>
             </div>
