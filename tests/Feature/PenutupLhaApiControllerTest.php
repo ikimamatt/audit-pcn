@@ -65,6 +65,9 @@ class PenutupLhaApiControllerTest extends AuditApiTestCase
             'status_approval' => 'approved', // must be approved for temuan to be active
         ]);
 
+        $aoiId = \Illuminate\Support\Facades\DB::table('master_kode_aoi')->first()?->id;
+        $riskId = \Illuminate\Support\Facades\DB::table('master_kode_risk')->first()?->id;
+
         // 3. Temuan
         $this->temuan = PelaporanTemuan::create([
             'pelaporan_hasil_audit_id' => $this->pelaporan->id,
@@ -75,8 +78,8 @@ class PenutupLhaApiControllerTest extends AuditApiTestCase
             'kriteria' => 'Kriteria kas harian',
             'nomor_iss' => 'ISS.001/PO PCN/SPI.01.02/01/01/2026',
             'tahun' => 2026,
-            'kode_aoi_id' => 1,
-            'kode_risk_id' => 1,
+            'kode_aoi_id' => $aoiId,
+            'kode_risk_id' => $riskId,
             'signifikan' => 'Medium',
             'status_approval' => 'approved',
         ]);

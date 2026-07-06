@@ -68,6 +68,9 @@ class TindakLanjutApiControllerTest extends AuditApiTestCase
             'status_approval' => 'approved',
         ]);
 
+        $aoiId = DB::table('master_kode_aoi')->first()?->id;
+        $riskId = DB::table('master_kode_risk')->first()?->id;
+
         // 3. Temuan
         $this->temuan = PelaporanTemuan::create([
             'pelaporan_hasil_audit_id' => $this->pelaporan->id,
@@ -78,8 +81,8 @@ class TindakLanjutApiControllerTest extends AuditApiTestCase
             'kriteria' => 'Kriteria kas harian TL',
             'nomor_iss' => 'ISS.002/PO PCN/SPI.01.02/01/01/2026',
             'tahun' => 2026,
-            'kode_aoi_id' => 1,
-            'kode_risk_id' => 1,
+            'kode_aoi_id' => $aoiId,
+            'kode_risk_id' => $riskId,
             'signifikan' => 'Medium',
             'status_approval' => 'approved',
         ]);

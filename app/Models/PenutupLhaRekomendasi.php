@@ -72,7 +72,8 @@ class PenutupLhaRekomendasi extends Model
     public function picUsers()
     {
         return $this->belongsToMany(\App\Models\MasterData\MasterUser::class, 'penutup_lha_rekomendasi_pic', 'penutup_lha_rekomendasi_id', 'master_user_id')
-            ->withPivot('pic_type')
+            ->using(PenutupLhaRekomendasiPic::class)
+            ->withPivot('id', 'pic_type')
             ->withTimestamps();
     }
 

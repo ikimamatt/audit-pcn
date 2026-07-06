@@ -178,9 +178,9 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
         $this->actingAs($this->ketuaUser);
         $response = $this->get('/audit/persetujuan');
         $response->assertStatus(200);
-        
+
         $pendingItems = $response->viewData('allPendingItems');
-        
+
         $this->assertTrue($pendingItems->contains('id', $this->walkthrough->id));
         $this->assertFalse($pendingItems->contains('id', $otherWalkthrough->id));
     }
@@ -255,13 +255,13 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
      */
     public function test_rejection_validation_and_rollback(): void
     {
-        // 1. Reject without reason -> fails with 403 because validation is caught by ApprovalHelper
+        // 1. Reject without reason -> fails with 422 because validation is caught by ApprovalHelper
         $response = $this->postJson('/api/v1/audit/persetujuan', [
             'type' => 'walkthrough',
             'id' => $this->walkthrough->id,
             'action' => 'reject'
         ], $this->asKetuaTim($this->ketuaUser));
-        $response->assertStatus(403);
+        $response->assertStatus(422);
 
         // 2. Reject with short reason -> validation error (must be min 10 chars)
         $response2 = $this->postJson('/api/v1/audit/persetujuan', [
@@ -270,7 +270,7 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
             'action' => 'reject',
             'rejection_reason' => 'short'
         ], $this->asKetuaTim($this->ketuaUser));
-        $response2->assertStatus(403);
+        $response2->assertStatus(422);
 
         // 3. Reject with valid reason -> rolls back status to rejected_level1
         $response3 = $this->postJson('/api/v1/audit/persetujuan', [
@@ -288,8 +288,16 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
      */
     public function test_business_reviewer_recommendation_flow(): void
     {
+        $pelaporanId = (string) \Illuminate\Support\Str::uuid();
+        $temuanId = (string) \Illuminate\Support\Str::uuid();
+        $rekomendasiId = (string) \Illuminate\Support\Str::uuid();
+
+        $aoiId = DB::table('master_kode_aoi')->first()?->id;
+        $riskId = DB::table('master_kode_risk')->first()?->id;
+
         // 1. Create a Temuan and PenutupLhaRekomendasi
-        $pelaporan = DB::table('pelaporan_hasil_audit')->insertGetId([
+        DB::table('pelaporan_hasil_audit')->insert([
+            'id' => $pelaporanId,
             'nomor_urut' => 99,
             'tahun' => 2026,
             'perencanaan_audit_id' => $this->perencanaan->id,
@@ -301,8 +309,9 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
             'updated_at' => now(),
         ]);
 
-        $temuan = DB::table('pelaporan_temuan')->insertGetId([
-            'pelaporan_hasil_audit_id' => $pelaporan,
+        DB::table('pelaporan_temuan')->insert([
+            'id' => $temuanId,
+            'pelaporan_hasil_audit_id' => $pelaporanId,
             'nomor_urut_iss' => 1,
             'hasil_temuan' => 'Ketidakpatuhan Prosedur Kas Kecil',
             'permasalahan' => 'Kondisi Kas Kecil',
@@ -311,14 +320,15 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
             'penyebab' => 'Sebab Kas Kecil',
             'nomor_iss' => 'ISS.001/PO PCN/SPI.01.02/01/01/2026',
             'tahun' => 2026,
-            'kode_aoi_id' => 1,
-            'kode_risk_id' => 1,
+            'kode_aoi_id' => $aoiId,
+            'kode_risk_id' => $riskId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $rekomendasiId = DB::table('penutup_lha_rekomendasi')->insertGetId([
-            'pelaporan_isi_lha_id' => $temuan,
+        DB::table('penutup_lha_rekomendasi')->insert([
+            'id' => $rekomendasiId,
+            'pelaporan_isi_lha_id' => $temuanId,
             'rekomendasi' => 'Melakukan rekonsiliasi kas secara harian.',
             'rencana_aksi' => 'Membuat form rekonsiliasi.',
             'eviden_rekomendasi' => 'Laporan rekonsiliasi harian.',
@@ -335,12 +345,14 @@ class PersetujuanWorkflowTest extends AuditApiTestCase
         // Assign PICs in pivot table
         DB::table('penutup_lha_rekomendasi_pic')->insert([
             [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'penutup_lha_rekomendasi_id' => $rekomendasiId,
                 'master_user_id' => $this->br1User->id,
                 'pic_type' => 'approval_1_spi',
                 'created_at' => now(),
             ],
             [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'penutup_lha_rekomendasi_id' => $rekomendasiId,
                 'master_user_id' => $this->br2User->id,
                 'pic_type' => 'approval_2_spi',

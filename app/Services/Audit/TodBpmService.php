@@ -50,6 +50,7 @@ class TodBpmService
             if (!empty($data['pka_risiko_ids'])) {
                 foreach ($data['pka_risiko_ids'] as $risikoId) {
                     DB::table('tod_bpm_risiko')->insert([
+                        'id'               => (string) \Illuminate\Support\Str::uuid(),
                         'tod_bpm_audit_id' => $bpm->id,
                         'pka_risiko_id'    => $risikoId,
                         'created_at'       => now(),
@@ -62,6 +63,7 @@ class TodBpmService
             if (!empty($data['pka_kontrol_ids'])) {
                 foreach ($data['pka_kontrol_ids'] as $kontrolId) {
                     DB::table('tod_bpm_kontrol')->insert([
+                        'id'               => (string) \Illuminate\Support\Str::uuid(),
                         'tod_bpm_audit_id' => $bpm->id,
                         'pka_kontrol_id'   => $kontrolId,
                         'created_at'       => now(),
@@ -119,6 +121,7 @@ class TodBpmService
             if (!empty($data['pka_risiko_ids'])) {
                 foreach ($data['pka_risiko_ids'] as $risikoId) {
                     DB::table('tod_bpm_risiko')->insert([
+                        'id'               => (string) \Illuminate\Support\Str::uuid(),
                         'tod_bpm_audit_id' => $item->id,
                         'pka_risiko_id'    => $risikoId,
                         'created_at'       => now(),
@@ -132,6 +135,7 @@ class TodBpmService
             if (!empty($data['pka_kontrol_ids'])) {
                 foreach ($data['pka_kontrol_ids'] as $kontrolId) {
                     DB::table('tod_bpm_kontrol')->insert([
+                        'id'               => (string) \Illuminate\Support\Str::uuid(),
                         'tod_bpm_audit_id' => $item->id,
                         'pka_kontrol_id'   => $kontrolId,
                         'created_at'       => now(),

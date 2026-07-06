@@ -46,6 +46,8 @@ class ProgramKerjaAuditApiControllerTest extends AuditApiTestCase
     public function test_pka_crud_and_custom_endpoints(): void
     {
         $headers = $this->auditorHeaders();
+        $aoiId = \Illuminate\Support\Facades\DB::table('master_kode_aoi')->first()?->id;
+        $riskId = \Illuminate\Support\Facades\DB::table('master_kode_risk')->first()?->id;
 
         $payload = [
             'perencanaan_audit_id' => $this->perencanaan->id,
@@ -57,10 +59,10 @@ class ProgramKerjaAuditApiControllerTest extends AuditApiTestCase
                     'nama' => 'Prosedur Pencatatan Jurnal Kas',
                     'risiko' => [
                         [
-                            'kode_risk_id' => 1,
+                            'kode_risk_id' => $riskId,
                             'kontrol' => [
                                 [
-                                    'kode_aoi_id' => 1,
+                                    'kode_aoi_id' => $aoiId,
                                     'nama_kontrol' => 'Review Kas Harian oleh Supervisor',
                                 ]
                             ]
