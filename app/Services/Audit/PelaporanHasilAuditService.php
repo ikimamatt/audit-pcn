@@ -70,6 +70,12 @@ class PelaporanHasilAuditService
                 'jenis_lha_lhk'        => $data['jenis_lha_lhk'],
                 'jenis_audit_id'       => $data['jenis_audit_id'],
                 'kode_spi'             => $data['kode_spi'],
+                'status_approval'      => 'pending',
+                'approved_by'          => null,
+                'approved_at'          => null,
+                'approved_by_level1'   => null,
+                'approved_at_level1'   => null,
+                'alasan_reject'        => null,
             ]);
 
             $submittedIds = array_filter($data['temuan_id'] ?? []);
@@ -98,12 +104,14 @@ class PelaporanHasilAuditService
                     'dampak_terjadi'           => $data['dampak_terjadi'][$i] ?? null,
                     'dampak_potensi'           => $data['dampak_potensi'][$i] ?? null,
                     'signifikan'               => $data['signifikan'][$i],
+                    'status_approval'          => 'pending',
+                    'approved_by'              => null,
+                    'approved_at'              => null,
                 ];
 
                 if ($temuanId) {
                     PelaporanTemuan::where('id', $temuanId)->update($temuanData);
                 } else {
-                    $temuanData['status_approval'] = 'pending';
                     PelaporanTemuan::create($temuanData);
                 }
             }
@@ -145,7 +153,25 @@ class PelaporanHasilAuditService
      */
     public function updateTemuan(PelaporanTemuan $temuan, array $data): PelaporanTemuan
     {
-        $temuan->update($data);
+        $temuan->update(array_merge($data, [
+            'status_approval' => 'pending',
+            'approved_by'     => null,
+            'approved_at'     => null,
+        ]));
+
+        // Reset parent LHA status to pending as well
+        $pelaporan = $temuan->pelaporanHasilAudit;
+        if ($pelaporan) {
+            $pelaporan->update([
+                'status_approval'    => 'pending',
+                'approved_by'        => null,
+                'approved_at'        => null,
+                'approved_by_level1' => null,
+                'approved_at_level1' => null,
+                'alasan_reject'      => null,
+            ]);
+        }
+
         return $temuan;
     }
 

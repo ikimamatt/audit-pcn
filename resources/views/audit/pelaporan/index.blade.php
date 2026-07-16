@@ -1028,7 +1028,7 @@ function showIssModal(id, nomorLhaLhk) {
                     <div class="iss-item">
                         <div class="iss-header">
                             <div>
-                                <span class="iss-number">ISS ${temuan.nomor_urut_iss}</span>
+                                <span class="iss-number">ISS ${index + 1}</span>
                                 <span class="ms-2">${temuan.nomor_iss}</span>
                             </div>
                             <span class="iss-status ${temuan.status_approval === 'approved' ? 'bg-success' : (temuan.status_approval === 'rejected' ? 'bg-danger' : 'bg-warning')}">
