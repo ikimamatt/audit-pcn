@@ -95,25 +95,43 @@ class NomorGeneratorService
     /**
      * Generate automatic nomor ISS.
      * Format: ISS.XXX/PO PCN/MM/NN/PP/YYYY
+     * Nomor urut ISS di-scope per surat tugas (perencanaan_audit_id).
      *
-     * @param int $kodeAoiId
-     * @param int $kodeRiskId
+     * @param string $kodeAoiId
+     * @param string $kodeRiskId
      * @param string $kodeSpi
+     * @param string|null $perencanaanAuditId
+     * @param int|null $existingNomorUrut  Jika diisi (edit ISS lama), gunakan nomor ini tanpa auto-increment
      * @return array
      */
-    public function generateNomorIss(string $kodeAoiId, string $kodeRiskId, string $kodeSpi = 'SPI.01.02'): array
+    public function generateNomorIss(string $kodeAoiId, string $kodeRiskId, string $kodeSpi = 'SPI.01.02', ?string $perencanaanAuditId = null, ?int $existingNomorUrut = null): array
     {
-        return DB::transaction(function () use ($kodeAoiId, $kodeRiskId, $kodeSpi) {
+        return DB::transaction(function () use ($kodeAoiId, $kodeRiskId, $kodeSpi, $perencanaanAuditId, $existingNomorUrut) {
             $kodeAoi = MasterKodeAoi::findOrFail($kodeAoiId);
             $kodeRisk = MasterKodeRisk::findOrFail($kodeRiskId);
             
             $currentYear = date('Y');
-            $lastIss = PelaporanTemuan::where('tahun', $currentYear)
-                ->lockForUpdate()
-                ->orderBy('nomor_urut_iss', 'desc')
-                ->first();
-            
-            $nextIssNumber = $lastIss ? ($lastIss->nomor_urut_iss + 1) : 1;
+
+            // Jika ISS lama sedang diedit, gunakan nomor urut yang sudah ada
+            if ($existingNomorUrut) {
+                $nextIssNumber = $existingNomorUrut;
+            } else {
+                // ISS baru: cari nomor urut tertinggi di scope surat tugas ini
+                $query = PelaporanTemuan::where('pelaporan_temuan.tahun', $currentYear);
+
+                if ($perencanaanAuditId) {
+                    $query->join('pelaporan_hasil_audit', 'pelaporan_temuan.pelaporan_hasil_audit_id', '=', 'pelaporan_hasil_audit.id')
+                          ->where('pelaporan_hasil_audit.perencanaan_audit_id', $perencanaanAuditId);
+                }
+
+                $lastIss = $query->lockForUpdate()
+                    ->orderBy('pelaporan_temuan.nomor_urut_iss', 'desc')
+                    ->select('pelaporan_temuan.*')
+                    ->first();
+                
+                $nextIssNumber = $lastIss ? ($lastIss->nomor_urut_iss + 1) : 1;
+            }
+
             $nomorIss = 'ISS.' . sprintf('%03d', $nextIssNumber) . '/PO PCN/' . $kodeSpi . '/' . $kodeAoi->kode_area_of_improvement . '/' . $kodeRisk->kode_risiko . '/' . $currentYear;
             
             return [

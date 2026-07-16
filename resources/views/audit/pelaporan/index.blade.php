@@ -381,6 +381,8 @@
             font-size: 13px;
             color: var(--corp-neutral-text);
             line-height: 1.5;
+            text-align: justify;
+            text-justify: inter-word;
         }
 
         .significance-badge {

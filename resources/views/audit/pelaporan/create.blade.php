@@ -290,13 +290,14 @@ window.addEventListener('load', function() {
         const kodeSpi     = $('#kode_spi').val();
         const kodeAoiId   = $item.find('.kode-aoi-select').val();
         const kodeRiskId  = $item.find('.kode-risk-select').val();
+        const perencanaanAuditId = $('#perencanaan_audit_id').val();
 
-        if (!nomorLhaLhk || !kodeSpi || !kodeAoiId || !kodeRiskId) {
+        if (!nomorLhaLhk || !kodeSpi || !kodeAoiId || !kodeRiskId || !perencanaanAuditId) {
             if (!silent) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Field Belum Lengkap',
-                    text: 'Mohon lengkapi Nomor LHA/LHK, Kode SPI, Kode AOI, dan Kode Risiko terlebih dahulu.',
+                    text: 'Mohon lengkapi Surat Tugas, Nomor LHA/LHK, Kode SPI, Kode AOI, dan Kode Risiko terlebih dahulu.',
                     confirmButtonText: 'OK'
                 });
             }
@@ -307,11 +308,12 @@ window.addEventListener('load', function() {
             url: '{{ route("audit.pelaporan-hasil-audit.generate-nomor-iss") }}',
             type: 'POST',
             data: {
-                _token       : '{{ csrf_token() }}',
-                nomor_lha_lhk: nomorLhaLhk,
-                kode_spi     : kodeSpi,
-                kode_aoi_id  : kodeAoiId,
-                kode_risk_id : kodeRiskId
+                _token              : '{{ csrf_token() }}',
+                perencanaan_audit_id: perencanaanAuditId,
+                nomor_lha_lhk       : nomorLhaLhk,
+                kode_spi            : kodeSpi,
+                kode_aoi_id         : kodeAoiId,
+                kode_risk_id        : kodeRiskId
             },
             success: function(response) {
                 $item.find('.nomor-iss-input').val(response.nomor_iss);

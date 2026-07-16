@@ -31,14 +31,26 @@ class PelaporanHasilAuditService
                 'status_approval'      => 'pending',
             ]);
 
+            // Calculate starting offset of ISS numbering for this perencanaan_audit_id
+            $startOffset = PelaporanTemuan::join('pelaporan_hasil_audit', 'pelaporan_temuan.pelaporan_hasil_audit_id', '=', 'pelaporan_hasil_audit.id')
+                ->where('pelaporan_hasil_audit.perencanaan_audit_id', $data['perencanaan_audit_id'])
+                ->where('pelaporan_temuan.tahun', date('Y'))
+                ->max('pelaporan_temuan.nomor_urut_iss') ?? 0;
+
             foreach ($data['hasil_temuan'] as $index => $hasilTemuan) {
+                $nextIssNumber = $startOffset + $index + 1; // Order sequentially starting from offset + 1
+                $kodeAoi = \App\Models\MasterData\MasterKodeAoi::findOrFail($data['kode_aoi_id'][$index]);
+                $kodeRisk = \App\Models\MasterData\MasterKodeRisk::findOrFail($data['kode_risk_id'][$index]);
+                $currentYear = date('Y');
+                $nomorIss = 'ISS.' . sprintf('%03d', $nextIssNumber) . '/PO PCN/' . $pelaporan->kode_spi . '/' . $kodeAoi->kode_area_of_improvement . '/' . $kodeRisk->kode_risiko . '/' . $currentYear;
+
                 PelaporanTemuan::create([
                     'pelaporan_hasil_audit_id' => $pelaporan->id,
                     'hasil_temuan'             => $hasilTemuan,
                     'kode_aoi_id'              => $data['kode_aoi_id'][$index],
                     'kode_risk_id'             => $data['kode_risk_id'][$index],
-                    'nomor_iss'                => $data['nomor_iss'][$index],
-                    'nomor_urut_iss'           => $data['nomor_urut_iss'][$index] ?? 0,
+                    'nomor_iss'                => $nomorIss,
+                    'nomor_urut_iss'           => $nextIssNumber,
                     'tahun'                    => date('Y'),
                     'permasalahan'             => $data['permasalahan'][$index],
                     'penyebab'                 => $data['penyebab'][$index],
@@ -88,15 +100,29 @@ class PelaporanHasilAuditService
                 PelaporanTemuan::where('pelaporan_hasil_audit_id', $item->id)->delete();
             }
 
+            // Calculate starting offset of ISS numbering for this perencanaan_audit_id (excluding current LHA)
+            $startOffset = PelaporanTemuan::join('pelaporan_hasil_audit', 'pelaporan_temuan.pelaporan_hasil_audit_id', '=', 'pelaporan_hasil_audit.id')
+                ->where('pelaporan_hasil_audit.perencanaan_audit_id', $data['perencanaan_audit_id'])
+                ->where('pelaporan_hasil_audit.id', '!=', $item->id)
+                ->where('pelaporan_temuan.tahun', date('Y'))
+                ->max('pelaporan_temuan.nomor_urut_iss') ?? 0;
+
             foreach ($data['hasil_temuan'] as $i => $hasilTemuan) {
                 $temuanId = $data['temuan_id'][$i] ?? null;
+                
+                $nextIssNumber = $startOffset + $i + 1; // Order sequentially starting from offset + 1
+                $kodeAoi = \App\Models\MasterData\MasterKodeAoi::findOrFail($data['kode_aoi_id'][$i]);
+                $kodeRisk = \App\Models\MasterData\MasterKodeRisk::findOrFail($data['kode_risk_id'][$i]);
+                $currentYear = date('Y');
+                $nomorIss = 'ISS.' . sprintf('%03d', $nextIssNumber) . '/PO PCN/' . $item->kode_spi . '/' . $kodeAoi->kode_area_of_improvement . '/' . $kodeRisk->kode_risiko . '/' . $currentYear;
+
                 $temuanData = [
                     'pelaporan_hasil_audit_id' => $item->id,
                     'hasil_temuan'             => $hasilTemuan,
                     'kode_aoi_id'              => $data['kode_aoi_id'][$i],
                     'kode_risk_id'             => $data['kode_risk_id'][$i],
-                    'nomor_iss'                => $data['nomor_iss'][$i],
-                    'nomor_urut_iss'           => $data['nomor_urut_iss'][$i] ?? 0,
+                    'nomor_iss'                => $nomorIss,
+                    'nomor_urut_iss'           => $nextIssNumber,
                     'tahun'                    => date('Y'),
                     'permasalahan'             => $data['permasalahan'][$i],
                     'penyebab'                 => $data['penyebab'][$i],
@@ -153,6 +179,19 @@ class PelaporanHasilAuditService
      */
     public function updateTemuan(PelaporanTemuan $temuan, array $data): PelaporanTemuan
     {
+        $kodeAoi = \App\Models\MasterData\MasterKodeAoi::findOrFail($data['kode_aoi_id']);
+        $kodeRisk = \App\Models\MasterData\MasterKodeRisk::findOrFail($data['kode_risk_id']);
+        
+        $pelaporan = $temuan->pelaporanHasilAudit;
+        $kodeSpi = $pelaporan ? $pelaporan->kode_spi : 'SPI.01.02';
+        $currentYear = date('Y');
+        
+        // Preserve the existing sequence number for modal inline edit
+        $nextIssNumber = $temuan->nomor_urut_iss ?: 1;
+        $nomorIss = 'ISS.' . sprintf('%03d', $nextIssNumber) . '/PO PCN/' . $kodeSpi . '/' . $kodeAoi->kode_area_of_improvement . '/' . $kodeRisk->kode_risiko . '/' . $currentYear;
+        
+        $data['nomor_iss'] = $nomorIss;
+
         $temuan->update(array_merge($data, [
             'status_approval' => 'pending',
             'approved_by'     => null,
@@ -160,7 +199,6 @@ class PelaporanHasilAuditService
         ]));
 
         // Reset parent LHA status to pending as well
-        $pelaporan = $temuan->pelaporanHasilAudit;
         if ($pelaporan) {
             $pelaporan->update([
                 'status_approval'    => 'pending',

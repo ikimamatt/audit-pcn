@@ -221,7 +221,9 @@ class PelaporanHasilAuditController extends Controller
         $res = $this->nomorService->generateNomorIss(
             $request->kode_aoi_id,
             $request->kode_risk_id,
-            $request->kode_spi ?? 'SPI.01.02'
+            $request->kode_spi ?? 'SPI.01.02',
+            $request->perencanaan_audit_id,
+            $request->existing_nomor_urut_iss ? (int) $request->existing_nomor_urut_iss : null
         );
         
         return response()->json($res);

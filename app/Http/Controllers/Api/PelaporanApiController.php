@@ -233,15 +233,19 @@ class PelaporanApiController extends BaseApiController
         }
 
         $request->validate([
-            'kode_aoi_id'  => 'required|string|exists:master_kode_aoi,id',
-            'kode_risk_id' => 'required|string|exists:master_kode_risk,id',
-            'kode_spi'     => 'nullable|string',
+            'perencanaan_audit_id'   => 'required|string|exists:perencanaan_audit,id',
+            'kode_aoi_id'            => 'required|string|exists:master_kode_aoi,id',
+            'kode_risk_id'           => 'required|string|exists:master_kode_risk,id',
+            'kode_spi'               => 'nullable|string',
+            'existing_nomor_urut_iss' => 'nullable|integer|min:1',
         ]);
 
         $result = $this->nomorService->generateNomorIss(
             $request->input('kode_aoi_id'),
             $request->input('kode_risk_id'),
-            $request->input('kode_spi', 'SPI.01.02')
+            $request->input('kode_spi', 'SPI.01.02'),
+            $request->input('perencanaan_audit_id'),
+            $request->input('existing_nomor_urut_iss') ? (int) $request->input('existing_nomor_urut_iss') : null
         );
 
         return $this->success($result);
