@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'sso_pln_nd' => [
+        'client_id' => env('SSO_CLIENT_ID'),
+        'check_token_url' => env('SSO_CHECK_TOKEN_URL'),
+        'redirect_url' => env('SSO_REDIRECT_URL'),
+    ],
+
 ];

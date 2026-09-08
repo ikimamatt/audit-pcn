@@ -52,6 +52,9 @@ Route::get('v1/audit/health', function () {
     ]);
 })->name('api.audit.health');
 
+// ── SSO NEXT PLN Nusa Daya (Public / Token Validated by Server) ─
+Route::post('sso/check-user', [\App\Http\Controllers\API\SSO\SSOApiController::class, 'checkUserExistsByNip'])->name('api.sso.check-user');
+
 Route::middleware(['gateway.validate'])->prefix('v1/audit')->name('api.audit.')->group(function () {
 
     // ── Dashboard ────────────────────────────────────────────────
