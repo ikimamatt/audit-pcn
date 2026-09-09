@@ -15,8 +15,10 @@ Route::get('/check-session', function () {
     return response()->json(['status' => 'expired'], 401);
 })->name('check-session');
 
-// Route SSO NEXT PLN Nusa Daya Callback (tidak perlu auth middleware)
+// Route SSO NEXT PLN Nusa Daya (Redirect & Callback)
+Route::get('/login/sso', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'redirectToSso'])->name('login.sso');
 Route::get('sso/callback', [\App\Http\Controllers\API\SSO\SSOApiController::class, 'login'])->name('login-sso');
+Route::get('loginsso.php', [\App\Http\Controllers\API\SSO\SSOApiController::class, 'login'])->name('login-sso-legacy');
 
 Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('', [RoutingController::class, 'index'])->name('root');

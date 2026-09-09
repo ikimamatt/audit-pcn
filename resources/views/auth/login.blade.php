@@ -280,114 +280,45 @@
       margin-bottom: 1.25rem;
     }
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .form-group {
+    .sso-action-wrapper {
       width: 78%;
       align-self: center;
+      margin: 10px auto 0 auto;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      gap: 14px;
     }
 
-    input {
-      padding: 12px 20px;
-      border: 3px solid #161616;
-      border-radius: 25px;
-      font-size: var(--text-sm);
-      font-weight: 500;
-      color: #1e293b;
-      outline: none;
-      width: 100%;
-      transition: border-color 0.25s var(--ease-out-quint);
-    }
-
-    input:focus {
-      border-color: var(--color-brand-primary);
-    }
-
-    input::placeholder {
-      color: #94a3b8;
-    }
-
-    .password-wrapper {
-      position: relative;
-      width: 78%;
-      align-self: center;
-      display: flex;
-    }
-
-    .password-wrapper input {
-      width: 100%;
-      padding-right: 45px;
-    }
-
-    .toggle-password-btn {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #777;
-      outline: none;
-      display: flex;
+    .btn-sso-login {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: color 0.2s var(--ease-out-quint), transform 0.2s var(--ease-out-quint);
-    }
-
-    .toggle-password-btn:hover {
-      color: var(--color-brand-primary);
-      transform: translateY(-50%) scale(1.15);
-    }
-
-    .toggle-password-btn:active {
-      transform: translateY(-50%) scale(0.95);
-    }
-
-    .forgot-pwd {
-      font-size: var(--text-xs);
-      color: #64748B;
-      font-weight: 500;
-      text-decoration: none;
-      align-self: center;
-      margin-top: -5px;
-      transition: color 0.2s var(--ease-out-quint), transform 0.2s var(--ease-out-quint);
-    }
-
-    .forgot-pwd:hover {
-      color: var(--color-brand-primary);
-      transform: translateY(-1px);
-    }
-
-    .btn-login {
-      background-color: var(--color-brand-primary);
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 25px;
+      gap: 10px;
+      width: 100%;
+      padding: 13px 20px;
+      background: linear-gradient(135deg, var(--color-brand-primary) 0%, #4700d6 100%);
+      color: #ffffff !important;
       font-size: var(--text-sm);
-      font-weight: 700;
-      cursor: pointer;
-      width: 140px;
-      align-self: center;
-      margin-top: 10px;
+      font-weight: 600;
       letter-spacing: 0.025em;
-      transition: background-color 0.25s var(--ease-out-quint), transform 0.2s var(--ease-out-quint);
+      text-decoration: none;
+      border-radius: 25px;
+      box-shadow: 0 4px 14px rgba(88, 0, 255, 0.35);
+      transition: all 0.25s var(--ease-out-quint);
+      cursor: pointer;
     }
 
-    .btn-login:hover {
-      background-color: var(--color-brand-hover);
+    .btn-sso-login:hover {
+      background: linear-gradient(135deg, #4700d6 0%, #3600a6 100%);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(88, 0, 255, 0.45);
+      color: #ffffff !important;
     }
 
-    .btn-login:active {
-      transform: translateY(0) scale(0.97);
+    .btn-sso-login:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 0 2px 8px rgba(88, 0, 255, 0.3);
     }
 
     /* Alerts styling */
@@ -479,91 +410,57 @@
         <h2>SATUAN PENGAWASAN INTERNAL</h2>
         <h3>NUSA DAYA EXCELLENCE TOOLS</h3>
 
-        <p>Please Sign-in to your Account</p>
+        <p class="animate-reveal-up stagger-1">Silakan masuk menggunakan Single Sign-On (SSO) NEXT</p>
 
-        <form autocomplete="off" method="POST" action="{{ route('login') }}" novalidate>
-          @csrf
-
-          <!-- Errors and Warning Messages -->
-          @if (sizeof($errors) > 0)
-            <div class="alert-container">
-              <div class="alert-danger">
-                @foreach ($errors->all() as $error)
-                  <p>{{ $error }}</p>
-                @endforeach
-              </div>
+        <!-- Errors and Warning Messages -->
+        @if (session('loginError'))
+          <div class="alert-container">
+            <div class="alert-danger">
+              <p>{{ session('loginError') }}</p>
             </div>
-          @endif
+          </div>
+        @endif
 
-          @if (session('warning'))
-            <div class="alert-container">
-              <div class="alert-warning">
-                <p>
-                  <i class="fas fa-exclamation-triangle"></i>
-                  {{ session('warning') }}
-                </p>
-              </div>
+        @if (sizeof($errors) > 0)
+          <div class="alert-container">
+            <div class="alert-danger">
+              @foreach ($errors->all() as $error)
+                <p>{{ $error }}</p>
+              @endforeach
             </div>
-          @endif
-
-          @if (session('gagal'))
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script>
-              Swal.fire({
-                icon: 'error',
-                title: '{{ session('gagal') }}',
-                text: '{{ session('infogagal') }}',
-              })
-            </script>
-          @endif
-
-          <!-- Username (NIP) Input -->
-          <div class="form-group animate-reveal-up stagger-1">
-            <input type="text" name="nip" id="nip" placeholder="Username" value="{{ old('nip') }}" required autofocus>
           </div>
+        @endif
 
-          <!-- Password Input with toggle button -->
-          <div class="password-wrapper animate-reveal-up stagger-2">
-            <input type="password" name="password" id="password" placeholder="Password" required
-              autocomplete="current-password">
-            <button type="button" id="toggle-password" class="toggle-password-btn" aria-label="Tampilkan password">
-              <i class="fas fa-eye-slash" id="eye-icon"></i>
-            </button>
+        @if (session('warning'))
+          <div class="alert-container">
+            <div class="alert-warning">
+              <p>
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ session('warning') }}
+              </p>
+            </div>
           </div>
+        @endif
 
-          <a href="#" class="forgot-pwd animate-reveal-up stagger-3">Forgot Password?</a>
-          <button type="submit" class="btn-login animate-reveal-up stagger-3">Login</button>
-        </form>
+        @if (session('gagal'))
+          <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+          <script>
+            Swal.fire({
+              icon: 'error',
+              title: '{{ session('gagal') }}',
+              text: '{{ session('infogagal') }}',
+            })
+          </script>
+        @endif
+
+        <!-- SSO Login Action -->
+        <div class="sso-action-wrapper animate-reveal-up stagger-2">
+          <a href="{{ route('login.sso') }}" class="btn-sso-login">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Masuk dengan SSO NEXT</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
-
-  <script>
-    // 1. Password Visibility Toggle
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('eye-icon');
-
-    if (togglePasswordBtn && passwordInput && eyeIcon) {
-      togglePasswordBtn.addEventListener('click', function () {
-        const isPassword = passwordInput.getAttribute('type') === 'password';
-        const newType = isPassword ? 'text' : 'password';
-        passwordInput.setAttribute('type', newType);
-
-        if (isPassword) {
-          eyeIcon.classList.remove('fa-eye-slash');
-          eyeIcon.classList.add('fa-eye');
-        } else {
-          eyeIcon.classList.remove('fa-eye');
-          eyeIcon.classList.add('fa-eye-slash');
-        }
-      });
-    }
-
-    // 2. Auto-focus NIP field
-    const nipInput = document.getElementById('nip');
-    if (nipInput) {
-      nipInput.focus();
-    }
-  </script>
 @endsection

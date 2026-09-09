@@ -18,60 +18,33 @@ class AuthenticatedSessionController extends Controller
      */
     public function create()
     {
+        if (Auth::check()) {
+            return redirect()->intended(RouteServiceProvider::HOME);
+        }
+
         return view('auth.login');
     }
 
     /**
+     * Redirect langsung ke portal login SSO NEXT PLN Nusa Daya yang terdaftar.
+     */
+    public function redirectToSso()
+    {
+        $ssoUrl = config('services.sso_pln_nd.redirect_url', 'https://next.plnnusadaya.co.id/');
+
+        return redirect()->away($ssoUrl);
+    }
+
+    /**
      * Handle an incoming authentication request.
+     * Manual login dinonaktifkan (Only SSO).
      *
-     * @param \App\Http\Requests\Auth\LoginRequest $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(LoginRequest $request)
+    public function store(Request $request)
     {
-
-        $request->authenticate();
-
-        $request->session()->regenerate();
-
-        $user = Auth::user(); // Get the authenticated MasterUser instance
-        
-        // Set login success message with user info
-        $request->session()->flash('login_success', [
-            'name' => $user->nama ?? 'User',
-            'role' => $user->akses->nama_akses ?? 'User',
-            'time' => now()->format('H:i:s')
-        ]);
-
-        $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
-
-        if ($user && $user->akses) {
-            $role = strtoupper(trim($user->akses->nama_akses));
-            switch ($role) {
-                case 'KSPI':
-                case 'ASMAN SPI':
-                case 'AUDITOR':
-                case 'SUPER ADMIN':
-                case 'VIEW BOD':
-                    $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
-                    break;
-                case 'AUDITEE':
-                    $redirectResponse = redirect()->intended(route('audit.pemantauan.index'));
-                    break;
-                default:
-                    $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
-                    break;
-            }
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Login berhasil!',
-                'redirect_url' => $redirectResponse->getTargetUrl()
-            ]);
-        }
-
-        return $redirectResponse;
+        return redirect()->route('login.sso');
     }
 
     /**
