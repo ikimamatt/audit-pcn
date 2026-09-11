@@ -181,6 +181,7 @@ class SSOIntegrationTest extends TestCase
         ]));
 
         $this->assertFalse(Auth::check());
-        $response->assertRedirect(config('services.sso_pln_nd.redirect_url'));
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('loginError');
     }
 }
