@@ -26,6 +26,20 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
+     * Display the manual login view.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function createManual()
+    {
+        if (Auth::check()) {
+            return redirect()->intended(RouteServiceProvider::HOME);
+        }
+
+        return view('auth.login-manual');
+    }
+
+    /**
      * Redirect langsung ke portal login SSO NEXT PLN Nusa Daya yang terdaftar.
      */
     public function redirectToSso()
@@ -37,7 +51,7 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
-     * Manual login dinonaktifkan (Only SSO).
+     * Manual login pada route utama diarahkan ke SSO.
      *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
@@ -45,6 +59,58 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request)
     {
         return redirect()->route('login.sso');
+    }
+
+    /**
+     * Handle incoming manual authentication request.
+     *
+     * @param \App\Http\Requests\Auth\LoginRequest $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function storeManual(LoginRequest $request)
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        // Set login success message with user info
+        $request->session()->flash('login_success', [
+            'name' => $user->nama ?? 'User',
+            'role' => $user->akses->nama_akses ?? 'User',
+            'time' => now()->format('H:i:s')
+        ]);
+
+        $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
+
+        if ($user && $user->akses) {
+            $role = strtoupper(trim($user->akses->nama_akses));
+            switch ($role) {
+                case 'KSPI':
+                case 'ASMAN SPI':
+                case 'AUDITOR':
+                case 'SUPER ADMIN':
+                case 'VIEW BOD':
+                    $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
+                    break;
+                case 'AUDITEE':
+                    $redirectResponse = redirect()->intended(route('audit.pemantauan.index'));
+                    break;
+                default:
+                    $redirectResponse = redirect()->intended(RouteServiceProvider::HOME);
+                    break;
+            }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Login berhasil!',
+                'redirect_url' => $redirectResponse->getTargetUrl()
+            ]);
+        }
+
+        return $redirectResponse;
     }
 
     /**

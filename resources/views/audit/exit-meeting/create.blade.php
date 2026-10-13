@@ -26,7 +26,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="perencanaan_audit_id" class="form-label">Perencanaan Audit <span class="text-danger">*</span></label>
-                                <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select @error('perencanaan_audit_id') is-invalid @enderror" required>
+                                <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select select2-search @error('perencanaan_audit_id') is-invalid @enderror" required>
                                     <option value="">Pilih Perencanaan Audit</option>
                                     @forelse($perencanaanAudits as $perencanaanAudit)
                                         @php
@@ -44,11 +44,11 @@
                                                 · [{{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_mulai)->locale('id')->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($perencanaanAudit->tanggal_audit_sampai)->locale('id')->translatedFormat('d M Y') }}]
                                             @endif
                                             @if($isRejectedExit)
-                                                · <span class="text-danger">Reject (Ajukan Ulang)</span>
+                                                · (Reject - Ajukan Ulang)
                                             @endif
                                         </option>
                                     @empty
-                                        <option disabled>Tidak ada perencanaan audit yang tersedia</option>
+                                        <option disabled value="">Tidak ada perencanaan audit yang tersedia</option>
                                     @endforelse
                                 </select>
                                 @error('perencanaan_audit_id')
@@ -347,6 +347,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('form').addEventListener('submit', function(e) {
         let isValid = true;
         
+        // Validate perencanaan audit
+        const perencanaanSelect = document.getElementById('perencanaan_audit_id');
+        if (perencanaanSelect && !perencanaanSelect.value) {
+            perencanaanSelect.classList.add('is-invalid');
+            if (typeof $ !== 'undefined') {
+                $(perencanaanSelect).next('.select2-container').find('.select2-selection').css('border-color', '#dc3545');
+            }
+            isValid = false;
+        }
+
         // Validate undangan file
         if (fileUndanganInput.files.length === 0) {
             fileUndanganError.textContent = 'File undangan harus diupload';
@@ -392,6 +402,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Select2 change listener to clear validation error
+    if (typeof $ !== 'undefined') {
+        $('#perencanaan_audit_id').on('change', function() {
+            if ($(this).val()) {
+                $(this).removeClass('is-invalid');
+                $(this).next('.select2-container').find('.select2-selection').css('border-color', '');
+            }
+        });
+    }
     
     // Status update function
     function updateStatus() {

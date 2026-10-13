@@ -27,7 +27,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="perencanaan_audit_id" class="form-label">Perencanaan Audit <span class="text-danger">*</span></label>
-                                <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select @error('perencanaan_audit_id') is-invalid @enderror" required>
+                                <select name="perencanaan_audit_id" id="perencanaan_audit_id" class="form-select select2-search @error('perencanaan_audit_id') is-invalid @enderror" required>
                                     <option value="">Pilih Perencanaan Audit</option>
                                     @foreach($perencanaanAudits as $perencanaanAudit)
                                         <option value="{{ $perencanaanAudit->id }}" 

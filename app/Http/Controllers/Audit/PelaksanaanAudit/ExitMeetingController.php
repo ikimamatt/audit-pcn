@@ -54,7 +54,7 @@ class ExitMeetingController extends Controller
         return view('audit.exit-meeting.index', compact('realisasiAudits'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         // Ambil Perencanaan Audit yang memiliki PKA dengan milestone 'Exit Meeting'
         // dan belum memiliki RealisasiAudit (Exit Meeting) yang statusnya pending atau approved
