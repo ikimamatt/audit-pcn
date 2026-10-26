@@ -26,3 +26,6 @@ bun.lockb
 /database/migrations/*.sql
 /master_bidang*.sql
 /scratch/
+AGENTS.md
+CLAUDE.md
+/.agents

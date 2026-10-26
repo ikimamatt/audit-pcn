@@ -131,10 +131,18 @@
 
     /* Accessibility reduced motion support */
     @media (prefers-reduced-motion: reduce) {
+      .animate-reveal-up,
+      .animate-reveal-left,
+      .animate-fade-in {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .main-illustration {
+        animation: none !important;
+      }
       * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        transition-duration: 0.001ms !important;
       }
     }
 
@@ -255,6 +263,7 @@
       height: auto;
     }
 
+    .login-container h1,
     .login-container h2 {
       font-size: var(--text-xl);
       font-weight: 700;
@@ -264,6 +273,7 @@
       margin-bottom: 0.25rem;
     }
 
+    .login-container h2.login-subtitle,
     .login-container h3 {
       font-size: var(--text-sm);
       font-weight: 500;
@@ -407,8 +417,8 @@
 
       <div class="login-container">
         <img src="/image/gennext-logo.png" alt="Audit Logo" class="audit-logo">
-        <h2>SATUAN PENGAWASAN INTERNAL</h2>
-        <h3>NUSA DAYA EXCELLENCE TOOLS</h3>
+        <h1 class="login-heading">SATUAN PENGAWASAN INTERNAL</h1>
+        <h2 class="login-subtitle">NUSA DAYA EXCELLENCE TOOLS</h2>
 
         <p class="animate-reveal-up stagger-1">Silakan masuk menggunakan Single Sign-On (SSO) NEXT</p>
 

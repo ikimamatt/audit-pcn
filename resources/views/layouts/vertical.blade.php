@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     @include('layouts.partials/title-meta', ['title' => $title])
     @yield('css')
     @include('layouts.partials/head-css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- SweetAlert2 Core Script -->
+    <script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
@@ -132,6 +134,53 @@
             color: #1e293b !important;
         }
 
+        /* Responsive adjustments for DataTables on mobile devices */
+        @media (max-width: 575.98px) {
+            .dataTables_wrapper .row:first-child,
+            .dataTables_wrapper .row:last-child {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 12px !important;
+                padding: 12px 16px !important;
+            }
+            .dataTables_filter input {
+                width: 100% !important;
+            }
+            .dataTables_filter input:focus {
+                width: 100% !important;
+            }
+            .dataTables_filter label,
+            .dataTables_length label {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        /* Accessible Action Buttons Standards across all DataTables */
+        .btn-act {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .btn-act:focus-visible {
+            outline: 2px solid #2d6a9f !important;
+            outline-offset: 2px !important;
+        }
+        .btn-act-edit {
+            color: #92400e !important;
+        }
+        .btn-act-edit:hover, .btn-act-edit:focus {
+            color: #78350f !important;
+        }
+        .btn-act-delete {
+            color: #b91c1c !important;
+        }
+        .btn-act-delete:hover, .btn-act-delete:focus {
+            color: #991b1b !important;
+        }
+
         .select2-container .select2-selection--single {
             height: 38px !important;
             border: 1px solid #dee2e6;
@@ -161,16 +210,18 @@
 
 <body data-menu-color="light" data-sidebar="default" @yield('body') >
 
+<!-- Skip link for keyboard accessibility -->
+<a href="#main-content" class="visually-hidden-focusable btn btn-primary position-fixed top-0 start-0 m-2" style="z-index: 9999; background: #1a3a5c; border-color: #1a3a5c;">Lewati ke konten utama</a>
+
 <div id="app-layout">
 
     @include('layouts.partials/topbar')
     @include('layouts.partials/sidebar')
 
     <div class="content-page">
-        <div class="content">
+        <main id="main-content" class="content">
             <div class="container-xxl">
                 @if(session('success'))
-                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <script>
                         Swal.fire({
                             icon: 'success',
@@ -183,7 +234,6 @@
                 @endif
 
                 @if(session('error'))
-                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <script>
                         Swal.fire({
                             icon: 'error',
@@ -196,7 +246,6 @@
                 @endif
 
                 @if($errors->any() && !($errors->has('old_password') || $errors->has('password')))
-                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <script>
                         Swal.fire({
                             icon: 'error',
@@ -218,7 +267,7 @@
                 
                 @yield('content')
             </div>
-        </div>
+        </main>
 
         @include("layouts.partials/footer")
 
@@ -231,9 +280,6 @@
 
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
-
-<!-- SweetAlert2 - loaded early so all scripts below can use Swal -->
-<script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
 
 @yield('script')
 
@@ -372,7 +418,7 @@
                                    style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
                                    placeholder="Masukkan password saat ini" 
                                    required>
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_old_password')" style="border-radius: 0 8px 8px 0;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_old_password')" style="border-radius: 0 8px 8px 0;" aria-label="Tampilkan atau sembunyikan password saat ini">
                                 <i class="mdi mdi-eye" id="global_old_password-eye"></i>
                             </button>
                             @error('old_password')
@@ -392,7 +438,7 @@
                                    style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
                                    placeholder="Minimal 6 karakter" 
                                    required>
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password')" style="border-radius: 0 8px 8px 0;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password')" style="border-radius: 0 8px 8px 0;" aria-label="Tampilkan atau sembunyikan password baru">
                                 <i class="mdi mdi-eye" id="global_new_password-eye"></i>
                             </button>
                             @error('password')
@@ -412,7 +458,7 @@
                                    style="border-radius: 0 8px 8px 0; font-size: 0.875rem;" 
                                    placeholder="Ulangi password baru" 
                                    required>
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password_confirmation')" style="border-radius: 0 8px 8px 0;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleGlobalPasswordVisibility('global_new_password_confirmation')" style="border-radius: 0 8px 8px 0;" aria-label="Tampilkan atau sembunyikan konfirmasi password baru">
                                 <i class="mdi mdi-eye" id="global_new_password_confirmation-eye"></i>
                             </button>
                         </div>

@@ -3,23 +3,23 @@
     <div class="h-100" data-simplebar>
 
         <!--- Sidemenu -->
-        <div id="sidebar-menu">
+        <nav id="sidebar-menu" aria-label="Menu Utama">
 
             <div class="logo-box" style="margin-bottom: 20px;">
                 <a href="{{ route('root') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png" alt="Logo PT PLN Nusa Daya" height="50">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png" alt="Logo PT PLN Nusa Daya" height="50">
                     </span>
                 </a>
                 <a href="{{ route('root') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png" alt="Logo PT PLN Nusa Daya" height="50">
                     </span>
                     <span class="logo-lg">
-                        <img src="/images/logo-pln.png" alt="" height="50">
+                        <img src="/images/logo-pln.png" alt="Logo PT PLN Nusa Daya" height="50">
                     </span>
                 </a>
             </div>
@@ -35,7 +35,7 @@
 
                 @if(!$isAuditee)
                 <li>
-                    <a href="#sidebarDashboards" data-bs-toggle="collapse">
+                    <a href="#sidebarDashboards" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarDashboards">
                         <i data-feather="home"></i>
                         <span> Dashboard </span>
                         <span class="menu-arrow"></span>
@@ -349,7 +349,7 @@
                     </li>
 
                     <li>
-                        <a href="#sidebarForms" data-bs-toggle="collapse">
+                        <a href="#sidebarForms" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarForms">
                             <i data-feather="briefcase"></i>
                             <span> Perencanaan Audit </span>
                             <span class="menu-arrow"></span>
@@ -376,7 +376,7 @@
                     </li>
 
                     <li>
-                        <a href="#sidebarPelaksanaanAudit" data-bs-toggle="collapse">
+                        <a href="#sidebarPelaksanaanAudit" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarPelaksanaanAudit">
                             <i data-feather="check-square"></i>
                             <span> Pelaksanaan Audit </span>
                             <span class="menu-arrow"></span>
@@ -406,7 +406,7 @@
                 @endif
 
                 <li>
-                    <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse">
+                    <a href="#sidebarPelaporanHasilAudit" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarPelaporanHasilAudit">
                         <i data-feather="file-text"></i>
                         <span> Pelaporan Hasil Audit </span>
                         <span class="menu-arrow"></span>
@@ -542,7 +542,7 @@
 
             </ul>
 
-        </div>
+        </nav>
         <!-- End Sidebar -->
 
         <div class="clearfix"></div>

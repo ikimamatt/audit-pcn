@@ -123,6 +123,35 @@
     /* =========================================
        CORE LAYOUT
        ========================================= */
+    /* Accessibility reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .animate-reveal-up,
+      .animate-reveal-left,
+      .animate-fade-in {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .main-illustration {
+        animation: none !important;
+      }
+      * {
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     * { 
       margin: 0; 
       padding: 0; 
@@ -237,6 +266,7 @@
       height: auto;
     }
 
+    .login-container h1,
     .login-container h2 {
       font-size: var(--text-xl);
       font-weight: 700;
@@ -246,6 +276,7 @@
       margin-bottom: 0.25rem;
     }
 
+    .login-container h2.login-subtitle,
     .login-container h3 {
       font-size: var(--text-sm);
       font-weight: 500;
@@ -471,8 +502,8 @@
 
       <div class="login-container">
         <img src="/image/gennext-logo.png" alt="Audit Logo" class="audit-logo">
-        <h2>SATUAN PENGAWASAN INTERNAL</h2>
-        <h3>NUSA DAYA EXCELLENCE TOOLS</h3>
+        <h1 class="login-heading">SATUAN PENGAWASAN INTERNAL</h1>
+        <h2 class="login-subtitle">NUSA DAYA EXCELLENCE TOOLS</h2>
 
         <p class="animate-reveal-up stagger-1">Silakan masuk menggunakan akun terdaftar</p>
 
@@ -522,14 +553,16 @@
 
           <!-- Username (NIP) Input -->
           <div class="form-group animate-reveal-up stagger-1">
-            <input type="text" name="nip" id="nip" placeholder="NIP / Username" value="{{ old('nip') }}" required autofocus>
+            <label for="nip" class="visually-hidden">NIP / Username</label>
+            <input type="text" name="nip" id="nip" placeholder="NIP / Username" aria-label="NIP atau Username" value="{{ old('nip') }}" required autofocus>
           </div>
 
           <!-- Password Input with toggle button -->
           <div class="password-wrapper animate-reveal-up stagger-2">
-            <input type="password" name="password" id="password" placeholder="Password" required
+            <label for="password" class="visually-hidden">Password</label>
+            <input type="password" name="password" id="password" placeholder="Password" aria-label="Password" required
               autocomplete="current-password">
-            <button type="button" id="toggle-password" class="toggle-password-btn" aria-label="Tampilkan password">
+            <button type="button" id="toggle-password" class="toggle-password-btn" aria-label="Tampilkan atau sembunyikan password">
               <i class="fas fa-eye-slash" id="eye-icon"></i>
             </button>
           </div>

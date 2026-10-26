@@ -106,14 +106,14 @@
 /* Action buttons */
 .action-wrap {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     align-items: center;
 }
 .btn-act {
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     border: none;
     transition: all .2s;
     cursor: pointer;
@@ -121,12 +121,12 @@
     flex-shrink: 0;
 }
 .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
-.btn-act-edit     { background: #fef3c7; color: #d97706; }
-.btn-act-edit:hover   { background: #fde68a; color: #b45309; }
-.btn-act-delete   { background: #fee2e2; color: #dc2626; }
-.btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+.btn-act-edit     { background: #fef3c7; color: #92400e; }
+.btn-act-edit:hover   { background: #fde68a; color: #78350f; }
+.btn-act-delete   { background: #fee2e2; color: #b91c1c; }
+.btn-act-delete:hover { background: #fecaca; color: #991b1b; }
 .btn-act-reset    { background: #e0f2fe; color: #0369a1; }
-.btn-act-reset:hover  { background: #bae6fd; color: #0284c7; }
+.btn-act-reset:hover  { background: #bae6fd; color: #075985; }
 
 /* Empty state */
 .empty-state {
@@ -146,7 +146,7 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <i class="mdi mdi-account-circle-outline" style="font-size:1.4rem; color:#2d6a9f;"></i>
-                <h2 class="mb-0">Master User</h2>
+                <h1 class="mb-0 fs-4 fw-bold" style="color: #1a3a5c;">Master User</h1>
             </div>
             <div class="subtitle">
                 <i class="mdi mdi-home-outline me-1"></i>Home &rsaquo; Master Data &rsaquo; User
@@ -231,12 +231,14 @@
                                     <button type="button" 
                                             class="btn-act btn-act-reset" 
                                             onclick="openResetModal({{ $item->id }}, '{{ addslashes($item->nama) }}')" 
-                                            title="Reset Password">
+                                            title="Reset Password"
+                                            aria-label="Reset password untuk user {{ $item->nama }}">
                                         <i class="mdi mdi-key-variant"></i>
                                     </button>
                                     <a href="{{ route('master.user.edit', $item->id) }}" 
                                        class="btn-act btn-act-edit" 
-                                       title="Edit User">
+                                       title="Edit User"
+                                       aria-label="Edit data user {{ $item->nama }}">
                                         <i class="mdi mdi-pencil"></i>
                                     </a>
                                     <form id="delete-form-{{ $item->id }}" action="{{ route('master.user.destroy', $item->id) }}" method="POST" class="m-0">
@@ -244,7 +246,8 @@
                                         <button type="button"
                                                 class="btn-act btn-act-delete"
                                                 onclick="deleteData('{{ $item->id }}')"
-                                                title="Hapus User">
+                                                title="Hapus User"
+                                                aria-label="Hapus user {{ $item->nama }}">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
                                     </form>

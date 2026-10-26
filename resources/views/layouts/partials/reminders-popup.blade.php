@@ -11,7 +11,7 @@
                 <span class="text-muted" style="font-size: 0.75rem;" id="reminders-subtitle">Memerlukan tindakan Anda</span>
             </div>
         </div>
-        <button type="button" class="btn-close-custom" id="reminders-close-btn" title="Tutup">
+        <button type="button" class="btn-close-custom" id="reminders-close-btn" title="Tutup panel pengingat" aria-label="Tutup panel pengingat">
             <i class="mdi mdi-close"></i>
         </button>
     </div>
@@ -26,7 +26,7 @@
 </div>
 
 <!-- Tombol Lonceng Melayang (Saat Panel Ditutup) -->
-<button type="button" id="reminders-bell-toggle" class="d-none">
+<button type="button" id="reminders-bell-toggle" class="d-none" aria-label="Buka notifikasi tindak lanjut tertunda">
     <i class="mdi mdi-bell-outline"></i>
     <span class="badge rounded-pill bg-danger shadow-sm" id="reminders-badge-count">0</span>
 </button>
@@ -83,7 +83,7 @@
     }
 
     .bell-ring-animation {
-        animation: ring-bell 2.5s ease infinite;
+        animation: ring-bell 2.5s ease 4;
         font-size: 1.15rem;
     }
 
@@ -93,17 +93,27 @@
         20%, 40%, 60%, 80% { transform: rotate(-10deg); }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        .bell-ring-animation {
+            animation: none !important;
+        }
+        #reminders-popup-panel {
+            transition: opacity 0.2s ease !important;
+            transform: none !important;
+        }
+    }
+
     .btn-close-custom {
         background: rgba(0, 0, 0, 0.05);
         border: none;
-        width: 28px;
-        height: 28px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #1a3a5c;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: bold;
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);

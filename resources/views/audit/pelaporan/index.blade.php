@@ -527,14 +527,14 @@
         /* Action buttons */
         .action-wrap {
             display: flex;
-            gap: 5px;
+            gap: 6px;
             align-items: center;
         }
         .btn-act {
-            width: 32px; height: 32px;
+            width: 36px; height: 36px;
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             border: none;
             transition: all .2s;
             cursor: pointer;
@@ -544,14 +544,14 @@
         .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
         .btn-act-view     { background: #e0f2fe; color: #0369a1; }
         .btn-act-view:hover   { background: #bae6fd; color: #0284c7; }
-        .btn-act-edit     { background: #fef3c7; color: #d97706; }
-        .btn-act-edit:hover   { background: #fde68a; color: #b45309; }
-        .btn-act-delete   { background: #fee2e2; color: #dc2626; }
-        .btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
-        .btn-act-approve { background: #dcfce7; color: #16a34a; }
-        .btn-act-approve:hover { background: #bbf7d0; color: #15803d; }
-        .btn-act-reject { background: #f3f4f6; color: #4b5563; }
-        .btn-act-reject:hover { background: #e5e7eb; color: #374151; }
+        .btn-act-edit     { background: #fef3c7; color: #92400e; }
+        .btn-act-edit:hover   { background: #fde68a; color: #78350f; }
+        .btn-act-delete   { background: #fee2e2; color: #b91c1c; }
+        .btn-act-delete:hover { background: #fecaca; color: #991b1b; }
+        .btn-act-approve { background: #dcfce7; color: #14532d; }
+        .btn-act-approve:hover { background: #bbf7d0; color: #052e16; }
+        .btn-act-reject { background: #f3f4f6; color: #374151; }
+        .btn-act-reject:hover { background: #e5e7eb; color: #1f2937; }
     </style>
 @endsection
 
@@ -567,7 +567,7 @@
                         <li class="breadcrumb-item active text-primary" aria-current="page">Pelaporan Hasil Audit</li>
                     </ol>
                 </nav>
-                <h2><i class="mdi mdi-file-document-outline me-2"></i>Pelaporan Hasil Audit</h2>
+                <h1 class="fs-4 fw-bold mb-0 text-dark"><i class="mdi mdi-file-document-outline me-2 text-primary"></i>Pelaporan Hasil Audit</h1>
                 <div class="subtitle">Kelola dan pantau seluruh pelaporan hasil audit, ISS, dan status approval.</div>
             </div>
             <div>
@@ -735,7 +735,8 @@
                                             @canModifyData
                                             <a href="{{ route('audit.pelaporan-hasil-audit.edit', $item->id) }}" 
                                                class="btn-act btn-act-edit" 
-                                               title="Edit">
+                                               title="Edit"
+                                               aria-label="Edit laporan {{ $item->nomor_lha_lhk }}">
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
                                             @endcanModifyData
@@ -752,17 +753,17 @@
                                                     <input type="hidden" name="action" id="action-{{ $item->id }}" value="">
                                                     
                                                     @if($canApproveLvl1)
-                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve">
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve" aria-label="Approve laporan {{ $item->nomor_lha_lhk }}">
                                                             <i class="mdi mdi-check"></i>
                                                         </button>
                                                     @elseif($canApproveLvl2)
-                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve Final">
+                                                        <button type="button" class="btn-act btn-act-approve" onclick="approveData('{{ $item->id }}')" title="Approve Final" aria-label="Approve final laporan {{ $item->nomor_lha_lhk }}">
                                                             <i class="mdi mdi-check-all"></i>
                                                         </button>
                                                     @endif
                                 
                                                     @if($canReject)
-                                                        <button type="button" class="btn-act btn-act-reject" onclick="rejectData('{{ $item->id }}')" title="Reject">
+                                                        <button type="button" class="btn-act btn-act-reject" onclick="rejectData('{{ $item->id }}')" title="Reject" aria-label="Reject laporan {{ $item->nomor_lha_lhk }}">
                                                             <i class="mdi mdi-close"></i>
                                                         </button>
                                                     @endif
@@ -773,6 +774,7 @@
                                             <button type="button" 
                                                     class="btn-act btn-act-delete" 
                                                     title="Hapus"
+                                                    aria-label="Hapus laporan {{ $item->nomor_lha_lhk }}"
                                                     onclick="deleteData('{{ $item->id }}')">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>

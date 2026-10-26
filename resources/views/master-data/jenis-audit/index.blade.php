@@ -110,7 +110,7 @@
     align-items: center;
 }
 .btn-act {
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.85rem;
@@ -121,10 +121,10 @@
     flex-shrink: 0;
 }
 .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
-.btn-act-edit     { background: #fef3c7; color: #d97706; }
-.btn-act-edit:hover   { background: #fde68a; color: #b45309; }
-.btn-act-delete   { background: #fee2e2; color: #dc2626; }
-.btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+.btn-act-edit     { background: #fef3c7; color: #92400e; }
+.btn-act-edit:hover   { background: #fde68a; color: #78350f; }
+.btn-act-delete   { background: #fee2e2; color: #b91c1c; }
+.btn-act-delete:hover { background: #fecaca; color: #991b1b; }
 
 /* Empty state */
 .empty-state {
@@ -144,7 +144,7 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <i class="mdi mdi-format-list-bulleted-type" style="font-size:1.4rem; color:#2d6a9f;"></i>
-                <h2 class="mb-0">Master Jenis Audit</h2>
+                <h1 class="mb-0 fs-4 fw-bold">Master Jenis Audit</h1>
             </div>
             <div class="subtitle">
                 <i class="mdi mdi-home-outline me-1"></i>Home &rsaquo; Master Data &rsaquo; Jenis Audit
@@ -196,16 +196,18 @@
                                 <div class="action-wrap">
                                     <a href="{{ route('master.jenis-audit.edit', $item->id) }}" 
                                        class="btn-act btn-act-edit" 
-                                       title="Edit Jenis Audit">
-                                        <i class="mdi mdi-pencil"></i>
+                                       title="Edit Jenis Audit"
+                                       aria-label="Edit jenis audit {{ $item->nama_jenis_audit }}">
+                                        <i class="mdi mdi-pencil" aria-hidden="true"></i>
                                     </a>
                                     <form id="delete-form-{{ $item->id }}" action="{{ route('master.jenis-audit.destroy', $item->id) }}" method="POST" class="m-0">
                                         @csrf @method('DELETE')
                                         <button type="button"
                                                 class="btn-act btn-act-delete"
                                                 onclick="deleteData('{{ $item->id }}')"
-                                                title="Hapus Jenis Audit">
-                                            <i class="mdi mdi-delete"></i>
+                                                title="Hapus Jenis Audit"
+                                                aria-label="Hapus jenis audit {{ $item->nama_jenis_audit }}">
+                                            <i class="mdi mdi-delete" aria-hidden="true"></i>
                                         </button>
                                     </form>
                                 </div>

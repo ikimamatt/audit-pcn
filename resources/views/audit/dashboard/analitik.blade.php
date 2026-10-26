@@ -128,7 +128,7 @@
 
         <div class="row mb-4">
             <div class="col-12">
-                <h3 class="mb-1" style="font-weight:700; color:#0f172a;">Dashboard Analitik Audit</h3>
+                <h1 class="mb-1" style="font-size: 1.5rem; font-weight:700; color:#0f172a;">Dashboard Analitik Audit</h1>
                 <p class="text-muted">Pantauan komprehensif performa, jadwal, dan temuan audit perusahaan.</p>
             </div>
         </div>
@@ -327,16 +327,16 @@
 
     {{-- Modal: Aging Detail Drill-Down --}}
     <div id="aging-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9999;backdrop-filter:blur(4px);" onclick="closeAgingModal()"></div>
-    <div id="aging-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;width:min(900px,95vw);max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;font-family:'Inter',sans-serif;">
+    <div id="aging-modal" role="dialog" aria-modal="true" aria-labelledby="aging-modal-title" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;width:min(900px,95vw);max-height:85vh;background:#fff;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;font-family:'Inter',sans-serif;">
         <div id="aging-modal-header" style="padding:20px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;">
             <div>
                 <h3 id="aging-modal-title" style="margin:0;font-size:16px;font-weight:700;color:#0f172a;"></h3>
                 <p id="aging-modal-subtitle" style="margin:4px 0 0;font-size:12px;color:#64748b;"></p>
             </div>
-            <button onclick="closeAgingModal()" style="border:none;background:#f1f5f9;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;color:#64748b;display:flex;align-items:center;justify-content:center;">&times;</button>
+            <button onclick="closeAgingModal()" aria-label="Tutup dialog rincian aging" style="border:none;background:#f1f5f9;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px;color:#64748b;display:flex;align-items:center;justify-content:center;">&times;</button>
         </div>
         <div style="padding:0 24px 8px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px;">
-            <input id="aging-modal-search" type="text" placeholder="Cari divisi atau area..." oninput="filterAgingTable()" style="margin:12px 0;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;color:#334155;outline:none;width:260px;"/>
+            <input id="aging-modal-search" type="text" placeholder="Cari divisi atau area..." aria-label="Cari divisi atau area" oninput="filterAgingTable()" style="margin:12px 0;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px;color:#334155;outline:none;width:260px;"/>
         </div>
         <div style="overflow-y:auto;max-height:calc(85vh - 160px);">
             <table id="aging-modal-table" style="width:100%;border-collapse:collapse;font-size:13px;">

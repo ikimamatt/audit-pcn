@@ -5,7 +5,7 @@
     <div class="col-lg-10">
         <div class="card">
             <div class="card-header bg-light">
-                <h4 class="card-title mb-0">CREATE PROGRAM KERJA AUDIT</h4>
+                <h1 class="card-title mb-0 fs-5 fw-bold text-dark">CREATE PROGRAM KERJA AUDIT</h1>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ route('audit.pka.store') }}" enctype="multipart/form-data" id="pkaForm">
@@ -14,8 +14,8 @@
                         <input type="hidden" name="return_url" value="{{ $returnUrl }}">
                     @endif
                     <div class="mb-3">
-                        <label class="form-label">Surat Tugas</label>
-                        <select name="perencanaan_audit_id" class="form-select select2-search" required>
+                        <label for="perencanaan_audit_id" class="form-label fw-semibold">Surat Tugas <span class="text-danger">*</span></label>
+                        <select id="perencanaan_audit_id" name="perencanaan_audit_id" class="form-select select2-search" required>
                             <option value="">Pilih Surat Tugas</option>
                             @forelse($suratTugas as $st)
                                 <option value="{{ $st->id }}" {{ old('perencanaan_audit_id') == $st->id ? 'selected' : '' }}>
@@ -39,16 +39,16 @@
                         @endif
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tanggal PKA</label>
-                        <input type="date" name="tanggal_pka" class="form-control" required>
+                        <label for="tanggal_pka" class="form-label fw-semibold">Tanggal PKA <span class="text-danger">*</span></label>
+                        <input type="date" id="tanggal_pka" name="tanggal_pka" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">No PKA</label>
-                        <input type="text" name="no_pka" class="form-control" required>
+                        <label for="no_pka" class="form-label fw-semibold">No PKA <span class="text-danger">*</span></label>
+                        <input type="text" id="no_pka" name="no_pka" class="form-control" required placeholder="Masukkan nomor PKA">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Judul PKA</label>
-                        <input type="text" name="judul_pka" class="form-control" required>
+                        <label for="judul_pka" class="form-label fw-semibold">Judul PKA <span class="text-danger">*</span></label>
+                        <input type="text" id="judul_pka" name="judul_pka" class="form-control" required placeholder="Masukkan judul PKA">
                     </div>
 
                     {{-- ===== PROSES BISNIS + RISK BASED AUDIT (Hierarki Baru) ===== --}}
@@ -66,12 +66,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Informasi Umum</label>
-                        <textarea name="informasi_umum" class="form-control"></textarea>
+                        <label for="informasi_umum" class="form-label fw-semibold">Informasi Umum</label>
+                        <textarea id="informasi_umum" name="informasi_umum" class="form-control" rows="3" placeholder="Informasi umum audit..."></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">KPI Tidak Tercapai</label>
-                        <textarea name="kpi_tidak_tercapai" class="form-control"></textarea>
+                        <label for="kpi_tidak_tercapai" class="form-label fw-semibold">KPI Tidak Tercapai</label>
+                        <textarea id="kpi_tidak_tercapai" name="kpi_tidak_tercapai" class="form-control" rows="3" placeholder="KPI tidak tercapai..."></textarea>
                     </div>
 
                     <div class="mb-3">
@@ -90,11 +90,11 @@
                                 <tbody id="data-awal-container">
                                     <tr class="data-awal-item">
                                         <td class="text-center align-middle row-number">1</td>
-                                        <td><input type="text" name="data_awal_dokumen[0][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" required></td>
-                                        <td><input type="text" name="data_awal_dokumen[0][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" required></td>
-                                        <td><input type="text" name="data_awal_dokumen[0][periode]" class="form-control" placeholder="Periode" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[0][nama_dokumen]" class="form-control" placeholder="Nama Dokumen" aria-label="Nama Dokumen" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[0][ruang_lingkup]" class="form-control" placeholder="Ruang Lingkup" aria-label="Ruang Lingkup" required></td>
+                                        <td><input type="text" name="data_awal_dokumen[0][periode]" class="form-control" placeholder="Periode" aria-label="Periode" required></td>
                                         <td class="text-center align-middle">
-                                            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal"><i class="mdi mdi-delete"></i></button>
+                                            <button type="button" class="btn btn-sm btn-danger btn-remove-data-awal" aria-label="Hapus baris dokumen data awal"><i class="mdi mdi-delete"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>

@@ -174,7 +174,7 @@
     align-items: center;
 }
 .btn-act {
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.85rem;
@@ -187,12 +187,12 @@
 .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
 .btn-act-view     { background: #e0f2fe; color: #0369a1; }
 .btn-act-view:hover   { background: #bae6fd; color: #0284c7; }
-.btn-act-edit     { background: #fef3c7; color: #d97706; }
-.btn-act-edit:hover   { background: #fde68a; color: #b45309; }
-.btn-act-download { background: #dcfce7; color: #16a34a; }
-.btn-act-download:hover { background: #bbf7d0; color: #15803d; }
-.btn-act-delete   { background: #fee2e2; color: #dc2626; }
-.btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+.btn-act-edit     { background: #fef3c7; color: #92400e; }
+.btn-act-edit:hover   { background: #fde68a; color: #78350f; }
+.btn-act-download { background: #dcfce7; color: #166534; }
+.btn-act-download:hover { background: #bbf7d0; color: #14532d; }
+.btn-act-delete   { background: #fee2e2; color: #b91c1c; }
+.btn-act-delete:hover { background: #fecaca; color: #991b1b; }
 
 /* Empty state */
 .empty-state {
@@ -212,7 +212,7 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <i class="mdi mdi-file-document-edit-outline" style="font-size:1.4rem; color:#2d6a9f;"></i>
-                <h2 class="mb-0">Program Kerja Audit</h2>
+                <h1 class="mb-0 fs-4 fw-bold">Program Kerja Audit</h1>
             </div>
             <div class="subtitle">
                 <i class="mdi mdi-home-outline me-1"></i>Home &rsaquo; Program Kerja Audit
@@ -319,16 +319,19 @@
                         <td>
                             <div class="action-wrap">
                                 <a href="{{ route('audit.pka.show', $item->id) }}"
-                                   class="btn-act btn-act-view" title="Detail PKA">
-                                    <i class="mdi mdi-eye"></i>
+                                   class="btn-act btn-act-view" title="Detail PKA"
+                                   aria-label="Detail PKA {{ $item->no_pka }}">
+                                    <i class="mdi mdi-eye" aria-hidden="true"></i>
                                 </a>
                                 <a href="{{ route('audit.pka.edit', $item->id) }}"
-                                   class="btn-act btn-act-edit" title="Edit PKA">
-                                    <i class="mdi mdi-pencil"></i>
+                                   class="btn-act btn-act-edit" title="Edit PKA"
+                                   aria-label="Edit PKA {{ $item->no_pka }}">
+                                    <i class="mdi mdi-pencil" aria-hidden="true"></i>
                                 </a>
                                 <a href="{{ route('audit.pka.download', $item->id) }}"
-                                   class="btn-act btn-act-download" title="Download PKA">
-                                    <i class="mdi mdi-download"></i>
+                                   class="btn-act btn-act-download" title="Download PKA"
+                                   aria-label="Download berkas PKA {{ $item->no_pka }}">
+                                    <i class="mdi mdi-download" aria-hidden="true"></i>
                                 </a>
                                 <form action="{{ route('audit.pka.destroy', $item->id) }}"
                                       method="POST" class="delete-form m-0"
@@ -338,8 +341,9 @@
                                         class="btn-act btn-act-delete btn-delete-swal"
                                         data-id="{{ $item->id }}"
                                         data-check-url="{{ route('audit.pka.check-relations', $item->id) }}"
-                                        title="Hapus PKA">
-                                        <i class="mdi mdi-delete"></i>
+                                        title="Hapus PKA"
+                                        aria-label="Hapus PKA {{ $item->no_pka }}">
+                                        <i class="mdi mdi-delete" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             </div>

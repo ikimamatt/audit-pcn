@@ -106,14 +106,14 @@
 /* Action buttons */
 .action-wrap {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     align-items: center;
 }
 .btn-act {
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     border: none;
     transition: all .2s;
     cursor: pointer;
@@ -121,10 +121,10 @@
     flex-shrink: 0;
 }
 .btn-act:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
-.btn-act-edit     { background: #fef3c7; color: #d97706; }
-.btn-act-edit:hover   { background: #fde68a; color: #b45309; }
-.btn-act-delete   { background: #fee2e2; color: #dc2626; }
-.btn-act-delete:hover { background: #fecaca; color: #b91c1c; }
+.btn-act-edit     { background: #fef3c7; color: #92400e; }
+.btn-act-edit:hover   { background: #fde68a; color: #78350f; }
+.btn-act-delete   { background: #fee2e2; color: #b91c1c; }
+.btn-act-delete:hover { background: #fecaca; color: #991b1b; }
 
 /* Empty state */
 .empty-state {
@@ -144,7 +144,7 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <i class="mdi mdi-clipboard-text-search-outline" style="font-size:1.4rem; color:#2d6a9f;"></i>
-                <h2 class="mb-0">Master Kode AOI</h2>
+                <h1 class="mb-0 fs-4 fw-bold" style="color: #1a3a5c;">Master Kode AOI</h1>
             </div>
             <div class="subtitle">
                 <i class="mdi mdi-home-outline me-1"></i>Home &rsaquo; Master Data &rsaquo; Kode AOI
@@ -202,7 +202,8 @@
                                         data-kode="{{ $item->kode_area_of_improvement }}"
                                         data-deskripsi="{{ $item->deskripsi_area_of_improvement }}"
                                         data-bs-toggle="modal" data-bs-target="#editModal"
-                                        title="Edit Kode AOI">
+                                        title="Edit Kode AOI"
+                                        aria-label="Edit kode AOI {{ $item->kode_area_of_improvement }}">
                                         <i class="mdi mdi-pencil"></i>
                                     </button>
                                     <form id="delete-form-{{ $item->id }}" action="{{ route('master.kode-aoi.destroy', $item->id) }}" method="POST" class="m-0">
@@ -210,7 +211,8 @@
                                         <button type="button"
                                                 class="btn-act btn-act-delete"
                                                 onclick="deleteData('{{ $item->id }}')"
-                                                title="Hapus Kode AOI">
+                                                title="Hapus Kode AOI"
+                                                aria-label="Hapus kode AOI {{ $item->kode_area_of_improvement }}">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
                                     </form>
